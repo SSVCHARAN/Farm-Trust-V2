@@ -101,6 +101,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
   // Refs
   const silenceTimerRef = useRef<any>(null);
   const confirmTimeoutRef = useRef<any>(null);
+  const transcriptRef = useRef('');
 
   // Sync language selection when parent language changes
   useEffect(() => {
@@ -163,6 +164,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
   const startListening = () => {
     cleanupSpeechAndAudio();
     setVoiceState('LISTENING');
+    transcriptRef.current = '';
     setTranscript('');
     setActiveAction(null);
     setExecutionMessage('');
@@ -182,9 +184,11 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
         }
       },
       onInterim: (interim) => {
+        transcriptRef.current = interim;
         setTranscript(interim);
       },
       onFinal: (finalText) => {
+        transcriptRef.current = finalText;
         setTranscript(finalText);
         processQuery(finalText);
       },
@@ -226,9 +230,11 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
   };
 
   const stopListening = () => {
+    const textToProcess = (transcriptRef.current || transcript || UniversalVoiceInput.getCurrentTranscript()).trim();
     UniversalVoiceInput.stopListening();
-    if (transcript.trim()) {
-      processQuery(transcript.trim());
+    if (textToProcess) {
+      setTranscript(textToProcess);
+      processQuery(textToProcess);
     } else {
       setVoiceState('IDLE');
     }

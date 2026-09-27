@@ -178,10 +178,12 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
   };
 
   const stopListening = () => {
+    const textToProcess = (transcript || UniversalVoiceInput.getCurrentTranscript()).trim();
     UniversalVoiceInput.stopListening();
     setIsListening(false);
-    if (transcript.trim()) {
-      processUtterance(transcript.trim());
+    if (textToProcess) {
+      setTranscript(textToProcess);
+      processUtterance(textToProcess);
     }
   };
 

@@ -1,12 +1,12 @@
 /**
  * Farm Trust Universal Voice Input Service
  * 
- * Provides production-ready, client-side speech input:
- * 1. Native Web Speech API (webkitSpeechRecognition / SpeechRecognition) with zero backend dependency.
- * 2. Continuous accumulation of interim & final speech with smart silence auto-finalization.
- * 3. Graceful fallback on Safari / mobile devices where Telugu or system dictation requires adaptation.
+ * Provides rock-solid, client-side speech input:
+ * 1. Native Web Speech API (SpeechRecognition / webkitSpeechRecognition) without microphone hardware conflicts.
+ * 2. Full-sentence continuous accumulation (interim + final) so zero words are dropped.
+ * 3. Immediate fallback delivery: if user clicks "Done Speaking", current buffer processes instantly.
  * 4. Distinct error classification: 'permission-denied' | 'no-speech' | 'network' | 'unsupported' | 'unknown'.
- * 5. Real-time visual waveform / volume feedback.
+ * 5. Animated waveform visual feedback without locking audio hardware.
  */
 
 export interface VoiceListenOptions {
@@ -16,19 +16,24 @@ export interface VoiceListenOptions {
   onError?: (errorCode: 'permission-denied' | 'no-speech' | 'network' | 'unsupported' | 'unknown', message?: string) => void;
   onStateChange?: (state: 'idle' | 'requesting-permission' | 'listening' | 'processing') => void;
   onVolumeChange?: (volumePercent: number) => void; // 0 to 100
-  silenceTimeoutMs?: number; // default 1400ms
+  silenceTimeoutMs?: number; // default 1500ms
   maxDurationMs?: number; // default 12000ms
 }
 
 export class UniversalVoiceInput {
   private static activeRecognition: any = null;
-  private static activeStream: MediaStream | null = null;
-  private static audioContext: AudioContext | null = null;
-  private static analyserNode: AnalyserNode | null = null;
   private static volumeAnimFrame: number | null = null;
   private static silenceTimer: any = null;
   private static maxDurationTimer: any = null;
   private static isRecording = false;
+  private static lastCapturedTranscript = '';
+
+  /**
+   * Returns whatever has been captured so far in the current session
+   */
+  public static getCurrentTranscript(): string {
+    return this.lastCapturedTranscript;
+  }
 
   /**
    * Check if native Web Speech Recognition is supported
@@ -42,11 +47,7 @@ export class UniversalVoiceInput {
    * Check if audio capture is supported in this browser
    */
   public static isMediaRecorderSupported(): boolean {
-    if (typeof window === 'undefined') return false;
-    return !!(
-      navigator.mediaDevices &&
-      typeof navigator.mediaDevices.getUserMedia === 'function'
-    );
+    return this.isNativeSpeechSupported();
   }
 
   /**
@@ -54,11 +55,9 @@ export class UniversalVoiceInput {
    */
   public static async startListening(options: VoiceListenOptions): Promise<void> {
     this.stopListening();
+    this.lastCapturedTranscript = '';
 
-    const {
-      onStateChange,
-      onError,
-    } = options;
+    const { onStateChange, onError } = options;
 
     if (!this.isNativeSpeechSupported()) {
       if (onStateChange) onStateChange('idle');
@@ -93,17 +92,14 @@ export class UniversalVoiceInput {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    let finalTranscript = '';
-    let interimTranscript = '';
-    let hasCapturedSpeech = false;
     let isDelivered = false;
 
     // Helper to safely deliver recognized text once
     const deliverFinal = (text: string) => {
       if (isDelivered) return;
       isDelivered = true;
-      this.stopListening();
       const clean = text.trim();
+      this.stopListening();
       if (clean) {
         if (onStateChange) onStateChange('processing');
         onFinal(clean);
@@ -116,13 +112,13 @@ export class UniversalVoiceInput {
     try {
       const recognition = new SpeechRecognition();
       recognition.lang = lang;
-      // continuous = false gives reliable speech-boundary detection in mobile/desktop Chrome
-      recognition.continuous = false;
+      // continuous = true allows fluid speaking without premature termination on small pauses
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
-      // Start visual volume feedback
-      this.startVolumeMonitoring(onVolumeChange);
+      // Start waveform animation pulse (without locking hardware microphone)
+      this.startWaveformAnimation(onVolumeChange);
 
       recognition.onstart = () => {
         this.isRecording = true;
@@ -130,61 +126,53 @@ export class UniversalVoiceInput {
       };
 
       recognition.onresult = (event: any) => {
-        interimTranscript = '';
-        let currentBatchFinal = '';
+        let fullFinal = '';
+        let fullInterim = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        // Accumulate from start of session so no interim or previous words are lost
+        for (let i = 0; i < event.results.length; ++i) {
           const res = event.results[i];
           const part = res[0]?.transcript || '';
           if (res.isFinal) {
-            currentBatchFinal += (currentBatchFinal ? ' ' : '') + part.trim();
+            fullFinal += (fullFinal ? ' ' : '') + part.trim();
           } else {
-            interimTranscript += part;
+            fullInterim += (fullInterim ? ' ' : '') + part.trim();
           }
         }
 
-        if (currentBatchFinal) {
-          finalTranscript += (finalTranscript ? ' ' : '') + currentBatchFinal;
-        }
-
-        const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
+        const candidate = (fullFinal + (fullInterim ? ' ' + fullInterim : '')).trim();
         if (candidate) {
-          hasCapturedSpeech = true;
+          this.lastCapturedTranscript = candidate;
           if (onInterim) onInterim(candidate);
 
-          // Elevate waveform feedback on speech activity
+          // Elevate volume visualizer when voice is detected
           if (onVolumeChange) {
-            const dynamicVol = Math.min(95, 35 + Math.min(55, candidate.length * 3));
+            const dynamicVol = Math.min(95, 45 + Math.min(50, candidate.length * 2));
             onVolumeChange(dynamicVol);
           }
 
           if (this.silenceTimer) clearTimeout(this.silenceTimer);
 
-          if (currentBatchFinal && !interimTranscript) {
-            // Browser reached a definitive final speech boundary
-            deliverFinal(finalTranscript);
-          } else {
-            // Auto finish on speech pause
-            this.silenceTimer = setTimeout(() => {
-              deliverFinal(candidate);
-            }, silenceTimeoutMs || 1400);
-          }
+          // Auto finish after user stops speaking for silenceTimeoutMs
+          this.silenceTimer = setTimeout(() => {
+            deliverFinal(candidate);
+          }, silenceTimeoutMs || 1500);
         }
       };
 
       recognition.onerror = (event: any) => {
         const err = event.error;
-        console.warn('Native speech recognition error:', err);
+        console.warn('SpeechRecognition error:', err);
 
         if (err === 'aborted') {
-          // Normal manual stop or restart; do not treat as an error
+          // Normal manual stop or restart; do nothing
           return;
         }
 
         if (isDelivered) return;
 
-        // If speech was already recognized, treat as success rather than failing
-        const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
+        // If speech was already recognized, treat as successful completion rather than failing
+        const candidate = this.lastCapturedTranscript.trim();
         if (candidate && (err === 'no-speech' || err === 'network')) {
           deliverFinal(candidate);
           return;
@@ -209,7 +197,7 @@ export class UniversalVoiceInput {
             onError('network', 'Speech service network error. Please check your internet connection.');
           }
         } else if (err === 'language-not-supported') {
-          // If Telugu is not supported by Safari/device, retry in Indian English
+          // If Telugu is not supported by Safari/device, retry with Indian English
           if (lang.startsWith('te')) {
             console.info('Telugu speech not supported on this device/browser; retrying with Indian English');
             this.startNativeRecognition({ ...options, lang: 'en-IN' });
@@ -233,11 +221,9 @@ export class UniversalVoiceInput {
           this.silenceTimer = null;
         }
 
-        const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
+        const candidate = this.lastCapturedTranscript.trim();
         if (candidate) {
           deliverFinal(candidate);
-        } else if (hasCapturedSpeech) {
-          deliverFinal(finalTranscript || interimTranscript);
         } else {
           this.stopListening();
           if (onStateChange) onStateChange('idle');
@@ -245,10 +231,10 @@ export class UniversalVoiceInput {
         }
       };
 
-      // Set max duration safeguard
+      // Set max duration safeguard (12 seconds)
       this.maxDurationTimer = setTimeout(() => {
         if (!isDelivered) {
-          const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
+          const candidate = this.lastCapturedTranscript.trim();
           if (candidate) {
             deliverFinal(candidate);
           } else {
@@ -274,63 +260,26 @@ export class UniversalVoiceInput {
   }
 
   /**
-   * Monitor real-time volume using AudioContext when available, or smooth audio pulse
+   * Smooth waveform animation while listening (zero hardware locks)
    */
-  private static async startVolumeMonitoring(onVolumeChange?: (vol: number) => void) {
+  private static startWaveformAnimation(onVolumeChange?: (vol: number) => void) {
     if (!onVolumeChange) return;
 
-    try {
-      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
-        if (stream && this.isRecording) {
-          this.activeStream = stream;
-          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioCtx) {
-            const audioCtx = new AudioCtx();
-            const analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 128;
-            const sourceNode = audioCtx.createMediaStreamSource(stream);
-            sourceNode.connect(analyser);
-
-            this.audioContext = audioCtx;
-            this.analyserNode = analyser;
-
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-            const updateVolume = () => {
-              if (!this.isRecording || !this.analyserNode) return;
-              analyser.getByteFrequencyData(dataArray);
-              let sum = 0;
-              for (let i = 0; i < dataArray.length; i++) {
-                sum += dataArray[i];
-              }
-              const avg = sum / dataArray.length;
-              const volumePercent = Math.min(100, Math.round((avg / 64) * 100));
-              onVolumeChange(volumePercent);
-              this.volumeAnimFrame = requestAnimationFrame(updateVolume);
-            };
-            this.volumeAnimFrame = requestAnimationFrame(updateVolume);
-            return;
-          }
-        }
-      }
-    } catch (_) {}
-
-    // Fallback listening pulse if microphone stream is busy with Web Speech API
-    let basePulse = 18;
+    let basePulse = 20;
     let direction = 1;
     const pulseLoop = () => {
       if (!this.isRecording) return;
-      basePulse += direction * 2;
-      if (basePulse > 40) direction = -1;
+      basePulse += direction * 2.5;
+      if (basePulse > 48) direction = -1;
       if (basePulse < 18) direction = 1;
-      onVolumeChange(basePulse);
+      onVolumeChange(Math.round(basePulse));
       this.volumeAnimFrame = requestAnimationFrame(pulseLoop);
     };
     this.volumeAnimFrame = requestAnimationFrame(pulseLoop);
   }
 
   /**
-   * Stop any active recording or speech recognition cleanly
+   * Stop any active speech recognition cleanly
    */
   public static stopListening() {
     this.isRecording = false;
@@ -356,35 +305,17 @@ export class UniversalVoiceInput {
       this.activeRecognition = null;
     }
 
-    if (this.activeStream) {
-      try {
-        this.activeStream.getTracks().forEach((track) => track.stop());
-      } catch (_) {}
-      this.activeStream = null;
+    if (this.volumeAnimFrame) {
+      cancelAnimationFrame(this.volumeAnimFrame);
+      this.volumeAnimFrame = null;
     }
-
-    this.cleanupAudioContext();
   }
 
   /**
    * Cancel and discard recording immediately without processing
    */
   public static abort() {
-    this.isRecording = false;
+    this.lastCapturedTranscript = '';
     this.stopListening();
-  }
-
-  private static cleanupAudioContext() {
-    if (this.volumeAnimFrame) {
-      cancelAnimationFrame(this.volumeAnimFrame);
-      this.volumeAnimFrame = null;
-    }
-    if (this.audioContext) {
-      try {
-        this.audioContext.close();
-      } catch (_) {}
-      this.audioContext = null;
-    }
-    this.analyserNode = null;
   }
 }

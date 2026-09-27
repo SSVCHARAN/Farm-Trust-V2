@@ -111,10 +111,12 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
   };
 
   const stopListening = () => {
+    const textToProcess = (transcript || UniversalVoiceInput.getCurrentTranscript()).trim();
     UniversalVoiceInput.stopListening();
     setIsListening(false);
-    if (transcript.trim()) {
-      processQuery(transcript.trim());
+    if (textToProcess) {
+      setTranscript(textToProcess);
+      processQuery(textToProcess);
     }
   };
 
