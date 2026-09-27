@@ -135,26 +135,16 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchPlaceholder}
-              className="w-full pl-11 pr-24 py-3 bg-white border border-stone-200 rounded-2xl text-xs sm:text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1b3d27] shadow-xs"
+              className="w-full pl-11 pr-12 py-3 bg-white border border-stone-200 rounded-2xl text-xs sm:text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1b3d27] shadow-xs"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-14 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-600 cursor-pointer min-touch-target"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-600 cursor-pointer min-touch-target"
               >
                 Clear
               </button>
             )}
-
-            {/* Quick Micro-Mic Inside Input */}
-            <button
-              onClick={onOpenVoiceSearch}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-[#1b3d27] hover:bg-[#244f34] text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer min-touch-target"
-              title="Voice Search"
-            >
-              <Mic className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Voice</span>
-            </button>
           </div>
 
           {/* Action: Voice Search Big Button */}
@@ -532,7 +522,9 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
                           {product.farmerName}
                         </span>
                         {product.farmerVerified ? (
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" title="Identity Verified Farmer" />
+                          <span title="Identity Verified Farmer">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                          </span>
                         ) : (
                           <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1 rounded shrink-0">
                             {language === 'te' ? 'కొత్త' : 'New'}

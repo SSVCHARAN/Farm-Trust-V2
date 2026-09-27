@@ -1,5 +1,7 @@
 import express from 'express';
 import http from 'http';
+import https from 'https';
+import os from 'os';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
@@ -7,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import crypto from 'crypto';
-import { execFile } from 'child_process';
+import { execFile, execSync } from 'child_process';
 import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
@@ -18,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
@@ -1195,17 +1197,76 @@ app.post('/api/tts/speak', async (req, res) => {
   });
 });
 
+function getLocalIpAddresses(): string[] {
+  const interfaces = os.networkInterfaces();
+  const addresses: string[] = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name] || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        addresses.push(net.address);
+      }
+    }
+  }
+  return addresses;
+}
+
+function getOrCreateCertificates() {
+  const certDir = path.join(__dirname, '.cert');
+  const keyPath = path.join(certDir, 'key.pem');
+  const certPath = path.join(certDir, 'cert.pem');
+
+  if (!fs.existsSync(certDir)) {
+    fs.mkdirSync(certDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    console.log('🔒 Generating self-signed SSL certificate for secure local network access...');
+    const localIps = getLocalIpAddresses();
+    const altNames = ['DNS:localhost', 'IP:127.0.0.1', ...localIps.map((ip) => `IP:${ip}`)].join(',');
+    try {
+      execSync(
+        `openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj "/CN=Farm-Trust-Local" -addext "subjectAltName=${altNames}" -keyout "${keyPath}" -out "${certPath}" -days 365`,
+        { stdio: 'ignore' }
+      );
+    } catch (e) {
+      console.warn('Could not generate SSL cert via openssl, falling back to HTTP:', e);
+      return null;
+    }
+  }
+
+  try {
+    return {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
+  } catch (err) {
+    console.warn('Failed reading SSL cert files:', err);
+    return null;
+  }
+}
+
 // Setup Vite middleware in dev or static files in production
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
-  const httpServer = http.createServer(app);
+  const useHttps = process.env.HTTPS === 'true';
+
+  let sslCreds = null;
+  if (useHttps) {
+    sslCreds = getOrCreateCertificates();
+  }
+
+  const server = (useHttps && sslCreds)
+    ? https.createServer(sslCreds, app)
+    : http.createServer(app);
+
+  const protocol = (useHttps && sslCreds) ? 'https' : 'http';
 
   if (!isProd) {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
         hmr: {
-          server: httpServer,
+          server,
         },
         watch: {
           usePolling: true,
@@ -1222,8 +1283,24 @@ async function startServer() {
     });
   }
 
-  httpServer.listen(port, '0.0.0.0', () => {
-    console.log(`🌾 Farm Trust server running on http://0.0.0.0:${port}`);
+  server.listen(port, '0.0.0.0', () => {
+    const localIps = getLocalIpAddresses();
+    console.log(`\n  🌾 Farm Trust is ready and accessible on your local network!`);
+    console.log(`  ➜  Local:   ${protocol}://localhost:${port}/`);
+    if (localIps.length > 0) {
+      localIps.forEach((ip) => {
+        console.log(`  ➜  Network: ${protocol}://${ip}:${port}/`);
+      });
+    } else {
+      console.log(`  ➜  Network: ${protocol}://0.0.0.0:${port}/`);
+    }
+    if (protocol === 'http') {
+      console.log(`\n  💡 Tip: To enable mobile microphone/voice input over LAN, run with HTTPS:`);
+      console.log(`     npm run dev:https\n`);
+    } else {
+      console.log(`\n  🔒 Running in HTTPS mode (Mobile mic/voice enabled).`);
+      console.log(`     If the browser warns about a self-signed cert, click 'Advanced' -> 'Proceed'.\n`);
+    }
   });
 }
 

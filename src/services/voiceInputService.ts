@@ -45,7 +45,7 @@ export class UniversalVoiceInput {
     if (typeof window === 'undefined') return false;
     return !!(
       navigator.mediaDevices &&
-      navigator.mediaDevices.getUserMedia &&
+      typeof navigator.mediaDevices.getUserMedia === 'function' &&
       typeof window.MediaRecorder !== 'undefined'
     );
   }

@@ -82,6 +82,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
   // Core Voice State Machine
   const [voiceState, setVoiceState] = useState<VoiceHubState>('IDLE');
   const [voiceLang, setVoiceLang] = useState<TTSLanguage>(language === 'te' ? 'te-IN' : 'en-IN');
+  const isTe = voiceLang.startsWith('te');
   const [transcript, setTranscript] = useState('');
   const [typedInput, setTypedInput] = useState('');
   const [showKeyboard, setShowKeyboard] = useState(false);
@@ -193,14 +194,14 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
           setVoiceState('IDLE');
         } else if (code === 'permission-denied') {
           setErrorMessage(
-            language === 'te'
+            isTe
               ? 'మైక్రోఫోన్ అనుమతి నిరాకరించబడింది. దయచేసి మీ బ్రౌజర్ అడ్రస్ బార్‌లో మైక్రోఫోన్ అనుమతి ఇవ్వండి.'
               : 'Microphone permission blocked. Please allow microphone access in your browser address bar.'
           );
           setVoiceState('ERROR');
         } else {
           setErrorMessage(
-            language === 'te'
+            isTe
               ? 'మాట సరిగ్గా వినపడలేదు. దయచేసి మైక్ నొక్కి మళ్ళీ మాట్లాడండి.'
               : 'Could not catch that clearly. Please tap the mic and try again.'
           );
@@ -350,7 +351,6 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
 
     cleanupSpeechAndAudio();
     const { actionType, payload } = action;
-    const isTe = voiceLang.startsWith('te');
 
     let resultMsg = isTe
       ? payload?.executedMessageTelugu || action.messageTelugu || 'చర్య విజయవంతంగా పూర్తయింది!'
@@ -433,7 +433,6 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
 
   const handleCancelAction = () => {
     cleanupSpeechAndAudio();
-    const isTe = voiceLang.startsWith('te');
     const cancelMsg = isTe ? 'సరే, రద్దు చేశాను.' : 'Okay, action cancelled.';
     setExecutionMessage(cancelMsg);
     setVoiceState('IDLE');
@@ -442,7 +441,6 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
 
   const currentDisplayText = () => {
     if (voiceState === 'EXECUTED') return executionMessage;
-    const isTe = voiceLang.startsWith('te');
     if (activeAction) {
       return isTe && activeAction.messageTelugu ? activeAction.messageTelugu : activeAction.message;
     }
@@ -481,14 +479,14 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-xs">
-                {language === 'te' ? 'ఫార్మ్‌ట్రస్ట్‌తో మాట్లాడండి' : 'Talk to Farm Trust'}
+                {isTe ? 'ఫార్మ్‌ట్రస్ట్‌తో మాట్లాడండి' : 'Talk to Farm Trust'}
               </h2>
               <span className="text-[10px] bg-amber-400 text-stone-950 font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
                 Voice First
               </span>
             </div>
             <p className="text-xs text-emerald-200/90 font-medium">
-              {language === 'te'
+              {isTe
                 ? 'ధర మార్చడం, స్టాక్, ఆర్డర్ల కోసం సహజంగా మాట్లాడండి'
                 : 'Speak naturally in Telugu or English for prices, stock & orders'}
             </p>
@@ -560,12 +558,12 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
               <div className="text-center sm:text-left">
                 <p className="text-sm font-bold text-amber-300">
-                  {language === 'te'
+                  {isTe
                     ? 'మైక్ నొక్కి మాట్లాడండి లేదా కింద ఉన్న నమూనా నొక్కండి'
                     : 'Tap the mic and speak, or choose a sample prompt below'}
                 </p>
                 <p className="text-xs text-stone-300 mt-0.5">
-                  {language === 'te'
+                  {isTe
                     ? 'ఉదాహరణ: "టమాటాల ధర 35 రూపాయలు చేయి"'
                     : 'e.g. "Change tomato price to ₹35" or "Show pending orders"'}
                 </p>
@@ -579,7 +577,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 >
                   <Mic className="w-5 h-5 text-stone-950 animate-pulse" />
                   <span className="text-sm">
-                    {language === 'te' ? 'నోటితో మాట్లాడండి' : 'Start Speaking'}
+                    {isTe ? 'నోటితో మాట్లాడండి' : 'Start Speaking'}
                   </span>
                 </button>
 
@@ -599,7 +597,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               <span className="text-xs font-bold text-emerald-200/90 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>
-                  {language === 'te' ? 'త్వరిత ఆదేశాలు (క్లిక్ చేసి మాట్లాడవచ్చు):' : 'Sample Voice Commands:'}
+                  {isTe ? 'త్వరిత ఆదేశాలు (క్లిక్ చేసి మాట్లాడవచ్చు):' : 'Sample Voice Commands:'}
                 </span>
               </span>
 
@@ -607,7 +605,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const prompt = language === 'te' ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to 35';
+                    const prompt = isTe ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to 35';
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
@@ -617,10 +615,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     <span className="text-base">💰</span>
                     <div>
                       <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
-                        {language === 'te' ? 'ధర సవరణ' : 'Price Change'}
+                        {isTe ? 'ధర సవరణ' : 'Price Change'}
                       </p>
                       <p className="text-stone-300 text-[11px] truncate">
-                        {language === 'te' ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to ₹35'}
+                        {isTe ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to ₹35'}
                       </p>
                     </div>
                   </div>
@@ -630,7 +628,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const prompt = language === 'te' ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders';
+                    const prompt = isTe ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders';
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
@@ -640,10 +638,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     <span className="text-base">📦</span>
                     <div>
                       <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
-                        {language === 'te' ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders'}
+                        {isTe ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders'}
                       </p>
                       <p className="text-stone-300 text-[11px] truncate">
-                        {language === 'te' ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders'}
+                        {isTe ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders'}
                       </p>
                     </div>
                   </div>
@@ -653,7 +651,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const prompt = language === 'te' ? 'ఈ వారం ఎంత అమ్మాను?' : 'How much did I sell this week?';
+                    const prompt = isTe ? 'ఈ వారం ఎంత అమ్మాను?' : 'How much did I sell this week?';
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
@@ -663,10 +661,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     <span className="text-base">📈</span>
                     <div>
                       <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
-                        {language === 'te' ? 'అమ్మకాల ఆదాయం' : 'Sales Summary'}
+                        {isTe ? 'అమ్మకాల ఆదాయం' : 'Sales Summary'}
                       </p>
                       <p className="text-stone-300 text-[11px] truncate">
-                        {language === 'te' ? 'ఈ వారం ఎంత అమ్మాను?' : 'How much did I sell this week?'}
+                        {isTe ? 'ఈ వారం ఎంత అమ్మాను?' : 'How much did I sell this week?'}
                       </p>
                     </div>
                   </div>
@@ -676,7 +674,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const prompt = language === 'te' ? 'నా దగ్గర ఏమేమి పంటలు ఉన్నాయి?' : 'What crops do I have in stock?';
+                    const prompt = isTe ? 'నా దగ్గర ఏమేమి పంటలు ఉన్నాయి?' : 'What crops do I have in stock?';
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
@@ -686,10 +684,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     <span className="text-base">🌾</span>
                     <div>
                       <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
-                        {language === 'te' ? 'పంట నిల్వలు' : 'My Harvest Stock'}
+                        {isTe ? 'పంట నిల్వలు' : 'My Harvest Stock'}
                       </p>
                       <p className="text-stone-300 text-[11px] truncate">
-                        {language === 'te' ? 'నా దగ్గర ఏమేమి పంటలు ఉన్నాయి?' : 'What crops do I have?'}
+                        {isTe ? 'నా దగ్గర ఏమేమి పంటలు ఉన్నాయి?' : 'What crops do I have?'}
                       </p>
                     </div>
                   </div>
@@ -707,7 +705,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               <div className="flex items-center gap-2.5">
                 <span className="w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
                 <span className="text-xs font-black uppercase tracking-wider text-red-400">
-                  {language === 'te' ? 'వింటున్నాం... స్పష్టంగా మాట్లాడండి' : 'Listening... Speak naturally'}
+                  {isTe ? 'వింటున్నాం... స్పష్టంగా మాట్లాడండి' : 'Listening... Speak naturally'}
                 </span>
               </div>
 
@@ -739,13 +737,13 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             {/* Live Transcript Box */}
             <div className="min-h-[56px] p-3.5 bg-black/40 rounded-xl border border-white/10 flex items-center">
               <p className="text-sm sm:text-base font-bold text-amber-200 tracking-wide">
-                {transcript ? `"${transcript}"` : (language === 'te' ? 'ధ్వని వినపడుతోంది...' : 'Hearing your voice...')}
+                {transcript ? `"${transcript}"` : (isTe ? 'ధ్వని వినపడుతోంది...' : 'Hearing your voice...')}
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2 pt-1 border-t border-white/10">
               <span className="text-stone-400 text-[11px]">
-                {language === 'te' ? 'మీరు ఆపగానే ఆటోమేటిక్‌గా ప్రాసెస్ అవుతుంది' : 'Will auto-process when you finish'}
+                {isTe ? 'మీరు ఆపగానే ఆటోమేటిక్‌గా ప్రాసెస్ అవుతుంది' : 'Will auto-process when you finish'}
               </span>
               <button
                 type="button"
@@ -753,47 +751,47 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 className="self-end px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl cursor-pointer min-touch-target flex items-center gap-1.5 shadow-md text-xs"
               >
                 <MicOff className="w-3.5 h-3.5" />
-                <span>{language === 'te' ? 'పూర్తయింది' : 'Done Speaking'}</span>
+                <span>{isTe ? 'పూర్తయింది' : 'Done Speaking'}</span>
               </button>
             </div>
 
             {/* Quick Clickable Suggestions while listening */}
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
               <span className="text-[11px] text-stone-400 font-bold">
-                {language === 'te' ? 'లేదా నొక్కండి:' : 'Or tap:'}
+                {isTe ? 'లేదా నొక్కండి:' : 'Or tap:'}
               </span>
               <button
                 type="button"
                 onClick={() => {
-                  const q = language === 'te' ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to 35';
+                  const q = isTe ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to 35';
                   setTranscript(q);
                   processQuery(q);
                 }}
                 className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[11px] font-bold text-amber-300 cursor-pointer min-touch-target"
               >
-                💰 {language === 'te' ? 'ధర 35 చేయి' : 'Price to ₹35'}
+                💰 {isTe ? 'ధర 35 చేయి' : 'Price to ₹35'}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const q = language === 'te' ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders';
+                  const q = isTe ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders';
                   setTranscript(q);
                   processQuery(q);
                 }}
                 className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[11px] font-bold text-amber-300 cursor-pointer min-touch-target"
               >
-                📦 {language === 'te' ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders'}
+                📦 {isTe ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders'}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  const q = language === 'te' ? 'ఈ వారం ఎంత అమ్మాను?' : 'How much did I sell this week?';
+                  const q = isTe ? 'ఈ వారం ఎంత అమ్మాను?' : 'How much did I sell this week?';
                   setTranscript(q);
                   processQuery(q);
                 }}
                 className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[11px] font-bold text-amber-300 cursor-pointer min-touch-target"
               >
-                📈 {language === 'te' ? 'అమ్మకాలు' : 'Sales'}
+                📈 {isTe ? 'అమ్మకాలు' : 'Sales'}
               </button>
             </div>
           </div>
@@ -807,7 +805,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             </div>
             <div>
               <p className="text-sm font-black text-amber-300">
-                {language === 'te' ? 'వ్యవసాయ మార్కెట్ డేటా పరిశీలిస్తున్నాం...' : 'Understanding farm marketplace intent...'}
+                {isTe ? 'వ్యవసాయ మార్కెట్ డేటా పరిశీలిస్తున్నాం...' : 'Understanding farm marketplace intent...'}
               </p>
               <p className="text-xs text-stone-300 mt-1">
                 {transcript ? `"${transcript}"` : ''}
@@ -822,12 +820,12 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-800">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>{language === 'te' ? 'మార్పును ఖరారు చేయండి' : 'Please Confirm This Action'}</span>
+                <span>{isTe ? 'మార్పును ఖరారు చేయండి' : 'Please Confirm This Action'}</span>
               </div>
               {isConfirmListening && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[11px] font-bold animate-pulse shrink-0">
                   <Mic className="w-3 h-3" />
-                  <span>{language === 'te' ? '"అవును" / "వద్దు" వింటున్నాం' : 'Listening for Yes/No'}</span>
+                  <span>{isTe ? '"అవును" / "వద్దు" వింటున్నాం' : 'Listening for Yes/No'}</span>
                 </div>
               )}
             </div>
@@ -837,7 +835,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               <div className="p-3 sm:p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-stone-600 font-bold">
-                    {language === 'te' ? 'పంట పేరు' : 'Crop'}:
+                    {isTe ? 'పంట పేరు' : 'Crop'}:
                   </p>
                   <p className="text-sm sm:text-base font-black text-emerald-950">
                     {activeAction.payload.productTeluguName || activeAction.payload.productName}
@@ -845,7 +843,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-stone-600 font-bold">
-                    {language === 'te' ? 'కొత్త ధర' : 'New Price'}:
+                    {isTe ? 'కొత్త ధర' : 'New Price'}:
                   </p>
                   <div className="flex items-baseline gap-1.5 justify-end">
                     <span className="text-xs line-through text-stone-400 font-bold">
@@ -868,7 +866,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 <div className="p-3 sm:p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
                   <div>
                     <p className="text-xs text-stone-600 font-bold">
-                      {language === 'te' ? 'పంట పేరు' : 'Crop'}:
+                      {isTe ? 'పంట పేరు' : 'Crop'}:
                     </p>
                     <p className="text-sm sm:text-base font-black text-emerald-950">
                       {activeAction.payload.productTeluguName || activeAction.payload.productName}
@@ -876,7 +874,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-stone-600 font-bold">
-                      {language === 'te' ? 'లభ్యమైన నిల్వ' : 'Stock Quantity'}:
+                      {isTe ? 'లభ్యమైన నిల్వ' : 'Stock Quantity'}:
                     </p>
                     <p className="text-base sm:text-lg font-black text-emerald-800">
                       {activeAction.actionType === 'ADD_STOCK'
@@ -900,7 +898,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-stone-600 font-bold">
-                    {language === 'te' ? 'కొత్త స్థితి' : 'Target Status'}:
+                    {isTe ? 'కొత్త స్థితి' : 'Target Status'}:
                   </p>
                   <span className="text-xs sm:text-sm font-black px-2.5 py-1 bg-emerald-800 text-amber-300 rounded-lg">
                     {activeAction.payload.statusNote || activeAction.payload.targetStatus}
@@ -923,7 +921,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 onClick={handleCancelAction}
                 className="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-3 text-xs font-bold text-stone-700 bg-stone-200 hover:bg-stone-300 rounded-xl cursor-pointer min-touch-target transition-colors text-center"
               >
-                {language === 'te' ? '❌ వద్దు / రద్దు' : '❌ Cancel'}
+                {isTe ? '❌ వద్దు / రద్దు' : '❌ Cancel'}
               </button>
 
               <button
@@ -932,7 +930,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 className="w-full sm:w-auto px-4 py-2.5 sm:px-6 sm:py-3.5 bg-[#1b3d27] hover:bg-[#244f34] text-amber-300 font-black rounded-xl text-xs sm:text-sm shadow-md cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 min-touch-target transition-transform active:scale-95 text-center"
               >
                 <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
-                <span>{language === 'te' ? '✅ అవును, మార్చు' : '✅ Yes, Confirm'}</span>
+                <span>{isTe ? '✅ అవును, మార్చు' : '✅ Yes, Confirm'}</span>
               </button>
             </div>
           </div>
@@ -943,7 +941,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
           <div className="p-4 sm:p-5 bg-emerald-950 text-white rounded-2xl border-2 border-emerald-400 shadow-xl space-y-3.5 animate-in fade-in">
             <div className="flex items-center gap-2 text-xs font-black text-amber-300 uppercase tracking-wider">
               <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" />
-              <span>{language === 'te' ? 'విజయవంతంగా అమలు చేయబడింది!' : 'Action Completed Successfully!'}</span>
+              <span>{isTe ? 'విజయవంతంగా అమలు చేయబడింది!' : 'Action Completed Successfully!'}</span>
             </div>
 
             <div className="p-3 bg-black/30 rounded-xl border border-emerald-500/30">
@@ -966,10 +964,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 />
                 <span className="font-bold text-emerald-200 text-[11px]">
                   {isAudioLoading
-                    ? (language === 'te' ? 'సహజ వాయిస్ లోడ్ అవుతోంది...' : 'Loading human voice...')
+                    ? (isTe ? 'సహజ వాయిస్ లోడ్ అవుతోంది...' : 'Loading human voice...')
                     : isSpeaking
-                    ? (language === 'te' ? 'మాట్లాడుతోంది...' : 'Speaking aloud...')
-                    : (language === 'te' ? 'ఆడియో సమాధానం' : 'Spoken Audio')}
+                    ? (isTe ? 'మాట్లాడుతోంది...' : 'Speaking aloud...')
+                    : (isTe ? 'ఆడియో సమాధానం' : 'Spoken Audio')}
                 </span>
               </div>
 
@@ -980,7 +978,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                   className="px-3 py-1 bg-amber-400 text-stone-950 font-black rounded-lg text-xs cursor-pointer min-touch-target flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  <span>{language === 'te' ? 'మళ్లీ వినండి' : 'Replay'}</span>
+                  <span>{isTe ? 'మళ్లీ వినండి' : 'Replay'}</span>
                 </button>
 
                 {isSpeaking && (
@@ -1003,7 +1001,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 onClick={() => setVoiceState('IDLE')}
                 className="px-3 py-2 bg-white/10 hover:bg-white/20 text-stone-200 font-bold rounded-xl text-xs cursor-pointer min-touch-target"
               >
-                {language === 'te' ? 'ప్రధాన జాబితా' : 'Main Menu'}
+                {isTe ? 'ప్రధాన జాబితా' : 'Main Menu'}
               </button>
               <button
                 type="button"
@@ -1014,7 +1012,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black rounded-xl text-xs shadow-md cursor-pointer flex items-center gap-1.5 min-touch-target"
               >
                 <Mic className="w-4 h-4 text-stone-950" />
-                <span>{language === 'te' ? 'మరొకటి అడగండి' : 'Ask Next Query'}</span>
+                <span>{isTe ? 'మరొకటి అడగండి' : 'Ask Next Query'}</span>
               </button>
             </div>
           </div>
@@ -1030,10 +1028,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 {activeAction.actionType === 'VIEW_INVENTORY_SUMMARY' && <Layers className="w-4 h-4 text-emerald-700" />}
                 <span>
                   {activeAction.actionType === 'VIEW_PENDING_ORDERS'
-                    ? (language === 'te' ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders')
+                    ? (isTe ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders')
                     : activeAction.actionType === 'VIEW_EARNINGS_SUMMARY'
-                    ? (language === 'te' ? 'అమ్మకాల ఆదాయం' : 'Earnings Summary')
-                    : (language === 'te' ? 'పంట నిల్వల వివరాలు' : 'Crop Inventory')}
+                    ? (isTe ? 'అమ్మకాల ఆదాయం' : 'Earnings Summary')
+                    : (isTe ? 'పంట నిల్వల వివరాలు' : 'Crop Inventory')}
                 </span>
               </div>
 
@@ -1045,7 +1043,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                   className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 font-bold rounded-lg text-xs cursor-pointer flex items-center gap-1"
                 >
                   <Volume2 className="w-3.5 h-3.5" />
-                  <span>{language === 'te' ? 'వినండి' : 'Listen'}</span>
+                  <span>{isTe ? 'వినండి' : 'Listen'}</span>
                 </button>
               </div>
             </div>
@@ -1067,7 +1065,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold rounded-xl text-xs cursor-pointer flex items-center gap-1.5 min-touch-target"
               >
                 <Mic className="w-3.5 h-3.5" />
-                <span>{language === 'te' ? 'మరో ప్రశ్న' : 'Ask another'}</span>
+                <span>{isTe ? 'మరో ప్రశ్న' : 'Ask another'}</span>
               </button>
 
               {activeAction.actionType === 'VIEW_PENDING_ORDERS' && onNavigateTab && (
@@ -1079,7 +1077,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                   }}
                   className="px-5 py-2.5 bg-[#1b3d27] hover:bg-[#244f34] text-amber-300 font-black rounded-xl text-xs cursor-pointer flex items-center gap-1.5 min-touch-target shadow-xs"
                 >
-                  <span>{language === 'te' ? 'ఆర్డర్ల విభాగం చూడండి' : 'Open Orders Tab'}</span>
+                  <span>{isTe ? 'ఆర్డర్ల విభాగం చూడండి' : 'Open Orders Tab'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -1094,14 +1092,14 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               <AlertTriangle className="w-4 h-4 text-red-400" />
               <span>
                 {errorMessage.includes('Microphone') || errorMessage.includes('మైక్రోఫోన్')
-                  ? (language === 'te' ? 'మైక్రోఫోన్ అనుమతి అవసరం' : 'Microphone Permission Needed')
-                  : (language === 'te' ? 'మాట సరిగ్గా వినపడలేదు' : 'Could not hear clearly')}
+                  ? (isTe ? 'మైక్రోఫోన్ అనుమతి అవసరం' : 'Microphone Permission Needed')
+                  : (isTe ? 'మాట సరిగ్గా వినపడలేదు' : 'Could not hear clearly')}
               </span>
             </div>
 
             <p className="text-sm text-stone-200 font-medium">
               {errorMessage || (
-                language === 'te'
+                isTe
                   ? 'నేను సరిగ్గా అర్థం చేసుకోలేకపోయాను. దయచేసి మైక్ నొక్కి మళ్లీ మాట్లాడండి.'
                   : 'Could not catch that clearly. Please tap the mic and try again.'
               )}
@@ -1113,7 +1111,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 onClick={() => setVoiceState('IDLE')}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-stone-300 font-bold rounded-xl text-xs cursor-pointer min-touch-target"
               >
-                {language === 'te' ? 'మూసివేయి' : 'Dismiss'}
+                {isTe ? 'మూసివేయి' : 'Dismiss'}
               </button>
               <button
                 type="button"
@@ -1121,7 +1119,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black rounded-xl text-xs cursor-pointer flex items-center gap-1.5 min-touch-target shadow-md"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>{language === 'te' ? 'మళ్లీ మాట్లాడండి' : 'Try Again'}</span>
+                <span>{isTe ? 'మళ్లీ మాట్లాడండి' : 'Try Again'}</span>
               </button>
             </div>
           </div>
@@ -1131,7 +1129,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
         {showKeyboard && (
           <div className="p-3 bg-white text-stone-900 rounded-2xl border border-stone-300 shadow-md space-y-2 animate-in fade-in">
             <div className="flex items-center justify-between text-xs text-stone-600 font-bold">
-              <span>{language === 'te' ? 'టైప్ చేసి అడగండి:' : 'Type your query:'}</span>
+              <span>{isTe ? 'టైప్ చేసి అడగండి:' : 'Type your query:'}</span>
               <button
                 type="button"
                 onClick={() => setShowKeyboard(false)}
@@ -1146,7 +1144,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 value={typedInput}
                 onChange={(e) => setTypedInput(e.target.value)}
                 placeholder={
-                  language === 'te'
+                  isTe
                     ? 'ఉదా: టమాటాల ధర 35 చేయి'
                     : 'e.g. Change tomato price to 35'
                 }
@@ -1172,7 +1170,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 className="px-4 py-2 bg-[#1b3d27] hover:bg-[#244f34] text-white font-bold rounded-xl text-xs disabled:opacity-40 cursor-pointer min-touch-target flex items-center gap-1"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>{language === 'te' ? 'పంపు' : 'Send'}</span>
+                <span>{isTe ? 'పంపు' : 'Send'}</span>
               </button>
             </div>
           </div>
