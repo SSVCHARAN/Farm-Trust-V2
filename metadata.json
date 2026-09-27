@@ -1,0 +1,6 @@
+{
+  "name": "Farm Trust",
+  "description": "Farm to Family, in Every Language — A voice-first Telugu and English marketplace connecting farmers directly with customers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
