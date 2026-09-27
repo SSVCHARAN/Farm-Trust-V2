@@ -199,11 +199,25 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               : 'Microphone permission blocked. Please allow microphone access in your browser address bar.'
           );
           setVoiceState('ERROR');
-        } else {
+        } else if (code === 'network') {
           setErrorMessage(
             isTe
+              ? 'వాయిస్ నెట్‌వర్క్ సమస్య. దయచేసి మీ ఇంటర్నెట్ కనెక్షన్ తనిఖీ చేసి మళ్ళీ మాట్లాడండి.'
+              : 'Speech recognition network error. Please check your internet connection and try again.'
+          );
+          setVoiceState('ERROR');
+        } else if (code === 'unsupported') {
+          setErrorMessage(
+            msg || (isTe
+              ? 'ఈ బ్రౌజర్‌లో వాయిస్ రికగ్నిషన్ అందుబాటులో లేదు. దయచేసి Chrome లేదా Edge ఉపయోగించండి.'
+              : 'Voice recognition is not supported in this browser. Please use Chrome or Edge.')
+          );
+          setVoiceState('ERROR');
+        } else {
+          setErrorMessage(
+            msg || (isTe
               ? 'మాట సరిగ్గా వినపడలేదు. దయచేసి మైక్ నొక్కి మళ్ళీ మాట్లాడండి.'
-              : 'Could not catch that clearly. Please tap the mic and try again.'
+              : 'Could not catch that clearly. Please tap the mic and try again.')
           );
           setVoiceState('ERROR');
         }
@@ -272,8 +286,13 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
         setVoiceState('ANSWER');
         playVoiceResponse(spokenQuestion);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to process voice query:', err);
+      setErrorMessage(
+        isTe
+          ? 'మాట ప్రాసెస్ చేయడంలో సమస్య తలెత్తింది. దయచేసి మళ్ళీ మాట్లాడండి.'
+          : 'Failed to process voice request. Please tap the mic and try again.'
+      );
       setVoiceState('ERROR');
     }
   };
@@ -1093,6 +1112,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               <span>
                 {errorMessage.includes('Microphone') || errorMessage.includes('మైక్రోఫోన్')
                   ? (isTe ? 'మైక్రోఫోన్ అనుమతి అవసరం' : 'Microphone Permission Needed')
+                  : errorMessage.includes('network') || errorMessage.includes('Network') || errorMessage.includes('నెట్‌వర్క్') || errorMessage.includes('ఇంటర్నెట్')
+                  ? (isTe ? 'ఇంటర్నెట్ నెట్‌వర్క్ లోపం' : 'Network Connection Error')
+                  : errorMessage.includes('Browser') || errorMessage.includes('browser') || errorMessage.includes('బ్రౌజర్')
+                  ? (isTe ? 'బ్రౌజర్ సపోర్ట్ లేదు' : 'Browser Not Supported')
                   : (isTe ? 'మాట సరిగ్గా వినపడలేదు' : 'Could not hear clearly')}
               </span>
             </div>

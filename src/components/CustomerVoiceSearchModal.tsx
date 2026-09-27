@@ -85,7 +85,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
         setTranscript(text);
         processQuery(text);
       },
-      onError: (code) => {
+      onError: (code, msg) => {
         setIsListening(false);
         if (code === 'permission-denied') {
           setSpeechError(
@@ -93,11 +93,17 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
               ? 'మైక్రోఫోన్ అనుమతి నిరాకరించబడింది. దయచేసి బ్రౌజర్ అడ్రస్ బార్‌లో మైక్ అనుమతి ఇవ్వండి.'
               : 'Microphone permission blocked. Please allow microphone access in your browser address bar.'
           );
-        } else if (code !== 'no-speech') {
+        } else if (code === 'network') {
           setSpeechError(
             language === 'te'
+              ? 'వాయిస్ నెట్‌వర్క్ సమస్య. దయచేసి ఇంటర్నెట్ తనిఖీ చేసి మళ్ళీ ప్రయత్నించండి.'
+              : 'Speech service network error. Please check your internet connection.'
+          );
+        } else if (code !== 'no-speech') {
+          setSpeechError(
+            msg || (language === 'te'
               ? 'వాయిస్ గుర్తించలేకపోయాము. దయచేసి మళ్ళీ మాట్లాడండి లేదా శాంపిల్ నొక్కండి.'
-              : 'Could not catch voice. Try again or tap a sample below.'
+              : 'Could not catch voice. Try again or tap a sample below.')
           );
         }
       },

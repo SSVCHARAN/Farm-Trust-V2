@@ -1,10 +1,12 @@
 /**
  * Farm Trust Universal Voice Input Service
  * 
- * Provides seamless cross-browser speech input:
- * 1. Primary: Native Web Speech API (webkitSpeechRecognition) where available (Chrome, Edge, Safari).
- * 2. Fallback: Universal MediaRecorder + Server Transcription (/api/voice/transcribe) for Firefox, Linux, etc.
- * 3. Real-time AudioContext AnalyserNode for live visual waveform feedback.
+ * Provides production-ready, client-side speech input:
+ * 1. Native Web Speech API (webkitSpeechRecognition / SpeechRecognition) with zero backend dependency.
+ * 2. Continuous accumulation of interim & final speech with smart silence auto-finalization.
+ * 3. Graceful fallback on Safari / mobile devices where Telugu or system dictation requires adaptation.
+ * 4. Distinct error classification: 'permission-denied' | 'no-speech' | 'network' | 'unsupported' | 'unknown'.
+ * 5. Real-time visual waveform / volume feedback.
  */
 
 export interface VoiceListenOptions {
@@ -20,14 +22,12 @@ export interface VoiceListenOptions {
 
 export class UniversalVoiceInput {
   private static activeRecognition: any = null;
-  private static activeMediaRecorder: MediaRecorder | null = null;
   private static activeStream: MediaStream | null = null;
   private static audioContext: AudioContext | null = null;
   private static analyserNode: AnalyserNode | null = null;
   private static volumeAnimFrame: number | null = null;
   private static silenceTimer: any = null;
   private static maxDurationTimer: any = null;
-  private static speechDetected = false;
   private static isRecording = false;
 
   /**
@@ -39,23 +39,46 @@ export class UniversalVoiceInput {
   }
 
   /**
-   * Check if MediaRecorder audio capture is supported (Firefox, Safari, Chrome, etc.)
+   * Check if audio capture is supported in this browser
    */
   public static isMediaRecorderSupported(): boolean {
     if (typeof window === 'undefined') return false;
     return !!(
       navigator.mediaDevices &&
-      typeof navigator.mediaDevices.getUserMedia === 'function' &&
-      typeof window.MediaRecorder !== 'undefined'
+      typeof navigator.mediaDevices.getUserMedia === 'function'
     );
   }
 
   /**
-   * Start listening using the best available technology
+   * Start listening using the native Web Speech API
    */
   public static async startListening(options: VoiceListenOptions): Promise<void> {
     this.stopListening();
 
+    const {
+      onStateChange,
+      onError,
+    } = options;
+
+    if (!this.isNativeSpeechSupported()) {
+      if (onStateChange) onStateChange('idle');
+      if (onError) {
+        onError(
+          'unsupported',
+          'Voice recognition is not supported in this browser. Please open Farm Trust in Google Chrome or Microsoft Edge.'
+        );
+      }
+      return;
+    }
+
+    this.isRecording = true;
+    this.startNativeRecognition(options);
+  }
+
+  /**
+   * Native Web Speech Recognition (Chrome/Edge/Safari/Android/iOS)
+   */
+  private static startNativeRecognition(options: VoiceListenOptions) {
     const {
       lang = 'te-IN',
       onInterim,
@@ -67,294 +90,247 @@ export class UniversalVoiceInput {
       maxDurationMs = 12000,
     } = options;
 
-    this.speechDetected = false;
-    this.isRecording = true;
-
-    // Check if native Web Speech API is available AND not desktop Firefox
-    // Note: Firefox has experimental SpeechRecognition that requires cloud credentials and fails
-    const isFirefox = typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent);
-    const nativeAvailable = this.isNativeSpeechSupported() && !isFirefox;
-
-    if (nativeAvailable) {
-      this.startNativeRecognition(options);
-    } else if (this.isMediaRecorderSupported()) {
-      await this.startMediaRecorderInput(options);
-    } else {
-      if (onStateChange) onStateChange('idle');
-      if (onError) {
-        onError('unsupported', 'Voice recording is not supported in this browser environment.');
-      }
-    }
-  }
-
-  /**
-   * Path 1: Native Web Speech Recognition (Chrome/Edge/Safari)
-   */
-  private static startNativeRecognition(options: VoiceListenOptions) {
-    const { lang, onInterim, onFinal, onError, onStateChange } = options;
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    let finalTranscript = '';
+    let interimTranscript = '';
+    let hasCapturedSpeech = false;
+    let isDelivered = false;
+
+    // Helper to safely deliver recognized text once
+    const deliverFinal = (text: string) => {
+      if (isDelivered) return;
+      isDelivered = true;
+      this.stopListening();
+      const clean = text.trim();
+      if (clean) {
+        if (onStateChange) onStateChange('processing');
+        onFinal(clean);
+      } else {
+        if (onStateChange) onStateChange('idle');
+        if (onError) onError('no-speech', 'No speech detected.');
+      }
+    };
 
     try {
       const recognition = new SpeechRecognition();
       recognition.lang = lang;
+      // continuous = false gives reliable speech-boundary detection in mobile/desktop Chrome
       recognition.continuous = false;
       recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      // Start visual volume feedback
+      this.startVolumeMonitoring(onVolumeChange);
 
       recognition.onstart = () => {
+        this.isRecording = true;
         if (onStateChange) onStateChange('listening');
       };
 
       recognition.onresult = (event: any) => {
-        let interimText = '';
-        let finalText = '';
+        interimTranscript = '';
+        let currentBatchFinal = '';
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const part = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalText += part;
+          const res = event.results[i];
+          const part = res[0]?.transcript || '';
+          if (res.isFinal) {
+            currentBatchFinal += (currentBatchFinal ? ' ' : '') + part.trim();
           } else {
-            interimText += part;
+            interimTranscript += part;
           }
         }
 
-        const candidate = (finalText || interimText).trim();
+        if (currentBatchFinal) {
+          finalTranscript += (finalTranscript ? ' ' : '') + currentBatchFinal;
+        }
+
+        const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
         if (candidate) {
+          hasCapturedSpeech = true;
           if (onInterim) onInterim(candidate);
+
+          // Elevate waveform feedback on speech activity
+          if (onVolumeChange) {
+            const dynamicVol = Math.min(95, 35 + Math.min(55, candidate.length * 3));
+            onVolumeChange(dynamicVol);
+          }
 
           if (this.silenceTimer) clearTimeout(this.silenceTimer);
 
-          if (finalText) {
-            this.stopListening();
-            if (onStateChange) onStateChange('processing');
-            onFinal(finalText.trim());
+          if (currentBatchFinal && !interimTranscript) {
+            // Browser reached a definitive final speech boundary
+            deliverFinal(finalTranscript);
           } else {
-            // Auto finish on pause
+            // Auto finish on speech pause
             this.silenceTimer = setTimeout(() => {
-              this.stopListening();
-              if (onStateChange) onStateChange('processing');
-              onFinal(candidate);
-            }, options.silenceTimeoutMs || 1400);
+              deliverFinal(candidate);
+            }, silenceTimeoutMs || 1400);
           }
         }
       };
 
       recognition.onerror = (event: any) => {
-        console.warn('Native speech recognition error:', event.error);
-        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-          if (onError) onError('permission-denied', 'Microphone access denied. Please allow microphone permissions.');
-        } else if (event.error === 'no-speech') {
-          if (onError) onError('no-speech', 'No speech detected.');
+        const err = event.error;
+        console.warn('Native speech recognition error:', err);
+
+        if (err === 'aborted') {
+          // Normal manual stop or restart; do not treat as an error
+          return;
+        }
+
+        if (isDelivered) return;
+
+        // If speech was already recognized, treat as success rather than failing
+        const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
+        if (candidate && (err === 'no-speech' || err === 'network')) {
+          deliverFinal(candidate);
+          return;
+        }
+
+        this.stopListening();
+        if (onStateChange) onStateChange('idle');
+
+        if (err === 'not-allowed' || err === 'permission-denied') {
+          if (onError) {
+            onError(
+              'permission-denied',
+              'Microphone permission blocked. Please allow microphone access in your browser address bar.'
+            );
+          }
+        } else if (err === 'no-speech') {
+          if (onError) {
+            onError('no-speech', 'No speech detected. Please tap the microphone and speak clearly.');
+          }
+        } else if (err === 'network') {
+          if (onError) {
+            onError('network', 'Speech service network error. Please check your internet connection.');
+          }
+        } else if (err === 'language-not-supported') {
+          // If Telugu is not supported by Safari/device, retry in Indian English
+          if (lang.startsWith('te')) {
+            console.info('Telugu speech not supported on this device/browser; retrying with Indian English');
+            this.startNativeRecognition({ ...options, lang: 'en-IN' });
+            return;
+          }
+          if (onError) {
+            onError('unsupported', 'Language not supported for speech recognition on this device.');
+          }
         } else {
-          // If native recognition fails due to network or service error, try media recorder fallback
-          console.info('Switching to MediaRecorder fallback due to native recognition error');
-          this.startMediaRecorderInput(options);
+          if (onError) {
+            onError('unknown', `Speech recognition error: ${err}`);
+          }
         }
       };
 
       recognition.onend = () => {
-        if (this.silenceTimer) clearTimeout(this.silenceTimer);
+        if (isDelivered) return;
+
+        if (this.silenceTimer) {
+          clearTimeout(this.silenceTimer);
+          this.silenceTimer = null;
+        }
+
+        const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
+        if (candidate) {
+          deliverFinal(candidate);
+        } else if (hasCapturedSpeech) {
+          deliverFinal(finalTranscript || interimTranscript);
+        } else {
+          this.stopListening();
+          if (onStateChange) onStateChange('idle');
+          if (onError) onError('no-speech', 'No speech detected.');
+        }
       };
+
+      // Set max duration safeguard
+      this.maxDurationTimer = setTimeout(() => {
+        if (!isDelivered) {
+          const candidate = (finalTranscript + (interimTranscript ? ' ' + interimTranscript : '')).trim();
+          if (candidate) {
+            deliverFinal(candidate);
+          } else {
+            this.stopListening();
+            if (onStateChange) onStateChange('idle');
+            if (onError) onError('no-speech', 'Recording time limit reached.');
+          }
+        }
+      }, maxDurationMs || 12000);
 
       this.activeRecognition = recognition;
       recognition.start();
     } catch (err: any) {
-      console.warn('Native SpeechRecognition init failed, using MediaRecorder fallback:', err);
-      this.startMediaRecorderInput(options);
-    }
-  }
-
-  /**
-   * Path 2: Universal MediaRecorder + Server Transcription (Firefox / Linux / Mobile Fallback)
-   */
-  private static async startMediaRecorderInput(options: VoiceListenOptions): Promise<void> {
-    const { lang, onInterim, onFinal, onError, onStateChange, onVolumeChange, silenceTimeoutMs = 1500, maxDurationMs = 12000 } = options;
-
-    if (onStateChange) onStateChange('requesting-permission');
-
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-    } catch (err: any) {
-      console.warn('getUserMedia permission error:', err);
-      if (onStateChange) onStateChange('idle');
-      if (onError) {
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          onError('permission-denied', 'Microphone permission blocked. Please enable microphone access in your browser.');
-        } else {
-          onError('unknown', err.message || 'Could not access microphone.');
-        }
-      }
-      return;
-    }
-
-    this.activeStream = stream;
-    if (onStateChange) onStateChange('listening');
-
-    // Setup AudioContext for real-time waveform volume visualization and silence detection
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        const audioCtx = new AudioCtx();
-        const analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        const sourceNode = audioCtx.createMediaStreamSource(stream);
-        sourceNode.connect(analyser);
-
-        this.audioContext = audioCtx;
-        this.analyserNode = analyser;
-
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        let consecutiveSilenceFrames = 0;
-
-        const updateVolume = () => {
-          if (!this.isRecording || !this.analyserNode) return;
-          analyser.getByteFrequencyData(dataArray);
-
-          let sum = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
-          }
-          const avg = sum / dataArray.length;
-          const volumePercent = Math.min(100, Math.round((avg / 128) * 100));
-
-          if (onVolumeChange) {
-            onVolumeChange(volumePercent);
-          }
-
-          // Silence detection
-          if (avg > 15) {
-            this.speechDetected = true;
-            consecutiveSilenceFrames = 0;
-          } else if (this.speechDetected) {
-            consecutiveSilenceFrames++;
-            // At ~60fps, 90 frames is ~1.5 seconds of silence
-            const framesThreshold = Math.round((silenceTimeoutMs / 1000) * 60);
-            if (consecutiveSilenceFrames > framesThreshold) {
-              this.stopAndTranscribe(lang, onStateChange, onFinal, onError);
-              return;
-            }
-          }
-
-          this.volumeAnimFrame = requestAnimationFrame(updateVolume);
-        };
-
-        this.volumeAnimFrame = requestAnimationFrame(updateVolume);
-      }
-    } catch (e) {
-      console.warn('AudioContext volume monitoring unavailable:', e);
-    }
-
-    // Determine supported MIME type
-    let mimeType = 'audio/webm';
-    if (typeof MediaRecorder.isTypeSupported === 'function') {
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        mimeType = 'audio/webm;codecs=opus';
-      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-        mimeType = 'audio/webm';
-      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-        mimeType = 'audio/ogg;codecs=opus';
-      } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
-        mimeType = 'audio/ogg';
-      }
-    }
-
-    const recordedChunks: Blob[] = [];
-    try {
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      this.activeMediaRecorder = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          recordedChunks.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        this.cleanupAudioContext();
-        if (recordedChunks.length === 0) {
-          if (onError) onError('no-speech', 'No audio recorded.');
-          if (onStateChange) onStateChange('idle');
-          return;
-        }
-
-        const audioBlob = new Blob(recordedChunks, { type: mimeType });
-        if (audioBlob.size < 500) {
-          if (onError) onError('no-speech', 'Recording too short.');
-          if (onStateChange) onStateChange('idle');
-          return;
-        }
-
-        if (onStateChange) onStateChange('processing');
-        if (onInterim) {
-          onInterim(lang.startsWith('te') ? 'మాట గుర్తిస్తున్నాము...' : 'Transcribing voice...');
-        }
-
-        try {
-          const base64Audio = await this.blobToBase64(audioBlob);
-          const response = await fetch('/api/voice/transcribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              audioBase64: base64Audio,
-              mimeType,
-              language: lang,
-            }),
-          });
-
-          const data = await response.json();
-          if (response.ok && data.success && data.transcript?.trim()) {
-            onFinal(data.transcript.trim());
-          } else {
-            console.warn('Transcription failed or empty:', data);
-            if (onError) onError('no-speech', data.error || 'Could not understand voice.');
-            if (onStateChange) onStateChange('idle');
-          }
-        } catch (postErr: any) {
-          console.error('Failed to send audio for transcription:', postErr);
-          if (onError) onError('network', 'Failed to reach speech transcription server.');
-          if (onStateChange) onStateChange('idle');
-        }
-      };
-
-      // Collect data every 250ms
-      mediaRecorder.start(250);
-
-      // Max recording duration safeguard
-      this.maxDurationTimer = setTimeout(() => {
-        this.stopAndTranscribe(lang, onStateChange, onFinal, onError);
-      }, maxDurationMs);
-
-    } catch (err: any) {
-      console.error('MediaRecorder initialization error:', err);
+      console.warn('Native SpeechRecognition start error:', err);
       this.stopListening();
-      if (onError) onError('unknown', err.message || 'MediaRecorder failed to initialize');
       if (onStateChange) onStateChange('idle');
-    }
-  }
-
-  private static stopAndTranscribe(
-    _lang: string,
-    onStateChange?: (state: any) => void,
-    _onFinal?: (text: string) => void,
-    _onError?: (err: any, msg?: string) => void
-  ) {
-    if (this.activeMediaRecorder && this.activeMediaRecorder.state === 'recording') {
-      if (onStateChange) onStateChange('processing');
-      try {
-        this.activeMediaRecorder.stop();
-      } catch (_) {}
+      if (err.name === 'NotAllowedError') {
+        if (onError) onError('permission-denied', 'Microphone permission blocked.');
+      } else {
+        if (onError) onError('unknown', err.message || 'Could not start speech recognition.');
+      }
     }
   }
 
   /**
-   * Stop any active recording or speech recognition
+   * Monitor real-time volume using AudioContext when available, or smooth audio pulse
+   */
+  private static async startVolumeMonitoring(onVolumeChange?: (vol: number) => void) {
+    if (!onVolumeChange) return;
+
+    try {
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+        if (stream && this.isRecording) {
+          this.activeStream = stream;
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const audioCtx = new AudioCtx();
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 128;
+            const sourceNode = audioCtx.createMediaStreamSource(stream);
+            sourceNode.connect(analyser);
+
+            this.audioContext = audioCtx;
+            this.analyserNode = analyser;
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const updateVolume = () => {
+              if (!this.isRecording || !this.analyserNode) return;
+              analyser.getByteFrequencyData(dataArray);
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+              }
+              const avg = sum / dataArray.length;
+              const volumePercent = Math.min(100, Math.round((avg / 64) * 100));
+              onVolumeChange(volumePercent);
+              this.volumeAnimFrame = requestAnimationFrame(updateVolume);
+            };
+            this.volumeAnimFrame = requestAnimationFrame(updateVolume);
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Fallback listening pulse if microphone stream is busy with Web Speech API
+    let basePulse = 18;
+    let direction = 1;
+    const pulseLoop = () => {
+      if (!this.isRecording) return;
+      basePulse += direction * 2;
+      if (basePulse > 40) direction = -1;
+      if (basePulse < 18) direction = 1;
+      onVolumeChange(basePulse);
+      this.volumeAnimFrame = requestAnimationFrame(pulseLoop);
+    };
+    this.volumeAnimFrame = requestAnimationFrame(pulseLoop);
+  }
+
+  /**
+   * Stop any active recording or speech recognition cleanly
    */
   public static stopListening() {
     this.isRecording = false;
@@ -371,20 +347,19 @@ export class UniversalVoiceInput {
 
     if (this.activeRecognition) {
       try {
+        // Detach handlers before stopping so no aborted event fires
+        this.activeRecognition.onresult = null;
+        this.activeRecognition.onerror = null;
+        this.activeRecognition.onend = null;
         this.activeRecognition.stop();
       } catch (_) {}
       this.activeRecognition = null;
     }
 
-    if (this.activeMediaRecorder && this.activeMediaRecorder.state === 'recording') {
-      try {
-        this.activeMediaRecorder.stop();
-      } catch (_) {}
-    }
-    this.activeMediaRecorder = null;
-
     if (this.activeStream) {
-      this.activeStream.getTracks().forEach((track) => track.stop());
+      try {
+        this.activeStream.getTracks().forEach((track) => track.stop());
+      } catch (_) {}
       this.activeStream = null;
     }
 
@@ -411,19 +386,5 @@ export class UniversalVoiceInput {
       this.audioContext = null;
     }
     this.analyserNode = null;
-  }
-
-  private static blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        // strip data:audio/*;base64, prefix
-        const base64 = dataUrl.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
   }
 }

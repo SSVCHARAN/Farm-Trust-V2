@@ -20,19 +20,17 @@ export async function parseVoiceProductInput(
       body: JSON.stringify({ text, language }),
     });
 
-    if (!res.ok) {
-      throw new Error(`Server returned status ${res.status}`);
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return json.data as VoiceExtractionResult;
+      }
     }
-
-    const json = await res.json();
-    if (json.success && json.data) {
-      return json.data as VoiceExtractionResult;
-    }
-    throw new Error('Invalid response structure');
   } catch (err) {
     console.warn('Backend AI call failed, using client-side resilient parsing:', err);
-    return clientSideVoiceFallback(text, language);
   }
+  return clientSideVoiceFallback(text, language);
 }
 
 // Feature 1: Customer Voice Search intent extraction
@@ -47,7 +45,8 @@ export async function parseCustomerVoiceSearch(
       body: JSON.stringify({ text, language }),
     });
 
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const json = await res.json();
       if (json.success && json.data) {
         return json.data as CustomerVoiceSearchIntent;
@@ -123,7 +122,8 @@ export async function callFarmerAIAssistant(
       body: JSON.stringify({ query, language, context }),
     });
 
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const json = await res.json();
       if (json.success && json.data) {
         return json.data as FarmerAssistantAction;
