@@ -121,28 +121,30 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-4 sm:space-y-6">
       
       {/* Search & Hero Filter Bar */}
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-          
+      <div className="space-y-2.5">
+        {/* Row 1: Search input + Prominent Voice Search Button side-by-side */}
+        <div className="flex items-center gap-2">
           {/* Main Search Input */}
           <div className="relative flex-1">
-            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-600" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchPlaceholder}
-              className="w-full pl-11 pr-12 py-3 bg-white border border-stone-200 rounded-2xl text-xs sm:text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#1b3d27] shadow-xs"
+              aria-label="Search products"
+              className="w-full pl-10 pr-12 py-2.5 sm:py-3 bg-white border border-stone-200 rounded-2xl text-base font-medium text-stone-900 placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-[#14321d] shadow-2xs min-h-[48px]"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-600 cursor-pointer min-touch-target"
+                aria-label="Clear search"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-base font-bold text-stone-600 hover:text-stone-900 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl"
               >
-                Clear
+                ✕
               </button>
             )}
           </div>
@@ -150,45 +152,65 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
           {/* Action: Voice Search Big Button */}
           <button
             onClick={onOpenVoiceSearch}
-            className="px-4 py-3 bg-[#1b3d27] hover:bg-[#244f34] text-amber-300 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer min-touch-target active:scale-95"
+            className="px-3.5 sm:px-4 py-2.5 sm:py-3 bg-[#14321d] hover:bg-[#1b3d27] text-amber-300 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0 active:scale-95 min-h-[48px] sm:min-h-[48px]"
           >
-            <Mic className="w-4 h-4 text-amber-300" />
+            <Mic className="w-4 h-4 text-amber-300 animate-pulse" />
             <span>{t.voiceSearchBtn}</span>
           </button>
+        </div>
 
+        {/* Row 2: Category Horizontal Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-sm font-bold shrink-0 transition-all cursor-pointer min-h-[44px] ${
+                selectedCategory === cat.id
+                  ? 'bg-[#14321d] text-amber-300 shadow-2xs'
+                  : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200/90 hover:bg-stone-50'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Row 3: Sub-actions (Request Produce & Sort Selector) */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
           {/* Action: Request Produce Button */}
           <button
             onClick={onOpenCustomerRequest}
-            className="px-4 py-3 bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer min-touch-target"
+            className="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 rounded-xl font-bold text-sm flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer min-h-[44px]"
           >
-            <Calendar className="w-4 h-4 text-emerald-800" />
+            <Calendar className="w-3.5 h-3.5 text-emerald-800" />
             <span>{t.requestProductBtn}</span>
           </button>
 
           {/* Sort Selector */}
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-stone-500 hidden sm:block" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-stone-600 hidden sm:block" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-3 bg-white border border-stone-200 rounded-2xl text-xs font-semibold text-stone-700 focus:outline-none focus:ring-2 focus:ring-[#1b3d27] shadow-xs cursor-pointer"
+              className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white border border-stone-200 rounded-xl text-sm font-bold text-stone-700 focus:outline-none focus:ring-1 focus:ring-[#14321d] shadow-2xs cursor-pointer min-h-[44px]"
             >
-              <option value="recommended">Featured / Fresh</option>
-              <option value="rating">Highest Rated Farmers</option>
-              <option value="price-asc">Price: Low to High</option>
+              <option value="recommended">{language === 'te' ? 'తాజా పంటలు' : 'Featured / Fresh'}</option>
+              <option value="rating">{language === 'te' ? 'రైతు రేటింగ్' : 'Top Farmers'}</option>
+              <option value="price-asc">{language === 'te' ? 'తక్కువ ధర' : 'Price: Low to High'}</option>
             </select>
           </div>
         </div>
 
         {/* ACTIVE VOICE FILTER BANNER */}
         {activeVoiceIntent && (
-          <div className="bg-gradient-to-r from-emerald-100 to-amber-100/70 border border-emerald-300/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 text-xs animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-700 animate-pulse"></span>
-              <span className="font-bold text-emerald-950">
-                {language === 'te' ? 'వాయిస్ ఫిల్టర్ వర్తించబడింది:' : 'Active Voice Search Filter:'}
+          <div className="bg-gradient-to-r from-emerald-50 via-amber-50 to-emerald-50 border border-emerald-300 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs animate-in fade-in">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0"></span>
+              <span className="font-bold text-emerald-950 shrink-0">
+                {language === 'te' ? 'వాయిస్ ఫిల్టర్:' : 'Voice Filter:'}
               </span>
-              <span className="font-extrabold text-stone-900 bg-white px-2.5 py-1 rounded-lg shadow-2xs">
+              <span className="font-black text-stone-900 bg-white px-2 py-0.5 rounded-lg shadow-2xs border border-emerald-200 truncate">
                 {language === 'te' && activeVoiceIntent.interpretationTelugu
                   ? activeVoiceIntent.interpretationTelugu
                   : activeVoiceIntent.interpretation}
@@ -197,45 +219,28 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
 
             <button
               onClick={onClearVoiceIntent}
-              className="px-3 py-1.5 bg-white hover:bg-stone-100 text-stone-700 font-bold rounded-xl border border-stone-200 flex items-center gap-1 transition-colors cursor-pointer min-touch-target"
+              className="px-2.5 py-1 bg-white hover:bg-stone-100 text-stone-700 font-bold rounded-xl border border-stone-200 flex items-center gap-1 transition-colors cursor-pointer shrink-0 text-sm min-h-[40px]"
             >
               <X className="w-3.5 h-3.5" />
               <span>{t.clearVoiceFilter}</span>
             </button>
           </div>
         )}
-
-        {/* Category Horizontal Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold shrink-0 transition-all cursor-pointer min-touch-target ${
-                selectedCategory === cat.id
-                  ? 'bg-[#1b3d27] text-amber-300 shadow-xs'
-                  : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200 hover:bg-stone-50'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* OFFERS RECEIVED FROM FARMERS (1-Click Customer Acceptance) */}
       {requestsWithOffers.length > 0 && (
-        <div className="bg-amber-50/90 border-2 border-amber-300 rounded-3xl p-5 space-y-3 shadow-xs">
+        <div className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-4 space-y-3 shadow-2xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center font-black">
+              <span className="w-7 h-7 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center font-black text-sm">
                 🌾
               </span>
               <div>
-                <h3 className="text-sm font-black text-amber-950">
+                <h3 className="text-xs sm:text-sm font-black text-amber-950">
                   {t.offersReceived} ({requestsWithOffers.length})
                 </h3>
-                <p className="text-xs text-amber-800">
+                <p className="text-[11px] text-amber-800">
                   {language === 'te'
                     ? 'మీ పంట రిక్వెస్ట్ చూసి రైతులు నేరుగా ధరను ఆఫర్ చేశారు!'
                     : 'Local farmers responded to your produce broadcast with direct offers!'}
@@ -244,26 +249,26 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
             {requestsWithOffers.map((req) => (
               <div
                 key={req.id}
-                className="bg-white rounded-2xl p-4 border border-amber-200 shadow-xs space-y-3"
+                className="bg-white rounded-xl p-3 border border-amber-200 shadow-2xs space-y-2.5"
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[9px] uppercase font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
                       {language === 'te' ? 'రైతు ఆఫర్ వచ్చింది' : 'Offer Received'}
                     </span>
-                    <h4 className="text-sm font-extrabold text-stone-900 mt-1">
+                    <h4 className="text-xs sm:text-sm font-black text-stone-900 mt-0.5">
                       {req.quantity} {req.unit} {req.product}
                     </h4>
                   </div>
-                  <span className="text-xs text-stone-400">{req.neededBy}</span>
+                  <span className="text-xs text-stone-600">{req.neededBy}</span>
                 </div>
 
                 {req.offers && req.offers.map((offer, idx) => (
-                  <div key={idx} className="p-3.5 bg-gradient-to-br from-emerald-50/80 to-stone-50 rounded-xl space-y-2.5 border border-emerald-200/80 text-xs">
+                  <div key={idx} className="p-3 bg-gradient-to-br from-emerald-50/70 to-stone-50 rounded-xl space-y-2 border border-emerald-200/80 text-xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {offer.farmerAvatar && (
@@ -274,7 +279,7 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
                           />
                         )}
                         <div>
-                          <span className="font-extrabold text-stone-900 flex items-center gap-1">
+                          <span className="font-extrabold text-stone-900 flex items-center gap-1 text-[11px] sm:text-xs">
                             <span>{language === 'te' ? (offer.farmerTeluguName || offer.farmerName) : offer.farmerName}</span>
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
                           </span>
@@ -283,28 +288,28 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
                       </div>
 
                       <div className="text-right">
-                        <span className="font-black text-emerald-950 text-sm block">
+                        <span className="font-black text-emerald-950 text-xs sm:text-sm block">
                           ₹{offer.unitPrice} / {req.unit}
                         </span>
-                        <span className="text-[10px] text-stone-500">
+                        <span className="text-[9px] text-stone-500">
                           {language === 'te' ? `మొత్తం: ₹${offer.totalPrice || offer.offeredQuantity * offer.unitPrice}` : `Total: ₹${offer.totalPrice || offer.offeredQuantity * offer.unitPrice}`}
                         </span>
                       </div>
                     </div>
 
                     {offer.notes && (
-                      <p className="text-[11px] text-stone-700 bg-white/70 p-2 rounded-lg border border-emerald-100">
+                      <p className="text-[10px] sm:text-[11px] text-stone-700 bg-white/80 p-2 rounded-lg border border-emerald-100 italic">
                         "{offer.notes}"
                       </p>
                     )}
 
                     <div className="pt-1 flex items-center justify-between">
-                      <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                      <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full">
                         🚚 {offer.deliveryPromise || (language === 'te' ? '24 గంటల్లో డెలివరీ' : 'Within 24 hours')}
                       </span>
                       <button
                         onClick={() => onAcceptFarmerOffer?.(req.id, offer.id)}
-                        className="px-4 py-2 bg-[#1b3d27] hover:bg-[#244f34] text-amber-300 font-extrabold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs min-touch-target active:scale-95"
+                        className="px-3 py-1.5 bg-[#14321d] hover:bg-[#1b3d27] text-amber-300 font-black rounded-lg text-sm flex items-center gap-1 cursor-pointer shadow-2xs active:scale-95 min-h-[44px]"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>{t.acceptOffer}</span>
@@ -318,14 +323,14 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
         </div>
       )}
 
-      {/* SECTION 1: VERIFIED LOCAL FARMERS STRIP (With Trust Passport Preview) */}
-      <div className="space-y-3">
+      {/* SECTION 1: VERIFIED LOCAL FARMERS STRIP (Horizontal touch scroll on mobile) */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base sm:text-lg font-black text-stone-900 tracking-tight">
               {t.nearbyFarmers}
             </h2>
-            <p className="text-xs text-stone-500 font-medium">
+            <p className="text-sm text-stone-600 font-medium">
               {language === 'te'
                 ? 'మీ సమీపంలో ఉన్న చిన్న కుటుంబ రైతులు · ప్రత్యక్ష మార్కెట్'
                 : 'Direct from family farms near you · Fresh harvest & verified local trust'}
@@ -333,87 +338,72 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Horizontal scroll on mobile, 3-column grid on desktop */}
+        <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none sm:grid sm:grid-cols-3">
           {farmers.map((farmer) => (
             <div
               key={farmer.id}
               onClick={() => onSelectFarmer(farmer)}
-              className="bg-white rounded-2xl border border-stone-200 p-4 hover:border-emerald-600 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between gap-3 min-touch-target"
+              className="w-[260px] sm:w-auto shrink-0 sm:shrink bg-white rounded-2xl border border-stone-200/90 p-3 hover:border-emerald-600 hover:shadow-xs transition-all cursor-pointer group flex items-center justify-between gap-2.5 shadow-2xs"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <img
                   src={farmer.avatar}
                   alt={farmer.name}
-                  className="w-13 h-13 rounded-2xl object-cover border-2 border-amber-400 group-hover:scale-105 transition-transform"
+                  className="w-11 h-11 rounded-xl object-cover border-2 border-amber-400 group-hover:scale-105 transition-transform shrink-0"
                 />
-                <div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h3 className="text-sm font-extrabold text-stone-900 group-hover:text-emerald-950 transition-colors">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <h3 className="text-sm font-extrabold text-stone-900 group-hover:text-emerald-950 transition-colors truncate">
                       {language === 'te' ? farmer.teluguName : farmer.name}
                     </h3>
-                    {farmer.identityVerified ? (
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                    ) : (
-                      <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded">
-                        {language === 'te' ? 'పరిశీలనలో ఉంది' : 'Verification Pending'}
-                      </span>
+                    {farmer.identityVerified && (
+                      <ShieldCheck className="w-3 h-3 text-emerald-700 shrink-0" />
                     )}
                   </div>
-                  <p className="text-xs text-stone-500 font-medium">
+                  <p className="text-[11px] text-stone-500 font-medium truncate">
                     {language === 'te' ? farmer.farmNameTelugu : farmer.farmName}
                   </p>
-                  <p className="text-[11px] text-stone-400 flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3 h-3 text-emerald-700" />
-                    <span>{farmer.location}</span>
+                  <p className="text-xs text-stone-600 flex items-center gap-1 truncate">
+                    <MapPin className="w-2.5 h-2.5 text-emerald-700 shrink-0" />
+                    <span className="truncate">{farmer.location}</span>
                   </p>
                 </div>
               </div>
 
               <div className="text-right shrink-0">
-                <div className="flex items-center gap-1 justify-end font-bold text-amber-600 text-xs">
-                  {farmer.rating > 0 ? (
-                    <>
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>{farmer.rating}</span>
-                    </>
-                  ) : (
-                    <span className="text-[11px] text-stone-500 font-medium">
-                      {language === 'te' ? 'కొత్త రైతు' : 'New Farmer'}
-                    </span>
-                  )}
+                <div className="flex items-center gap-0.5 justify-end font-bold text-amber-700 text-xs">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  <span>{farmer.rating}</span>
                 </div>
                 {farmer.totalCompletedOrders > 0 && farmer.orderCompletionRate ? (
-                  <span className="text-[10px] text-emerald-800 font-extrabold bg-emerald-50 px-2 py-0.5 rounded-full mt-1 inline-block">
-                    {farmer.orderCompletionRate}% Fulfilled
+                  <span className="text-[9px] text-emerald-800 font-extrabold bg-emerald-50 px-1.5 py-0.5 rounded-full mt-1 inline-block">
+                    {farmer.orderCompletionRate}%
                   </span>
-                ) : (
-                  <span className="text-[10px] text-stone-600 font-semibold bg-stone-100 px-2 py-0.5 rounded-full mt-1 inline-block">
-                    {language === 'te' ? 'సమీక్షలు లేవు' : 'No reviews yet'}
-                  </span>
-                )}
+                ) : null}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* SECTION 2: PRODUCE FEED */}
-      <div className="space-y-4">
+      {/* SECTION 2: PRODUCE FEED - 2 Columns on Mobile, 4 on Desktop */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base sm:text-lg font-black text-stone-900 tracking-tight">
               {t.popularProduce}
             </h2>
-            <p className="text-xs text-stone-500 font-medium">
+            <p className="text-sm text-stone-600 font-medium">
               {sortedProducts.length} {language === 'te' ? 'తాజా పంటలు అందుబాటులో ఉన్నాయి' : 'fresh produce items available'}
             </p>
           </div>
         </div>
 
         {sortedProducts.length === 0 ? (
-          <div className="bg-white rounded-3xl p-10 text-center border border-stone-200 text-stone-500 space-y-3">
-            <ShoppingBag className="w-12 h-12 mx-auto text-stone-300" />
-            <p className="text-sm font-bold text-stone-800">
+          <div className="bg-white rounded-2xl p-8 text-center border border-stone-200 text-stone-500 space-y-3">
+            <ShoppingBag className="w-10 h-10 mx-auto text-stone-300" />
+            <p className="text-sm sm:text-base font-bold text-stone-800">
               {language === 'te' ? 'మీ శోధనకు తగిన పంటలు దొరకలేదు.' : 'No produce items matched your search criteria.'}
             </p>
             <div className="flex justify-center gap-2">
@@ -423,13 +413,13 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
                   setSelectedCategory('All');
                   onClearVoiceIntent();
                 }}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs min-touch-target cursor-pointer"
+                className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-sm min-h-[44px] cursor-pointer"
               >
                 Reset Filters
               </button>
               <button
                 onClick={onOpenCustomerRequest}
-                className="px-4 py-2 bg-[#1b3d27] hover:bg-[#244f34] text-amber-300 font-bold rounded-xl text-xs flex items-center gap-1 min-touch-target cursor-pointer"
+                className="px-3.5 py-2 bg-[#14321d] hover:bg-[#1b3d27] text-amber-300 font-bold rounded-xl text-sm min-h-[44px] flex items-center gap-1 cursor-pointer"
               >
                 <Calendar className="w-3.5 h-3.5" />
                 <span>{t.requestProductBtn}</span>
@@ -437,15 +427,18 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {sortedProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-xs hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-white rounded-2xl border border-stone-200/90 overflow-hidden shadow-2xs hover:border-emerald-300 hover:shadow-xs transition-all flex flex-col justify-between group"
               >
                 <div>
                   {/* Product Image */}
-                  <div className="h-44 relative bg-stone-100 overflow-hidden cursor-pointer" onClick={() => onSelectProduct(product)}>
+                  <div
+                    className="h-32 sm:h-44 relative bg-stone-100 overflow-hidden cursor-pointer"
+                    onClick={() => onSelectProduct(product)}
+                  >
                     <img
                       src={product.image}
                       alt=""
@@ -456,107 +449,77 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 text-transparent"
                     />
                     
-                    {/* Clear distinction: Farmer Declared Organic vs Verified */}
+                    {/* Organic Claim Badge */}
                     {product.organicClaim && (
-                      <div className="absolute top-2.5 left-2.5 bg-[#1b3d27] text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1">
-                        <Leaf className="w-3 h-3" />
-                        <span>{t.farmerDeclared}</span>
+                      <div className="absolute top-1.5 left-1.5 bg-[#14321d] text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-2xs flex items-center gap-0.5">
+                        <Leaf className="w-2.5 h-2.5" />
+                        <span>{language === 'te' ? 'సేంద్రీయ' : 'Organic'}</span>
                       </div>
                     )}
 
-                    <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-xs text-stone-800 text-[10px] font-extrabold px-2 py-0.5 rounded-lg shadow-xs">
+                    {/* Stock Remaining Badge */}
+                    <div className="absolute bottom-1.5 right-1.5 bg-white/95 backdrop-blur-xs text-stone-800 text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-2xs">
                       {product.availableQuantity} {product.unit} left
                     </div>
                   </div>
 
-                  {/* Card Content */}
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-extrabold text-emerald-800 uppercase tracking-wider">
+                  {/* Card Body */}
+                  <div className="p-2.5 sm:p-3.5 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-black text-emerald-800 uppercase tracking-wider">
                         {product.category}
                       </span>
-                      <span className="text-stone-400 font-medium">{product.harvestDate}</span>
+                      <span className="text-stone-600 font-medium hidden sm:inline">{product.harvestDate}</span>
                     </div>
 
-                    {/* Bilingual Crop Title */}
+                    {/* Bilingual Crop Name */}
                     <h3
                       onClick={() => onSelectProduct(product)}
-                      className="text-base font-black text-stone-900 group-hover:text-emerald-950 transition-colors cursor-pointer leading-snug"
+                      className="text-sm sm:text-base font-black text-stone-900 group-hover:text-emerald-950 transition-colors cursor-pointer leading-tight truncate"
+                      title={product.name}
                     >
-                      {language === 'te' && product.teluguName ? (
-                        <span>
-                          {product.teluguName}{' '}
-                          <span className="text-stone-400 font-normal text-xs">
-                            ({product.name.replace(/\s*\([^)]*\)/g, '').trim()})
-                          </span>
-                        </span>
-                      ) : (
-                        <span>
-                          {product.name.replace(/\s*\([^)]*\)/g, '').trim()}{' '}
-                          {product.teluguName && (
-                            <span className="text-emerald-800 font-medium text-xs font-serif">· {product.teluguName}</span>
-                          )}
-                        </span>
-                      )}
+                      {language === 'te' && product.teluguName ? product.teluguName : product.name}
                     </h3>
 
                     {/* Price */}
-                    <div className="flex items-baseline gap-1.5 pt-0.5">
-                      <span className="text-xl font-black text-emerald-950">
+                    <div className="flex items-baseline gap-1 pt-0.5">
+                      <span className="text-base sm:text-xl font-black text-emerald-950">
                         ₹{product.price}
                       </span>
-                      <span className="text-xs text-stone-500 font-medium">
+                      <span className="text-sm text-stone-500 font-medium">
                         / {product.priceUnit}
                       </span>
                     </div>
 
-                    {/* Farmer Trust Mini Bar */}
-                    <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
+                    {/* Mini Farmer Credit */}
+                    <div className="pt-1.5 border-t border-stone-100 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1 min-w-0">
                         <img
                           src={product.farmerAvatar}
                           alt={product.farmerName}
-                          className="w-5 h-5 rounded-full object-cover"
+                          className="w-4 h-4 rounded-full object-cover shrink-0"
                         />
-                        <span className="text-stone-700 font-semibold truncate max-w-[110px]">
+                        <span className="text-stone-700 font-bold truncate max-w-[70px] sm:max-w-[100px]">
                           {product.farmerName}
                         </span>
-                        {product.farmerVerified ? (
-                          <span title="Identity Verified Farmer">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                          </span>
-                        ) : (
-                          <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1 rounded shrink-0">
-                            {language === 'te' ? 'కొత్త' : 'New'}
-                          </span>
+                        {product.farmerVerified && (
+                          <ShieldCheck className="w-3 h-3 text-emerald-700 shrink-0" />
                         )}
                       </div>
 
-                      <div className="flex items-center gap-0.5 font-bold text-amber-600">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <div className="flex items-center gap-0.5 font-bold text-amber-700 shrink-0">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                         <span>{product.farmerRating}</span>
                       </div>
                     </div>
-
-                    {/* Location */}
-                    <p className="text-[11px] text-stone-400 flex items-center gap-1 truncate font-medium">
-                      <MapPin className="w-3 h-3 text-stone-400 shrink-0" />
-                      <span className="truncate">{product.farmerLocation}</span>
-                    </p>
                   </div>
                 </div>
 
-                {/* Card Button */}
-                <div className="p-3 bg-stone-50/70 border-t border-stone-100 flex items-center gap-2">
-                  <button
-                    onClick={() => onSelectProduct(product)}
-                    className="flex-1 py-2.5 text-xs font-bold text-stone-700 hover:text-stone-900 bg-white hover:bg-stone-100 rounded-xl border border-stone-200 transition-colors cursor-pointer min-touch-target"
-                  >
-                    {language === 'te' ? 'వివరాలు' : 'Details'}
-                  </button>
+                {/* Card Order Action Button */}
+                <div className="p-2 sm:p-2.5 bg-stone-50/80 border-t border-stone-100 flex items-center gap-1.5">
                   <button
                     onClick={() => onQuickOrder(product)}
-                    className="flex-1 py-2.5 text-xs font-black bg-[#1b3d27] hover:bg-[#244f34] text-amber-300 rounded-xl transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer active:scale-95 min-touch-target"
+                    className="w-full py-2 bg-[#14321d] hover:bg-[#1b3d27] text-amber-300 font-black rounded-xl transition-all flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 text-sm min-h-[44px]"
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
                     <span>{language === 'te' ? 'ఆర్డర్ చేయండి' : 'Order Now'}</span>

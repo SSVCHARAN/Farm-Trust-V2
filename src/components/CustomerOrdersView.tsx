@@ -109,14 +109,15 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold tracking-tight">{t.myOrders}</h2>
-              <p className="text-xs text-emerald-200/90 font-medium">
+              <p className="text-sm text-emerald-100 font-medium">
                 {orders.length} {language === 'te' ? 'ఆర్డర్లు నమోదయ్యాయి' : 'orders placed'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Close"
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -130,7 +131,7 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
               <p className="text-sm font-bold">
                 {language === 'te' ? 'ఇంకా ఎలాంటి ఆర్డర్లు లేవు' : 'No orders placed yet.'}
               </p>
-              <p className="text-xs text-stone-400 mt-1">
+              <p className="text-xs text-stone-600 mt-1">
                 {language === 'te'
                   ? 'మార్కెట్‌ను పరిశీలించి మన స్థానిక రైతులకు మద్దతు ఇవ్వండి!'
                   : 'Explore the marketplace and support our local farmers!'}
@@ -155,23 +156,23 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                       />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-stone-400">
+                          <span className="text-sm font-mono font-bold text-stone-600">
                             #{order.id}
                           </span>
                           <span>·</span>
-                          <span className="text-xs font-bold text-emerald-900">
+                          <span className="text-sm font-bold text-emerald-900">
                             {order.farmerName}
                           </span>
                           <span>·</span>
-                          <span className="text-[11px] text-stone-400">
+                          <span className="text-xs text-stone-600">
                             {formatRelativeDate(order.createdAt, language)}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-stone-900">
+                        <h4 className="text-base font-bold text-stone-900">
                           {order.quantity} {order.unit} {order.productName}
                         </h4>
                         {order.deliveryOption && (
-                          <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">
+                          <span className="inline-block mt-1 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">
                             {order.deliveryOption === 'cluster'
                               ? (language === 'te' ? 'క్లస్టర్ డ్రాప్ (₹20)' : 'Cluster Drop (₹20)')
                               : (language === 'te' ? 'డైరెక్ట్ ఎక్స్‌ప్రెస్ (₹60)' : 'Direct Express (₹60)')}
@@ -203,21 +204,21 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                             className="flex flex-col items-center flex-1 relative z-10"
                           >
                             <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                                 isCompleted
                                   ? 'bg-[#1e3a24] text-amber-300 ring-2 ring-emerald-200'
-                                  : 'bg-stone-200 text-stone-500'
+                                  : 'bg-stone-200 text-stone-700'
                               } ${isCurrent ? 'scale-110 shadow-sm ring-4 ring-emerald-100' : ''}`}
                             >
                               {isCompleted ? '✓' : idx + 1}
                             </div>
                             <span
-                              className={`text-[9px] sm:text-[10px] mt-1 text-center font-medium leading-tight max-w-[60px] truncate ${
+                              className={`text-[11px] sm:text-[11px] mt-1 text-center font-medium leading-tight max-w-[72px] truncate ${
                                 isCurrent
                                   ? 'text-emerald-950 font-bold'
                                   : isCompleted
                                   ? 'text-stone-700'
-                                  : 'text-stone-400'
+                                  : 'text-stone-600'
                               }`}
                             >
                               {step === 'Order Placed' && (language === 'te' ? 'నమోదైంది' : 'Placed')}
@@ -244,7 +245,7 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                           {order.deliveryOtp || '4829'}
                         </span>
                       </div>
-                      <p className="text-[11px] text-stone-600 leading-relaxed">
+                      <p className="text-sm text-stone-600 leading-relaxed">
                         {language === 'te'
                           ? 'మీ ఆర్డర్ సిద్ధమైంది! ఈ కోడ్‌ను డెలివరీ సమయంలో రైతుకు చెప్పండి, లేదా కింద బటన్ నొక్కి డెలివరీ అందినట్లు ధృవీకరించండి.'
                           : 'Produce ready for delivery! Share this 4-digit code with the farmer upon delivery, OR tap below to confirm receipt directly.'}
@@ -254,7 +255,7 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onConfirmDelivery(order.id)}
-                            className="w-full py-2.5 bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                            className="w-full px-5 py-3 bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all min-h-[48px]"
                           >
                             <CheckCircle2 className="w-4 h-4" />
                             <span>{language === 'te' ? 'డెలివరీ అందింది - రసీదు నిర్ధారించండి' : 'Confirm Delivery & Receipt'}</span>
@@ -265,9 +266,9 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                   )}
 
                   {/* Order Footer / Rating Prompt */}
-                  <div className="pt-2 border-t border-stone-200/70 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="pt-2 border-t border-stone-200/70 flex flex-wrap items-center justify-between gap-2 text-sm">
                     <div className="text-stone-500 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-stone-400" />
+                      <MapPin className="w-3.5 h-3.5 text-stone-600" />
                       <span className="truncate max-w-[240px]">{order.deliveryAddress}</span>
                     </div>
 
@@ -281,7 +282,7 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                         ) : (
                           <button
                             onClick={() => handleOpenRating(order)}
-                            className="px-4 py-1.5 bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
+                            className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold rounded-lg shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95 min-h-[44px]"
                           >
                             <Star className="w-3.5 h-3.5 fill-stone-950 text-stone-950" />
                             <span>{t.rateFarmer}</span>
@@ -321,7 +322,7 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                   </h3>
                   <button
                     onClick={() => setRatingOrder(null)}
-                    className="text-stone-400 hover:text-stone-600 cursor-pointer"
+                    className="text-stone-600 hover:text-stone-900 cursor-pointer w-11 h-11 flex items-center justify-center rounded-full"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -336,7 +337,7 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                       key={star}
                       type="button"
                       onClick={() => setSelectedStars(star)}
-                      className="p-1 hover:scale-125 transition-transform cursor-pointer"
+                      className="p-2 hover:scale-125 transition-transform cursor-pointer"
                     >
                       <Star
                         className={`w-8 h-8 ${
@@ -355,19 +356,19 @@ export const CustomerOrdersView: React.FC<CustomerOrdersViewProps> = ({
                   onChange={(e) => setReviewComment(e.target.value)}
                   placeholder={t.reviewPlaceholder}
                   rows={3}
-                  className="w-full p-3 text-xs border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-700 text-stone-900 placeholder:text-stone-400"
+                  className="w-full p-3 text-xs border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-700 text-stone-900 placeholder:text-stone-600"
                 ></textarea>
 
                 <div className="flex items-center gap-2 pt-2">
                   <button
                     onClick={() => setRatingOrder(null)}
-                    className="flex-1 py-2.5 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl cursor-pointer"
+                    className="flex-1 py-3 min-h-[48px] text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl cursor-pointer"
                   >
                     {language === 'te' ? 'రద్దు చేయి' : 'Cancel'}
                   </button>
                   <button
                     onClick={handleSubmitReview}
-                    className="flex-1 py-2.5 text-xs font-bold bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 rounded-xl shadow-md cursor-pointer"
+                    className="flex-1 py-3 min-h-[48px] text-xs font-bold bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 rounded-xl shadow-md cursor-pointer"
                   >
                     {t.submitRating}
                   </button>

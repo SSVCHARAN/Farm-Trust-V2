@@ -180,14 +180,15 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
               <h2 className="text-base sm:text-lg font-bold tracking-tight">
                 {step === 'confirm' ? t.iUnderstood : t.voiceSearchModalTitle}
               </h2>
-              <p className="text-xs text-emerald-200/90 font-medium">
+              <p className="text-xs text-emerald-100 font-medium">
                 {language === 'te' ? 'కస్టమర్ వాయిస్ శోధన' : 'Search marketplace by speaking'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            aria-label="Close"
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -197,17 +198,17 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
           {/* STEP 1: VOICE INPUT */}
           {step === 'input' && (
             <div className="space-y-4 text-center">
-              <p className="text-xs sm:text-sm text-stone-600 font-medium max-w-sm mx-auto">
+              <p className="text-sm sm:text-base text-stone-600 font-medium max-w-sm mx-auto">
                 {t.voiceSearchInstructions}
               </p>
 
               {/* Language toggle for voice */}
-              <div className="inline-flex items-center gap-1.5 bg-stone-100 p-1 rounded-lg text-xs">
-                <span className="text-stone-500 font-medium px-2">Voice:</span>
+              <div className="inline-flex items-center gap-1.5 bg-stone-100 p-1 rounded-lg text-sm">
+                <span className="text-stone-600 font-medium px-2">Voice:</span>
                 <button
                   type="button"
                   onClick={() => setVoiceLang('te-IN')}
-                  className={`px-3 py-1 rounded font-semibold transition-all ${
+                  className={`px-4 py-2 min-h-[40px] rounded font-semibold transition-all ${
                     voiceLang === 'te-IN'
                       ? 'bg-[#1e3a24] text-amber-300 shadow-xs'
                       : 'text-stone-600 hover:text-stone-900'
@@ -218,7 +219,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                 <button
                   type="button"
                   onClick={() => setVoiceLang('en-IN')}
-                  className={`px-3 py-1 rounded font-semibold transition-all ${
+                  className={`px-4 py-2 min-h-[40px] rounded font-semibold transition-all ${
                     voiceLang === 'en-IN'
                       ? 'bg-[#1e3a24] text-amber-300 shadow-xs'
                       : 'text-stone-600 hover:text-stone-900'
@@ -242,14 +243,14 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                   {isListening ? (
                     <>
                       <MicOff className="w-8 h-8 mb-1" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                      <span className="text-xs font-bold uppercase tracking-wider">
                         {t.stopSpeaking}
                       </span>
                     </>
                   ) : (
                     <>
                       <Mic className="w-9 h-9 mb-1" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                      <span className="text-xs font-bold uppercase tracking-wider">
                         {t.pressToSpeak}
                       </span>
                     </>
@@ -257,18 +258,18 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                 </button>
 
                 {isListening && (
-                  <p className="mt-3 text-xs text-red-600 font-semibold animate-pulse">
+                  <p className="mt-3 text-sm text-red-600 font-semibold animate-pulse">
                     {t.listening}
                   </p>
                 )}
 
                 {transcript && (
-                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-stone-800 text-xs w-full">
-                    <p className="font-semibold text-amber-800 mb-0.5">Heard:</p>
-                    <p className="text-sm font-medium italic">“{transcript}”</p>
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-stone-800 text-sm w-full">
+                    <p className="font-semibold text-amber-800 mb-0.5 text-sm">Heard:</p>
+                    <p className="text-base font-medium italic">“{transcript}”</p>
                     <button
                       onClick={() => processQuery(transcript)}
-                      className="mt-2 px-4 py-1.5 bg-[#1e3a24] text-amber-300 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                      className="mt-2 min-h-[44px] px-4 py-1.5 bg-[#1e3a24] text-amber-300 rounded-lg text-sm font-bold inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>Process Request</span>
@@ -278,29 +279,29 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
               </div>
 
               {speechError && (
-                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 text-left">
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-sm text-amber-900 text-left">
                   {speechError}
                 </div>
               )}
 
               {/* Sample Preset Buttons for Demo */}
               <div className="pt-2 border-t border-stone-200 text-left space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
+                <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-950">
                   <Volume2 className="w-4 h-4 text-emerald-700" />
                   <span>{language === 'te' ? 'లేదా డెమో ఉదాహరణ నొక్కండి:' : 'Or tap a sample voice search:'}</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <button
                     type="button"
                     onClick={() => {
                       setTranscript(t.searchSample1);
                       processQuery(t.searchSample1);
                     }}
-                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer"
+                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer min-h-[44px]"
                   >
                     <p className="font-bold text-emerald-950">🍅 Tomatoes &lt; ₹40/kg</p>
-                    <p className="text-stone-500 line-clamp-1">{t.searchSample1}</p>
+                    <p className="text-stone-600 line-clamp-1">{t.searchSample1}</p>
                   </button>
 
                   <button
@@ -309,10 +310,10 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                       setTranscript(t.searchSample2);
                       processQuery(t.searchSample2);
                     }}
-                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer"
+                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer min-h-[44px]"
                   >
                     <p className="font-bold text-emerald-950">🍅 టమాటాలు 40 లోపు</p>
-                    <p className="text-stone-500 line-clamp-1">{t.searchSample2}</p>
+                    <p className="text-stone-600 line-clamp-1">{t.searchSample2}</p>
                   </button>
 
                   <button
@@ -321,10 +322,10 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                       setTranscript(t.searchSample3);
                       processQuery(t.searchSample3);
                     }}
-                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer"
+                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer min-h-[44px]"
                   >
                     <p className="font-bold text-emerald-950">🌾 5 kg Sona Masoori</p>
-                    <p className="text-stone-500 line-clamp-1">{t.searchSample3}</p>
+                    <p className="text-stone-600 line-clamp-1">{t.searchSample3}</p>
                   </button>
 
                   <button
@@ -333,10 +334,10 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                       setTranscript(t.searchSample4);
                       processQuery(t.searchSample4);
                     }}
-                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer"
+                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left transition-colors cursor-pointer min-h-[44px]"
                   >
                     <p className="font-bold text-emerald-950">🥛 2L Pure Cow Milk</p>
-                    <p className="text-stone-500 line-clamp-1">{t.searchSample4}</p>
+                    <p className="text-stone-600 line-clamp-1">{t.searchSample4}</p>
                   </button>
                 </div>
               </div>
@@ -349,7 +350,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                     value={manualText}
                     onChange={(e) => setManualText(e.target.value)}
                     placeholder="E.g. 2 kg tomatoes under 40 rupees..."
-                    className="flex-1 px-3 py-2 text-xs border border-stone-300 rounded-lg text-stone-900"
+                    className="flex-1 px-3 py-2 text-base min-h-[48px] border border-stone-300 rounded-lg text-stone-900"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && manualText.trim()) {
                         processQuery(manualText);
@@ -360,7 +361,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                     type="button"
                     onClick={() => manualText.trim() && processQuery(manualText)}
                     disabled={!manualText.trim()}
-                    className="px-4 py-2 bg-[#1e3a24] text-amber-300 text-xs font-bold rounded-lg disabled:opacity-50 cursor-pointer"
+                    className="px-4 py-2 min-h-[48px] bg-[#1e3a24] text-amber-300 text-sm font-bold rounded-lg disabled:opacity-50 cursor-pointer"
                   >
                     Search
                   </button>
@@ -373,10 +374,10 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
           {step === 'processing' && (
             <div className="py-10 text-center space-y-3">
               <div className="w-12 h-12 rounded-full border-4 border-emerald-100 border-t-emerald-800 animate-spin mx-auto"></div>
-              <h3 className="text-sm font-bold text-stone-900">
+              <h3 className="text-base font-bold text-stone-900">
                 {language === 'te' ? 'జెమినీ AI మీ మాటలను అర్థం చేసుకుంటోంది...' : 'Gemini AI is interpreting your search...'}
               </h3>
-              <p className="text-xs text-stone-500">
+              <p className="text-sm text-stone-600">
                 Extracting target produce, quantity, and price budget...
               </p>
             </div>
@@ -388,22 +389,22 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
               <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between text-xs text-emerald-900 font-bold">
                   <span>{t.iUnderstood}</span>
-                  <span className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded font-semibold">
+                  <span className="text-xs bg-emerald-700 text-white px-2 py-0.5 rounded font-semibold">
                     AI Parsed
                   </span>
                 </div>
 
                 <div className="bg-white rounded-xl p-3 border border-stone-200/80 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-stone-500">Produce:</span>
+                    <span className="text-sm text-stone-600">Produce:</span>
                     <span className="text-base font-extrabold text-stone-900">
                       {editProduct}
                     </span>
                   </div>
 
                   {editQuantity && (
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-stone-500">Desired Quantity:</span>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-stone-600">Desired Quantity:</span>
                       <span className="font-bold text-stone-800">
                         {editQuantity} {editUnit}
                       </span>
@@ -411,8 +412,8 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                   )}
 
                   {editMaxPrice && (
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-stone-500">Budget Limit:</span>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-stone-600">Budget Limit:</span>
                       <span className="font-extrabold text-emerald-950">
                         Up to ₹{editMaxPrice} / {editUnit}
                       </span>
@@ -420,7 +421,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                   )}
                 </div>
 
-                <p className="text-xs text-stone-600 italic text-center">
+                <p className="text-sm text-stone-600 italic text-center">
                   “{intent.rawQuery}”
                 </p>
               </div>
@@ -429,19 +430,19 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
               {step === 'edit' && (
                 <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 space-y-2.5 text-xs">
                   <div>
-                    <label className="block text-[11px] font-semibold text-stone-600 mb-0.5">
+                    <label className="block text-sm font-semibold text-stone-600 mb-0.5">
                       Produce Name
                     </label>
                     <input
                       type="text"
                       value={editProduct}
                       onChange={(e) => setEditProduct(e.target.value)}
-                      className="w-full px-2.5 py-1.5 border border-stone-300 rounded bg-white"
+                      className="w-full px-2.5 py-1.5 min-h-[44px] text-base border border-stone-300 rounded bg-white"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] font-semibold text-stone-600 mb-0.5">
+                      <label className="block text-sm font-semibold text-stone-600 mb-0.5">
                         Max Price (₹)
                       </label>
                       <input
@@ -449,11 +450,11 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                         value={editMaxPrice || ''}
                         onChange={(e) => setEditMaxPrice(e.target.value ? Number(e.target.value) : null)}
                         placeholder="e.g. 40"
-                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded bg-white"
+                        className="w-full px-2.5 py-1.5 min-h-[44px] text-base border border-stone-300 rounded bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-stone-600 mb-0.5">
+                      <label className="block text-sm font-semibold text-stone-600 mb-0.5">
                         Quantity ({editUnit})
                       </label>
                       <input
@@ -461,7 +462,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                         value={editQuantity || ''}
                         onChange={(e) => setEditQuantity(e.target.value ? Number(e.target.value) : null)}
                         placeholder="e.g. 2"
-                        className="w-full px-2.5 py-1.5 border border-stone-300 rounded bg-white"
+                        className="w-full px-2.5 py-1.5 min-h-[44px] text-base border border-stone-300 rounded bg-white"
                       />
                     </div>
                   </div>
@@ -473,7 +474,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                 <button
                   type="button"
                   onClick={() => setStep('input')}
-                  className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full sm:w-auto min-h-[48px] px-4 py-2 text-sm font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>{t.speakAgain}</span>
@@ -483,7 +484,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                   <button
                     type="button"
                     onClick={() => setStep('edit')}
-                    className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full sm:w-auto min-h-[48px] px-4 py-2 text-sm font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>{t.editSearch}</span>
@@ -492,7 +493,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                   <button
                     type="button"
                     onClick={() => setStep('confirm')}
-                    className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl cursor-pointer"
+                    className="w-full sm:w-auto min-h-[48px] px-4 py-2 text-sm font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl cursor-pointer"
                   >
                     Done Editing
                   </button>
@@ -501,7 +502,7 @@ export const CustomerVoiceSearchModal: React.FC<CustomerVoiceSearchModalProps> =
                 <button
                   type="button"
                   onClick={handleApply}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  className="w-full sm:w-auto min-h-[48px] px-6 py-2.5 bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-sm sm:text-base rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span>{t.showResults}</span>

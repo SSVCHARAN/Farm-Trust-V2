@@ -156,14 +156,15 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold tracking-tight">{t.requestProductTitle}</h2>
-              <p className="text-xs text-emerald-200 font-medium">
+              <p className="text-xs text-emerald-100 font-medium">
                 {language === 'te' ? 'స్థానిక రైతులకు నేరుగా ఆర్డర్ రిక్వెస్ట్ పంపండి' : 'Broadcast harvest demand to local farmers'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            aria-label="Close"
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -173,17 +174,17 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
           
           {step === 'input' && (
             <div className="space-y-4 text-center">
-              <p className="text-xs sm:text-sm text-stone-600 font-medium max-w-sm mx-auto">
+              <p className="text-sm sm:text-base text-stone-600 font-medium max-w-sm mx-auto">
                 {t.requestProductSub}
               </p>
 
               {/* Language toggle */}
-              <div className="inline-flex items-center gap-1.5 bg-stone-100 p-1 rounded-lg text-xs">
-                <span className="text-stone-500 font-medium px-2">Language:</span>
+              <div className="inline-flex items-center gap-1.5 bg-stone-100 p-1 rounded-lg text-sm">
+                <span className="text-stone-600 font-medium px-2">Language:</span>
                 <button
                   type="button"
                   onClick={() => setVoiceLang('te-IN')}
-                  className={`px-3 py-1 rounded font-semibold transition-all ${
+                  className={`px-4 py-2 min-h-[40px] rounded font-semibold transition-all ${
                     voiceLang === 'te-IN' ? 'bg-[#1e3a24] text-amber-300' : 'text-stone-600'
                   }`}
                 >
@@ -192,7 +193,7 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setVoiceLang('en-IN')}
-                  className={`px-3 py-1 rounded font-semibold transition-all ${
+                  className={`px-4 py-2 min-h-[40px] rounded font-semibold transition-all ${
                     voiceLang === 'en-IN' ? 'bg-[#1e3a24] text-amber-300' : 'text-stone-600'
                   }`}
                 >
@@ -212,18 +213,18 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
                   }`}
                 >
                   {isListening ? <MicOff className="w-8 h-8 mb-1" /> : <Mic className="w-8 h-8 mb-1" />}
-                  <span className="text-[10px] font-bold uppercase">
+                  <span className="text-xs font-bold uppercase">
                     {isListening ? t.stopSpeaking : t.pressToSpeak}
                   </span>
                 </button>
 
                 {transcript && (
-                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-stone-800 text-xs w-full">
-                    <p className="font-semibold text-amber-800 mb-0.5">Heard:</p>
-                    <p className="text-sm font-medium italic">“{transcript}”</p>
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-stone-800 text-sm w-full">
+                    <p className="font-semibold text-amber-800 mb-0.5 text-sm">Heard:</p>
+                    <p className="text-base font-medium italic">“{transcript}”</p>
                     <button
                       onClick={() => processRequest(transcript)}
-                      className="mt-2 px-4 py-1.5 bg-[#1e3a24] text-amber-300 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                      className="mt-2 min-h-[44px] px-4 py-1.5 bg-[#1e3a24] text-amber-300 rounded-lg text-sm font-bold inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>Extract Request</span>
@@ -234,21 +235,21 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
 
               {/* Sample presets */}
               <div className="pt-2 border-t border-stone-200 text-left space-y-2">
-                <span className="text-xs font-bold text-stone-700 flex items-center gap-1">
+                <span className="text-sm font-bold text-stone-700 flex items-center gap-1">
                   <Volume2 className="w-4 h-4 text-emerald-800" />
                   <span>Tap a sample request to test:</span>
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <button
                     type="button"
                     onClick={() => {
                       setTranscript('I need 5 kg of tomatoes tomorrow.');
                       processRequest('I need 5 kg of tomatoes tomorrow.');
                     }}
-                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left cursor-pointer"
+                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left cursor-pointer min-h-[44px]"
                   >
                     <p className="font-bold text-emerald-950">🍅 5 kg Tomatoes Tomorrow</p>
-                    <p className="text-stone-500">“I need 5 kg of tomatoes tomorrow.”</p>
+                    <p className="text-stone-600">“I need 5 kg of tomatoes tomorrow.”</p>
                   </button>
 
                   <button
@@ -257,10 +258,10 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
                       setTranscript('నాకు రేపు 5 కిలోల టమాటాలు కావాలి.');
                       processRequest('నాకు రేపు 5 కిలోల టమాటాలు కావాలి.');
                     }}
-                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left cursor-pointer"
+                    className="p-2 bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl text-left cursor-pointer min-h-[44px]"
                   >
                     <p className="font-bold text-emerald-950">🍅 రేపు 5 కిలోల టమాటాలు (Telugu)</p>
-                    <p className="text-stone-500">“నాకు రేపు 5 కిలోల టమాటాలు కావాలి.”</p>
+                    <p className="text-stone-600">“నాకు రేపు 5 కిలోల టమాటాలు కావాలి.”</p>
                   </button>
                 </div>
               </div>
@@ -272,7 +273,7 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
                   value={manualText}
                   onChange={(e) => setManualText(e.target.value)}
                   placeholder="Type: e.g. 5 kg tomatoes needed tomorrow..."
-                  className="flex-1 px-3 py-2 text-xs border border-stone-300 rounded-lg text-stone-900"
+                  className="flex-1 px-3 py-2 text-base min-h-[48px] border border-stone-300 rounded-lg text-stone-900"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && manualText.trim()) {
                       processRequest(manualText);
@@ -283,7 +284,7 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
                   type="button"
                   onClick={() => manualText.trim() && processRequest(manualText)}
                   disabled={!manualText.trim()}
-                  className="px-4 py-2 bg-[#1e3a24] text-amber-300 text-xs font-bold rounded-lg disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 min-h-[48px] bg-[#1e3a24] text-amber-300 text-sm font-bold rounded-lg disabled:opacity-50 cursor-pointer"
                 >
                   Extract
                 </button>
@@ -294,38 +295,38 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
           {step === 'processing' && (
             <div className="py-10 text-center space-y-3">
               <div className="w-12 h-12 rounded-full border-4 border-emerald-100 border-t-emerald-800 animate-spin mx-auto"></div>
-              <h3 className="text-sm font-bold text-stone-900">Understanding local demand request...</h3>
+              <h3 className="text-base font-bold text-stone-900">Understanding local demand request...</h3>
             </div>
           )}
 
           {step === 'confirm' && (
             <div className="space-y-4">
               <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between text-xs text-emerald-950 font-bold">
+                <div className="flex items-center justify-between text-sm text-emerald-950 font-bold">
                   <span>CUSTOMER REQUEST PREVIEW</span>
-                  <span className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded font-semibold">
+                  <span className="text-xs bg-emerald-700 text-white px-2 py-0.5 rounded font-semibold">
                     Local Demand
                   </span>
                 </div>
 
                 <div className="bg-white rounded-xl p-4 border border-stone-200 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-stone-500">Produce:</span>
+                    <span className="text-sm text-stone-600">Produce:</span>
                     <span className="text-base font-extrabold text-stone-900">{product}</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-stone-500">Required Quantity:</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-stone-600">Required Quantity:</span>
                     <span className="font-bold text-stone-800">{quantity} {unit}</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-stone-500">Needed By:</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-stone-600">Needed By:</span>
                     <span className="font-bold text-emerald-900">{neededBy}</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-stone-500">Area:</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-stone-600">Area:</span>
                     <span className="font-medium text-stone-700">{location}</span>
                   </div>
                 </div>
@@ -335,7 +336,7 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep('input')}
-                  className="px-4 py-2 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl cursor-pointer"
+                  className="px-4 py-2 min-h-[48px] text-sm font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5 inline mr-1" />
                   Speak Again
@@ -343,7 +344,7 @@ export const CustomerRequestModal: React.FC<CustomerRequestModalProps> = ({
                 <button
                   type="button"
                   onClick={handlePost}
-                  className="px-6 py-2.5 bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-6 py-2.5 min-h-[48px] bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-sm sm:text-base rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span>{t.postRequestBtn}</span>

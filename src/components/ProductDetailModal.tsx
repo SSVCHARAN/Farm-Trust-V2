@@ -55,7 +55,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-stone-900/70 hover:bg-stone-900 text-white flex items-center justify-center transition-colors cursor-pointer"
+          aria-label="Close"
+          className="absolute top-3 right-3 z-10 w-11 h-11 rounded-full bg-stone-900/70 hover:bg-stone-900 text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -84,9 +85,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <div className="sm:w-1/2 p-5 sm:p-6 flex flex-col justify-between space-y-4">
             <div>
               {/* Category & Title */}
-              <div className="flex items-center justify-between text-xs text-stone-400 font-semibold mb-1">
-                <span className="text-emerald-800 uppercase tracking-wider">{product.category}</span>
-                <span className="text-stone-500 font-normal">
+              <div className="flex items-center justify-between font-semibold mb-1">
+                <span className="text-xs text-emerald-800 uppercase tracking-wider">{product.category}</span>
+                <span className="text-sm text-stone-600 font-normal">
                   {product.availableQuantity} {product.unit} available
                 </span>
               </div>
@@ -95,7 +96,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 {product.name}
               </h2>
               {product.teluguName && product.teluguName !== product.name && (
-                <p className="text-xs text-stone-500 mt-0.5 font-medium">
+                <p className="text-sm text-stone-500 mt-0.5 font-medium">
                   {product.teluguName}
                 </p>
               )}
@@ -111,7 +112,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </div>
 
               {/* Description */}
-              <p className="text-xs sm:text-sm text-stone-600 mt-2.5 leading-relaxed">
+              <p className="text-sm sm:text-base text-stone-600 mt-2.5 leading-relaxed">
                 {product.description}
               </p>
 
@@ -129,26 +130,26 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     />
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-bold text-stone-900">
+                        <span className="text-sm font-bold text-stone-900">
                           {product.farmerName}
                         </span>
                         {product.farmerVerified ? (
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
                         ) : (
-                          <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded">
+                          <span className="text-xs bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded">
                             {language === 'te' ? 'పరిశీలనలో ఉంది' : 'Verification Pending'}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-stone-500 flex items-center gap-0.5">
-                        <MapPin className="w-3 h-3 text-stone-400" />
+                      <p className="text-xs text-stone-500 flex items-center gap-0.5">
+                        <MapPin className="w-3 h-3 text-stone-600" />
                         <span>{product.farmerLocation}</span>
                       </p>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="flex items-center gap-1 text-xs font-bold text-amber-600">
+                    <div className="flex items-center gap-1 text-sm font-bold text-amber-700">
                       {product.farmerRating > 0 ? (
                         <>
                           <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -160,7 +161,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-emerald-800 underline font-bold">
+                    <span className="text-sm text-emerald-800 underline font-bold">
                       {language === 'te' ? 'రైతు ప్రొఫైల్' : 'View Profile'}
                     </span>
                   </div>
@@ -175,7 +176,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
                         <span>{t.reviewRecommendedClaim}</span>
                       </div>
-                      <p className="text-[11px] text-amber-800 leading-relaxed">
+                      <p className="text-xs text-amber-800 leading-relaxed">
                         {product.trustNote || 'This description contains strong organic declarations that require supporting evidence.'}
                       </p>
                     </div>
@@ -187,7 +188,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         <AlertTriangle className="w-3.5 h-3.5 text-red-700" />
                         <span>{t.potentiallyExaggeratedClaim}</span>
                       </div>
-                      <p className="text-[11px] text-red-800 leading-relaxed">
+                      <p className="text-xs text-red-800 leading-relaxed">
                         {product.trustNote || 'This description contains unverified health claims.'}
                       </p>
                     </div>
@@ -195,14 +196,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                   {/* Clear separation: Farmer-Declared vs Platform-Verified */}
                   <div className="bg-stone-50/90 p-2.5 rounded-xl border border-stone-200 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-stone-500">{language === 'te' ? 'పంట వర్గం:' : 'Produce Type:'}</span>
                       <span className="px-2 py-0.5 bg-stone-200/80 rounded font-medium text-stone-800">
                         {product.organicClaim ? t.farmerDeclared : (language === 'te' ? 'సాధారణ పొలం కోత' : 'Standard Field Harvest')}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-stone-500">{language === 'te' ? 'ప్లాట్‌ఫారమ్ స్థితి:' : 'Platform Status:'}</span>
                       {product.farmerVerified ? (
                         <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 rounded font-bold flex items-center gap-1">
@@ -217,7 +218,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       )}
                     </div>
 
-                    <p className="text-[10px] text-stone-500 pt-1 border-t border-stone-200 leading-relaxed">
+                    <p className="text-xs text-stone-500 pt-1 border-t border-stone-200 leading-relaxed">
                       {product.trustNote || (product.farmerVerified
                         ? (language === 'te' ? 'ధృవీకరించబడిన రైతు · ప్రత్యక్ష పొలం కోత' : 'Identity verified producer · Direct farm harvest')
                         : (language === 'te' ? 'కొత్త రైతు నమోదు చేసిన వివరాలు' : 'Direct producer listing · Farm details submitted'))}
@@ -230,11 +231,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             {/* Bottom Actions: Quantity + Order */}
             <div className="pt-3 border-t border-stone-200 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-stone-700">{t.selectQuantity}:</span>
+                <span className="text-sm font-bold text-stone-700">{t.selectQuantity}:</span>
                 <div className="flex items-center gap-2 bg-stone-100 p-1 rounded-xl">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-lg bg-white hover:bg-stone-200 flex items-center justify-center text-stone-800 font-bold shadow-xs cursor-pointer active:scale-95"
+                    className="w-12 h-12 rounded-lg bg-white hover:bg-stone-200 flex items-center justify-center text-stone-800 font-bold shadow-xs cursor-pointer active:scale-95"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="w-4 h-4" />
@@ -244,7 +245,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </span>
                   <button
                     onClick={() => setQuantity(Math.min(product.availableQuantity, quantity + 1))}
-                    className="w-10 h-10 rounded-lg bg-white hover:bg-stone-200 flex items-center justify-center text-stone-800 font-bold shadow-xs cursor-pointer active:scale-95"
+                    className="w-12 h-12 rounded-lg bg-white hover:bg-stone-200 flex items-center justify-center text-stone-800 font-bold shadow-xs cursor-pointer active:scale-95"
                     aria-label="Increase quantity"
                   >
                     <Plus className="w-4 h-4" />
@@ -254,13 +255,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
               <div className="flex items-center justify-between pt-1">
                 <div>
-                  <span className="text-[11px] text-stone-500 block">{t.totalAmount}</span>
+                  <span className="text-sm text-stone-500 block">{t.totalAmount}</span>
                   <span className="text-xl font-black text-emerald-950">₹{totalPrice}</span>
                 </div>
 
                 <button
                   onClick={() => onOrderNow(product, quantity)}
-                  className="px-6 py-3 bg-[#1e3a24] hover:bg-emerald-900 text-amber-300 font-extrabold text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 min-h-[44px]"
+                  className="px-6 py-3 bg-[#1e3a24] hover:bg-emerald-900 text-amber-300 font-extrabold text-base rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 min-h-[48px]"
                 >
                   <ShoppingBag className="w-4 h-4" />
                   <span>{t.viewAndBuy}</span>

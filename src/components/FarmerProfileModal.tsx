@@ -63,17 +63,17 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                   {language === 'te' ? farmer.teluguName : farmer.name}
                 </h2>
                 {farmer.identityVerified ? (
-                  <span className="px-2 py-0.5 bg-amber-400 text-stone-950 font-bold text-[11px] rounded flex items-center gap-1 shadow-xs">
+                  <span className="px-2 py-0.5 bg-amber-400 text-stone-950 font-bold text-xs rounded flex items-center gap-1 shadow-xs">
                     <ShieldCheck className="w-3.5 h-3.5 text-stone-950" />
                     {t.verifiedFarmer}
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 bg-amber-200 text-stone-950 font-bold text-[11px] rounded flex items-center gap-1 shadow-xs">
+                  <span className="px-2 py-0.5 bg-amber-200 text-stone-950 font-bold text-xs rounded flex items-center gap-1 shadow-xs">
                     {language === 'te' ? 'గుర్తింపు పరిశీలనలో ఉంది' : 'Verification Pending'}
                   </span>
                 )}
               </div>
-              <p className="text-emerald-200 text-xs sm:text-sm font-medium mt-0.5">
+              <p className="text-emerald-100 text-xs sm:text-sm font-medium mt-0.5">
                 {language === 'te' ? farmer.farmNameTelugu : farmer.farmName}
               </p>
               <p className="text-emerald-300/80 text-xs flex items-center gap-1 mt-1">
@@ -85,7 +85,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -105,7 +105,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                   <h3 className="text-sm font-extrabold text-stone-900 tracking-tight">
                     {t.trustPassportTitle}
                   </h3>
-                  <span className="text-[10px] text-emerald-800 font-semibold uppercase tracking-wider">
+                  <span className="text-xs text-emerald-800 font-semibold uppercase tracking-wider">
                     {farmer.identityVerified
                       ? (language === 'te' ? 'ప్లాట్‌ఫారమ్ ధృవీకరణ: పూర్తయింది' : 'Platform Trust Level: High (Identity Verified)')
                       : (language === 'te' ? 'ప్లాట్‌ఫారమ్ స్థితి: పరిశీలనలో ఉంది' : 'Platform Trust Level: Verification Pending')}
@@ -119,7 +119,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                     ? `${farmer.orderCompletionRate}%`
                     : (language === 'te' ? 'కొత్త రైతు' : 'New Farmer')}
                 </span>
-                <p className="text-[10px] text-stone-500 font-medium">
+                <p className="text-xs text-stone-600 font-medium">
                   {farmer.totalCompletedOrders > 0
                     ? t.orderCompletionRate
                     : (language === 'te' ? 'పూర్తయిన ఆర్డర్లు లేవు' : 'No order history yet')}
@@ -130,7 +130,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
             {/* Trust Metrics Grid */}
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-3 bg-white rounded-xl border border-stone-200 shadow-2xs">
-                <span className="text-[11px] text-stone-500 block">Rating</span>
+                <span className="text-xs text-stone-600 block">Rating</span>
                 <div className="flex items-center justify-center gap-1 mt-0.5">
                   {farmer.rating > 0 ? (
                     <>
@@ -143,25 +143,25 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] text-stone-400">
+                <span className="text-xs text-stone-600">
                   {farmer.reviewCount > 0 ? `(${farmer.reviewCount} reviews)` : (language === 'te' ? 'సమీక్షలు లేవు' : 'No reviews yet')}
                 </span>
               </div>
 
               <div className="p-3 bg-white rounded-xl border border-stone-200 shadow-2xs">
-                <span className="text-[11px] text-stone-500 block">Completed</span>
+                <span className="text-xs text-stone-600 block">Completed</span>
                 <span className="text-base font-extrabold text-stone-900 mt-0.5 block">
                   {farmer.totalCompletedOrders || 0}
                 </span>
-                <span className="text-[10px] text-stone-400">Delivered Orders</span>
+                <span className="text-xs text-stone-600">Delivered Orders</span>
               </div>
 
               <div className="p-3 bg-white rounded-xl border border-stone-200 shadow-2xs">
-                <span className="text-[11px] text-stone-500 block">Active Produce</span>
+                <span className="text-xs text-stone-600 block">Active Produce</span>
                 <span className="text-base font-extrabold text-emerald-900 mt-0.5 block">
                   {farmerProducts.length}
                 </span>
-                <span className="text-[10px] text-emerald-700 font-semibold">Live in Market</span>
+                <span className="text-xs text-emerald-700 font-semibold">Live in Market</span>
               </div>
             </div>
 
@@ -181,7 +181,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                         ? (language === 'te' ? 'గుర్తింపు ధృవీకరణ (Identity Verified)' : 'Identity Verified')
                         : (language === 'te' ? 'గుర్తింపు పరిశీలనలో ఉంది (Verification Pending)' : 'Identity Verification Pending')}
                     </span>
-                    <p className="text-[11px] text-stone-600 mt-0.5">
+                    <p className="text-xs text-stone-600 mt-0.5">
                       {farmer.identityVerified
                         ? (language === 'te'
                           ? `రైతు యొక్క గుర్తింపు మరియు ${farmer.location} లోని వ్యవసాయ క్షేత్రం ధృవీకరించబడింది.`
@@ -199,7 +199,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                     <span className="font-bold text-stone-900">
                       {language === 'te' ? 'ప్రజల రేటింగ్ (Community Rated)' : 'Community Rated'}
                     </span>
-                    <p className="text-[11px] text-stone-600 mt-0.5">
+                    <p className="text-xs text-stone-600 mt-0.5">
                       {language === 'te'
                         ? 'రేటింగ్‌లు కేవలం విజయవంతంగా డెలివరీ చేయబడిన ఆర్డర్ల ఆధారంగా మాత్రమే నమోదు చేయబడతాయి.'
                         : 'Ratings and reviews come strictly from verified buyers with delivered orders.'}
@@ -213,7 +213,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                     <span className="font-bold text-stone-900">
                       {language === 'te' ? 'ఆర్డర్ చరిత్ర (Order History Available)' : 'Order History Available'}
                     </span>
-                    <p className="text-[11px] text-stone-600 mt-0.5">
+                    <p className="text-xs text-stone-600 mt-0.5">
                       {farmer.totalCompletedOrders > 0
                         ? (language === 'te'
                           ? `ఈ రైతు ఇప్పటివరకు ${farmer.totalCompletedOrders} ఆర్డర్లను ${farmer.orderCompletionRate || 98}% విజయవంతమైన రేటుతో సమయానికి పూర్తి చేశారు.`
@@ -227,7 +227,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
               </div>
 
               {/* Disclaimer Notice */}
-              <div className="p-2 bg-amber-50/80 rounded-lg text-[10px] text-amber-900 border border-amber-200/60 leading-relaxed">
+              <div className="p-2 bg-amber-50/80 rounded-lg text-xs text-amber-900 border border-amber-200/60 leading-relaxed">
                 <strong>Platform Notice:</strong> {t.platformSignalsNotice}
               </div>
             </div>
@@ -268,7 +268,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                     <p className="text-xs font-extrabold text-emerald-950 mt-0.5">
                       ₹{p.price} / {p.priceUnit}
                     </p>
-                    <span className="text-[10px] text-stone-500">
+                    <span className="text-xs text-stone-600">
                       {p.availableQuantity} {p.unit} in stock
                     </span>
                   </div>
@@ -287,7 +287,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                 <p className="font-semibold text-stone-700">
                   {language === 'te' ? 'ఇంకా ఎలాంటి సమీక్షలు లేవు' : 'No customer reviews yet'}
                 </p>
-                <p className="text-[11px] text-stone-400 mt-0.5">
+                <p className="text-xs text-stone-600 mt-0.5">
                   {language === 'te'
                     ? 'ఈ రైతు వద్ద పంట ఆర్డర్ చేసి డెలివరీ పొందిన తర్వాత మొదటి సమీక్ష ఇవ్వండి!'
                     : 'Order produce from this farmer to be the first to leave a verified review!'}
@@ -309,7 +309,7 @@ export const FarmerProfileModal: React.FC<FarmerProfileModalProps> = ({
                       </div>
                     </div>
                     <p className="text-stone-600">{rev.comment}</p>
-                    <div className="flex items-center gap-2 text-[10px] text-stone-400 pt-0.5">
+                    <div className="flex items-center gap-2 text-xs text-stone-600 pt-0.5">
                       <span className="text-emerald-700 font-semibold">✓ Verified Purchase</span>
                       <span>·</span>
                       <span>{rev.date}</span>

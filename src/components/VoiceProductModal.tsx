@@ -289,14 +289,14 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
               <h2 className="text-base sm:text-xl font-bold tracking-tight">
                 {step === 'preview' ? t.productPreviewTitle : t.voiceModalTitle}
               </h2>
-              <p className="text-xs text-emerald-200/90 font-medium">
+              <p className="text-xs text-emerald-100 font-medium">
                 {language === 'te' ? 'రైతు సులభ వాయిస్ అసిస్టెంట్' : 'AI-assisted voice listing for farmers'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -538,7 +538,7 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
             <div className="space-y-4">
               <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 text-xs text-emerald-950 font-medium flex items-center justify-between">
                 <span>{t.previewSubtext}</span>
-                <span className="text-[11px] px-2 py-0.5 bg-emerald-600 text-white rounded font-bold">
+                <span className="text-xs px-2 py-0.5 bg-emerald-600 text-white rounded font-bold">
                   {language === 'te' ? 'AI పరిశీలన పూర్తయింది' : 'AI Extracted'}
                 </span>
               </div>
@@ -553,12 +553,12 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
                       className="w-full h-full object-cover"
                     />
                     {editOrganic && (
-                      <div className="absolute top-2 left-2 bg-emerald-800 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded shadow-xs flex items-center gap-1">
+                      <div className="absolute top-2 left-2 bg-emerald-800 text-amber-300 text-xs font-bold px-2 py-0.5 rounded shadow-xs flex items-center gap-1">
                         <Leaf className="w-3 h-3" />
                         <span>{t.organicClaimBadge}</span>
                       </div>
                     )}
-                    <label className="absolute bottom-2 right-2 bg-black/75 hover:bg-black text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 cursor-pointer shadow-md transition-colors">
+                    <label className="absolute bottom-2 right-2 bg-black/75 hover:bg-black text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 cursor-pointer shadow-md transition-colors">
                       <Camera className="w-3 h-3 text-amber-300" />
                       <span>{customImage ? (language === 'te' ? 'మార్చు' : 'Change') : (language === 'te' ? 'ఫోటో తీయి' : 'Add Photo')}</span>
                       <input
@@ -588,13 +588,13 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t border-stone-200/70">
                       <div>
-                        <span className="text-[11px] text-stone-500 block">{t.quantityAvailable}</span>
+                        <span className="text-xs text-stone-600 block">{t.quantityAvailable}</span>
                         <span className="text-sm font-bold text-stone-800">
                           {editQuantity} {editUnit}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[11px] text-stone-500 block">{t.pricePerUnit}</span>
+                        <span className="text-xs text-stone-600 block">{t.pricePerUnit}</span>
                         <span className="text-base font-extrabold text-emerald-900">
                           ₹{editPrice} / {editPriceUnit}
                         </span>
@@ -627,7 +627,7 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
                       <span>AI TRUST SCREENING</span>
                     </div>
 
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                    <span className={`px-2 py-0.5 rounded text-xs font-extrabold uppercase ${
                       trustStatus === 'verified'
                         ? 'bg-emerald-100 text-emerald-900'
                         : trustStatus === 'potentially_exaggerated'
@@ -642,7 +642,7 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
                     </span>
                   </div>
 
-                  <p className="text-[11px] leading-relaxed">
+                  <p className="text-xs leading-relaxed">
                     {trustScreeningNote || 'This description contains claims that will be labeled transparently as Farmer-Declared.'}
                   </p>
 
@@ -651,7 +651,7 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setStep('manual-edit')}
-                        className="px-3 py-1 bg-white hover:bg-stone-100 text-stone-800 text-[11px] font-bold rounded border border-amber-300 cursor-pointer"
+                        className="px-3 py-1 bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold rounded border border-amber-300 cursor-pointer"
                       >
                         [Edit Description]
                       </button>
@@ -660,7 +660,7 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
                         onClick={() => {
                           setTrustScreeningNote('Recorded as unverified farmer-declared statement.');
                         }}
-                        className="px-3 py-1 bg-amber-200 hover:bg-amber-300 text-amber-950 text-[11px] font-bold rounded cursor-pointer"
+                        className="px-3 py-1 bg-amber-200 hover:bg-amber-300 text-amber-950 text-xs font-bold rounded cursor-pointer"
                       >
                         [Keep as Farmer Claim]
                       </button>

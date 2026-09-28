@@ -2,17 +2,40 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', 'Noto Sans Telugu', system-ui, -apple-system, sans-serif;
+    font-family: 'Noto Sans', 'Noto Sans Telugu', system-ui, -apple-system, sans-serif;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    font-size: 16px;
+    line-height: 1.6;
+    background-color: #FBF8F1;
+    color: #1A1A1A;
+  }
+  /* Ensure minimum 16px on all interactive elements */
+  input, select, textarea, button {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  /* Focus visible ring for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid #1B3D27;
+    outline-offset: 2px;
+    border-radius: 8px;
   }
 }
 
 .telugu-font, .telugu-text {
-  font-family: 'Noto Sans Telugu', 'Plus Jakarta Sans', system-ui, sans-serif;
-  line-height: 1.7;
+  font-family: 'Noto Sans Telugu', 'Noto Sans', system-ui, sans-serif;
+  line-height: 1.6;
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+/* Hide scrollbars for touch-friendly horizontal swipe strips */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Safe area padding for mobile gesture navigation & notches */
@@ -24,10 +47,10 @@
   padding-top: max(env(safe-area-inset-top, 16px), 16px);
 }
 
-/* WCAG 2.5.8 Minimum touch target size (44x44px) */
+/* WCAG 2.5.8 Minimum touch target size (48x48px) */
 .min-touch-target {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 48px;
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -63,3 +86,4 @@
 .voice-bar-3 { animation: voice-wave 1s infinite ease-in-out 0.4s; }
 .voice-bar-4 { animation: voice-wave 1s infinite ease-in-out 0.1s; }
 .voice-bar-5 { animation: voice-wave 1s infinite ease-in-out 0.3s; }
+

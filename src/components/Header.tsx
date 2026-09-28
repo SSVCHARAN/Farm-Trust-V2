@@ -1,7 +1,9 @@
-import React from 'react';
-import { Sprout, Globe, UserCheck, ShoppingBag, RotateCcw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sprout, RotateCcw, User, Check, ShieldCheck, ChevronDown } from 'lucide-react';
 import { UserRole } from '../types';
 import { Language, translations } from '../data/translations';
+import { BottomSheet } from './ui/BottomSheet';
+import { Button } from './ui/Button';
 
 interface HeaderProps {
   role: UserRole;
@@ -25,145 +27,208 @@ export const Header: React.FC<HeaderProps> = ({
   onResetDemo,
 }) => {
   const t = translations[language];
+  const [isDemoSheetOpen, setIsDemoSheetOpen] = useState(false);
+
+  // Avatar initials / labels
+  const userInitials = role === 'FARMER' ? (language === 'te' ? 'రవి' : 'RK') : (language === 'te' ? 'అన' : 'AS');
+  const userName = role === 'FARMER' ? (language === 'te' ? 'రవి కుమార్' : 'Ravi Kumar') : (language === 'te' ? 'అనన్య' : 'Ananya');
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs">
-      {/* Top Bar / Clean Account & Role Switcher */}
-      <div className="bg-[#1b3d27] text-white px-3 sm:px-6 py-1.5 text-xs sm:text-sm font-medium flex items-center justify-between gap-2 border-b border-emerald-900/50">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-emerald-200/90 font-bold text-[11px] sm:text-xs hidden md:inline">
-            {language === 'te' ? 'యాక్టివ్ ఖాతా:' : 'Active Account:'}
-          </span>
-          <div className="inline-flex rounded-lg p-0.5 bg-black/25 border border-white/10 shrink-0">
-            <button
-              onClick={() => setRole('FARMER')}
-              className={`px-2 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs transition-all font-bold flex items-center gap-1 cursor-pointer ${
-                role === 'FARMER'
-                  ? 'bg-amber-400 text-stone-950 shadow-xs'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-            >
-              <span>🧑‍🌾</span>
-              <span>{language === 'te' ? 'రైతు' : 'Farmer'}</span>
-              <span className="hidden sm:inline">{language === 'te' ? 'వీక్షణ' : 'View'}</span>
-              <span className="hidden lg:inline font-normal opacity-85 text-[11px]">
-                ({language === 'te' ? 'రవి కుమార్' : 'Ravi Kumar'})
-              </span>
-              {farmerPendingOrdersCount > 0 && (
-                <span className="ml-0.5 px-1.5 py-0.2 bg-red-600 text-white rounded-full text-[10px] font-black animate-pulse">
-                  {farmerPendingOrdersCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setRole('CUSTOMER')}
-              className={`px-2 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs transition-all font-bold flex items-center gap-1 cursor-pointer ${
-                role === 'CUSTOMER'
-                  ? 'bg-amber-400 text-stone-950 shadow-xs'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-            >
-              <span>🛒</span>
-              <span>{language === 'te' ? 'కొనుగోలు' : 'Buyer'}</span>
-              <span className="hidden sm:inline">{language === 'te' ? 'దారు' : 'View'}</span>
-              <span className="hidden lg:inline font-normal opacity-85 text-[11px]">
-                ({language === 'te' ? 'అనన్య' : 'Ananya'})
-              </span>
-              {activeOrdersCount > 0 && (
-                <span className="ml-0.5 px-1.5 py-0.2 bg-emerald-700 text-amber-200 rounded-full text-[10px] font-black">
-                  {activeOrdersCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Language Switcher */}
-          <div className="flex items-center gap-0.5 bg-black/25 border border-white/10 rounded-md p-0.5">
-            <Globe className="w-3.5 h-3.5 text-emerald-300 ml-1 hidden sm:inline" />
-            <button
-              onClick={() => setLanguage('te')}
-              className={`px-1.5 sm:px-2 py-0.5 text-xs rounded transition-all cursor-pointer ${
-                language === 'te'
-                  ? 'bg-white text-stone-900 font-bold shadow-2xs'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-            >
-              తెలుగు
-            </button>
-            <button
-              onClick={() => setLanguage('en')}
-              className={`px-1.5 sm:px-2 py-0.5 text-xs rounded transition-all cursor-pointer ${
-                language === 'en'
-                  ? 'bg-white text-stone-900 font-bold shadow-2xs'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-            >
-              EN
-            </button>
-          </div>
-
-          <button
-            onClick={onResetDemo}
-            title={language === 'te' ? 'డేటా రీసెట్' : 'Reset demo seed data'}
-            className="flex items-center gap-1 text-[11px] text-emerald-300/70 hover:text-white transition-colors px-1.5 py-1 rounded cursor-pointer opacity-75 hover:opacity-100"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">{language === 'te' ? 'రీసెట్' : 'Reset Data'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-800 to-green-950 flex items-center justify-center text-amber-300 shadow-sm border border-emerald-700/30 shrink-0">
-            <Sprout className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-lg sm:text-2xl font-extrabold tracking-tight text-emerald-950 truncate">
+    <>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E2DDCF] shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-14 select-none">
+        <div className="max-w-md md:max-w-4xl mx-auto h-full px-4 flex items-center justify-between gap-2">
+          
+          {/* LEFT: Logo & Brand Name */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#1B3D27] flex items-center justify-center text-[#F5B800] shadow-2xs shrink-0">
+              <Sprout className="w-5 h-5 text-[#F5B800]" />
+            </div>
+            <div className="min-w-0 shrink-0">
+              <span className="text-[17px] font-black tracking-tight text-[#1B3D27] leading-tight block whitespace-nowrap">
                 {t.appName}
               </span>
-              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60 hidden sm:inline-block">
-                {language === 'te' ? 'ప్రత్యక్ష రైతు అంగడి' : 'Direct Farm Direct'}
+              <span className="text-[10px] font-bold text-[#1E7B3F] leading-none block whitespace-nowrap">
+                {language === 'te' ? 'రైతు నేరుగా' : 'Farm Direct'}
               </span>
             </div>
-            <p className="text-[11px] sm:text-xs text-stone-500 font-medium truncate">
-              {t.tagline}
-            </p>
           </div>
-        </div>
 
-        {/* Right Action Area */}
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          {role === 'CUSTOMER' && (
+          {/* RIGHT: Demo Chip + Language Switcher + Avatar */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            
+            {/* Small Demo Chip (Opens Role BottomSheet) */}
             <button
-              onClick={onOpenOrders}
-              className="relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-stone-700 hover:text-emerald-900 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors cursor-pointer"
+              onClick={() => setIsDemoSheetOpen(true)}
+              aria-label="Switch Role or Demo options"
+              className="min-h-[36px] px-2 py-1 rounded-full bg-[#E6F2EA] text-[#1B3D27] border border-[#1B3D27]/25 flex items-center gap-1 text-[12px] font-bold cursor-pointer hover:bg-[#d8ebdffe] active:scale-95 transition-all"
             >
-              <ShoppingBag className="w-4 h-4 text-emerald-800 shrink-0" />
-              <span>{t.myOrders}</span>
-              {activeOrdersCount > 0 && (
-                <span className="inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-bold text-white bg-emerald-700 rounded-full">
-                  {activeOrdersCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {role === 'FARMER' && (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-amber-50 border border-amber-200/80 rounded-lg text-xs font-medium text-amber-900">
-              <UserCheck className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-              <span className="truncate max-w-[120px] sm:max-w-none">
-                {language === 'te' ? 'రవి కుమార్' : 'Ravi Kumar'}
+              <span className="text-[12px]">{role === 'FARMER' ? '🧑‍🌾' : '🛒'}</span>
+              <span>
+                {role === 'FARMER'
+                  ? language === 'te' ? 'రైతు' : 'Farmer'
+                  : language === 'te' ? 'కొనుగోలు' : 'Buyer'}
               </span>
+              {(role === 'FARMER' ? farmerPendingOrdersCount : activeOrdersCount) > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[#B3261E] animate-pulse" />
+              )}
+              <ChevronDown className="w-3 h-3 opacity-70" />
+            </button>
+
+            {/* Single Segmented Language Switcher (తె | EN) */}
+            <div className="inline-flex rounded-xl p-0.5 bg-stone-100 border border-stone-200">
+              <button
+                type="button"
+                onClick={() => setLanguage('te')}
+                aria-label="తెలుగు భాషను ఎంచుకోండి"
+                className={`min-h-[36px] px-2.5 py-1 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                  language === 'te'
+                    ? 'bg-[#1B3D27] text-white shadow-2xs'
+                    : 'text-[#5B5B5B] hover:text-[#1A1A1A]'
+                }`}
+              >
+                తె
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                aria-label="Select English language"
+                className={`min-h-[36px] px-2.5 py-1 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                  language === 'en'
+                    ? 'bg-[#1B3D27] text-white shadow-2xs'
+                    : 'text-[#5B5B5B] hover:text-[#1A1A1A]'
+                }`}
+              >
+                EN
+              </button>
             </div>
-          )}
+
+            {/* Avatar Pill / Initial */}
+            <div
+              className="relative w-9 h-9 rounded-full bg-[#E6F2EA] border-2 border-[#1B3D27]/20 flex items-center justify-center text-[#1B3D27] font-black text-[13px] shrink-0 cursor-pointer"
+              onClick={() => setIsDemoSheetOpen(true)}
+              title={userName}
+            >
+              <span>{userInitials}</span>
+              {role === 'FARMER' && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#1E7B3F] border-2 border-white" />
+              )}
+            </div>
+
+          </div>
+
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Role Switch & Demo Options BottomSheet */}
+      <BottomSheet
+        isOpen={isDemoSheetOpen}
+        onClose={() => setIsDemoSheetOpen(false)}
+        title={language === 'te' ? 'పాత్ర మార్చండి / డెమో' : 'Switch Role & Demo'}
+        subtitle={language === 'te' ? 'రైతు లేదా కొనుగోలుదారు వీక్షణను ఎంచుకోండి' : 'Choose Farmer or Buyer perspective'}
+      >
+        <div className="space-y-4 pt-1">
+          
+          {/* Farmer Option */}
+          <button
+            type="button"
+            onClick={() => {
+              setRole('FARMER');
+              setIsDemoSheetOpen(false);
+            }}
+            className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
+              role === 'FARMER'
+                ? 'bg-[#E6F2EA] border-[#1B3D27] ring-2 ring-[#1B3D27]/20'
+                : 'bg-white border-[#E2DDCF] hover:border-stone-400'
+            }`}
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-[#1B3D27] text-[#F5B800] flex items-center justify-center text-2xl shrink-0">
+                🧑‍🌾
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[17px] font-black text-[#1A1A1A]">
+                    {language === 'te' ? 'రైతు మోడ్' : 'Farmer Mode'}
+                  </h3>
+                  {farmerPendingOrdersCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-[#B3261E] text-white">
+                      {farmerPendingOrdersCount} new
+                    </span>
+                  )}
+                </div>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te'
+                    ? 'పంటలు అమ్మండి, ఆర్డర్లు స్వీకరించండి'
+                    : 'List harvests, accept direct orders'}
+                </p>
+              </div>
+            </div>
+            {role === 'FARMER' && (
+              <div className="w-7 h-7 rounded-full bg-[#1B3D27] text-white flex items-center justify-center shrink-0">
+                <Check className="w-4 h-4 stroke-[3]" />
+              </div>
+            )}
+          </button>
+
+          {/* Buyer Option */}
+          <button
+            type="button"
+            onClick={() => {
+              setRole('CUSTOMER');
+              setIsDemoSheetOpen(false);
+            }}
+            className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
+              role === 'CUSTOMER'
+                ? 'bg-[#E6F2EA] border-[#1B3D27] ring-2 ring-[#1B3D27]/20'
+                : 'bg-white border-[#E2DDCF] hover:border-stone-400'
+            }`}
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-[#F5B800] text-[#1A1A1A] flex items-center justify-center text-2xl shrink-0">
+                🛒
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[17px] font-black text-[#1A1A1A]">
+                    {language === 'te' ? 'కొనుగోలుదారు మోడ్' : 'Buyer Mode'}
+                  </h3>
+                  {activeOrdersCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-[#1E7B3F] text-white">
+                      {activeOrdersCount}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te'
+                    ? 'తాజా పంటలు కొనండి, స్థానిక రైతులను కలవండి'
+                    : 'Browse marketplace, request harvests'}
+                </p>
+              </div>
+            </div>
+            {role === 'CUSTOMER' && (
+              <div className="w-7 h-7 rounded-full bg-[#1B3D27] text-white flex items-center justify-center shrink-0">
+                <Check className="w-4 h-4 stroke-[3]" />
+              </div>
+            )}
+          </button>
+
+          {/* Reset Demo Data */}
+          <div className="pt-2 border-t border-[#E2DDCF]">
+            <button
+              type="button"
+              onClick={() => {
+                onResetDemo();
+                setIsDemoSheetOpen(false);
+              }}
+              className="w-full min-h-[48px] px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-100 text-[#5B5B5B] hover:text-[#1A1A1A] flex items-center justify-center gap-2 text-[14px] font-bold transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>{language === 'te' ? 'డెమో డేటాను ప్రారంభ స్థితికి రీసెట్ చేయండి' : 'Reset Demo Seed Data'}</span>
+            </button>
+          </div>
+
+        </div>
+      </BottomSheet>
+    </>
   );
 };

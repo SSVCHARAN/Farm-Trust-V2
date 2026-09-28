@@ -70,7 +70,7 @@ export default function App() {
     return false;
   });
 
-  const [farmerTab, setFarmerTab] = useState<'orders' | 'products' | 'demand' | 'profile'>('orders');
+  const [farmerTab, setFarmerTab] = useState<'home' | 'orders' | 'products' | 'demand' | 'profile'>('home');
 
   // Entities state (initialized synchronously to avoid empty flash)
   const [farmers, setFarmers] = useState<Farmer[]>(() => StorageService.getFarmers());
@@ -300,7 +300,7 @@ export default function App() {
       {toastMessage && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#1b3d27] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-emerald-700/60 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md w-[92%] sm:w-auto">
           <CheckCircle2 className="w-5 h-5 text-amber-300 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold tracking-wide telugu-text">{toastMessage}</span>
+          <span className="text-sm sm:text-base font-semibold tracking-wide telugu-text">{toastMessage}</span>
         </div>
       )}
 
@@ -391,22 +391,22 @@ export default function App() {
             setIsCustomerVoiceSearchOpen(true);
           }
         }}
-        onOpenAssistant={() => setIsFarmerAssistantOpen(true)}
         onOpenOrders={() => setIsCustomerOrdersOpen(true)}
         onOpenRequestModal={() => setIsCustomerRequestOpen(true)}
+        onOpenBasket={() => setIsCustomerOrdersOpen(true)}
         farmerTab={farmerTab}
         setFarmerTab={setFarmerTab}
       />
 
       {/* Footer */}
-      <footer className="bg-stone-900 text-stone-400 text-xs py-8 border-t border-stone-800 pb-24 sm:pb-8">
+      <footer className="bg-stone-900 text-stone-300 text-sm py-8 border-t border-stone-800 pb-24 sm:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-stone-200">
-            <span className="font-bold text-sm text-white">Farm Trust</span>
+            <span className="font-bold text-base text-white">Farm Trust</span>
             <span>·</span>
             <span>Farm to Family, in Every Language</span>
           </div>
-          <div className="flex items-center gap-4 text-stone-400">
+          <div className="flex items-center gap-4 text-stone-300">
             <span>Visakhapatnam, Andhra Pradesh</span>
             <span>·</span>
             <span>Voice-First AI Agricultural Marketplace</span>

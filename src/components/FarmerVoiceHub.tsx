@@ -510,7 +510,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 Voice First
               </span>
             </div>
-            <p className="text-xs text-emerald-200/90 font-medium">
+            <p className="text-xs text-emerald-100 font-medium">
               {isTe
                 ? 'ధర మార్చడం, స్టాక్, ఆర్డర్ల కోసం సహజంగా మాట్లాడండి'
                 : 'Speak naturally in Telugu or English for prices, stock & orders'}
@@ -525,7 +525,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             <button
               type="button"
               onClick={() => setVoiceLang('te-IN')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all min-touch-target cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all min-touch-target cursor-pointer ${
                 voiceLang === 'te-IN'
                   ? 'bg-amber-400 text-stone-950 shadow-xs'
                   : 'text-emerald-100 hover:text-white'
@@ -536,7 +536,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             <button
               type="button"
               onClick={() => setVoiceLang('en-IN')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all min-touch-target cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all min-touch-target cursor-pointer ${
                 voiceLang === 'en-IN'
                   ? 'bg-amber-400 text-stone-950 shadow-xs'
                   : 'text-emerald-100 hover:text-white'
@@ -594,14 +594,14 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="w-full sm:w-auto flex items-center gap-2">
                 <button
                   type="button"
                   onClick={startListening}
-                  className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black rounded-2xl shadow-lg transition-transform active:scale-95 flex items-center gap-2.5 cursor-pointer min-touch-target"
+                  className="flex-1 sm:flex-initial px-6 py-3 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black rounded-2xl shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer min-h-[46px]"
                 >
                   <Mic className="w-5 h-5 text-stone-950 animate-pulse" />
-                  <span className="text-sm">
+                  <span className="text-xs sm:text-sm">
                     {isTe ? 'నోటితో మాట్లాడండి' : 'Start Speaking'}
                   </span>
                 </button>
@@ -609,7 +609,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowKeyboard(!showKeyboard)}
-                  className="w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center transition-colors cursor-pointer min-touch-target"
+                  className="w-11 h-11 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center transition-colors cursor-pointer shrink-0"
                   title="Toggle typing input"
                 >
                   <Keyboard className="w-5 h-5" />
@@ -619,10 +619,10 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
 
             {/* Clickable Sample Prompts */}
             <div className="space-y-2">
-              <span className="text-xs font-bold text-emerald-200/90 flex items-center gap-1.5">
+              <span className="text-xs font-bold text-emerald-100 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>
-                  {isTe ? 'త్వరిత ఆదేశాలు (క్లిక్ చేసి మాట్లాడవచ్చు):' : 'Sample Voice Commands:'}
+                  {isTe ? 'త్వరిత ఆదేశాలు (నొక్కవచ్చు):' : 'Sample Voice Commands:'}
                 </span>
               </span>
 
@@ -634,20 +634,20 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
-                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-touch-target group shadow-2xs"
+                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-h-[42px] group shadow-2xs"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">💰</span>
-                    <div>
-                      <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">💰</span>
+                    <div className="min-w-0">
+                      <p className="font-black text-amber-300 group-hover:text-amber-200 text-xs">
                         {isTe ? 'ధర సవరణ' : 'Price Change'}
                       </p>
-                      <p className="text-stone-300 text-[11px] truncate">
+                      <p className="text-stone-300 text-xs truncate">
                         {isTe ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to ₹35'}
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors shrink-0 ml-2" />
                 </button>
 
                 <button
@@ -657,20 +657,20 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
-                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-touch-target group shadow-2xs"
+                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-h-[42px] group shadow-2xs"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">📦</span>
-                    <div>
-                      <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">📦</span>
+                    <div className="min-w-0">
+                      <p className="font-black text-amber-300 group-hover:text-amber-200 text-xs">
                         {isTe ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders'}
                       </p>
-                      <p className="text-stone-300 text-[11px] truncate">
+                      <p className="text-stone-300 text-xs truncate">
                         {isTe ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders'}
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors shrink-0 ml-2" />
                 </button>
 
                 <button
@@ -680,20 +680,20 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
-                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-touch-target group shadow-2xs"
+                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-h-[42px] group shadow-2xs"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">📈</span>
-                    <div>
-                      <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">📈</span>
+                    <div className="min-w-0">
+                      <p className="font-black text-amber-300 group-hover:text-amber-200 text-xs">
                         {isTe ? 'అమ్మకాల ఆదాయం' : 'Sales Summary'}
                       </p>
-                      <p className="text-stone-300 text-[11px] truncate">
+                      <p className="text-stone-300 text-xs truncate">
                         {isTe ? 'ఈ వారం ఎంత అమ్మాను?' : 'How much did I sell this week?'}
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors shrink-0 ml-2" />
                 </button>
 
                 <button
@@ -703,20 +703,20 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     setTranscript(prompt);
                     processQuery(prompt);
                   }}
-                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-touch-target group shadow-2xs"
+                  className="p-3 text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-amber-400/60 rounded-xl transition-all flex items-center justify-between cursor-pointer min-h-[42px] group shadow-2xs"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🌾</span>
-                    <div>
-                      <p className="font-extrabold text-amber-300 group-hover:text-amber-200">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">🌾</span>
+                    <div className="min-w-0">
+                      <p className="font-black text-amber-300 group-hover:text-amber-200 text-xs">
                         {isTe ? 'పంట నిల్వలు' : 'My Harvest Stock'}
                       </p>
-                      <p className="text-stone-300 text-[11px] truncate">
+                      <p className="text-stone-300 text-xs truncate">
                         {isTe ? 'నా దగ్గర ఏమేమి పంటలు ఉన్నాయి?' : 'What crops do I have?'}
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-white/50 group-hover:text-amber-300 transition-colors shrink-0 ml-2" />
                 </button>
               </div>
             </div>
@@ -725,9 +725,9 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
 
         {/* 2. STATE: LISTENING - Live Audio Wave & Interim Transcript */}
         {voiceState === 'LISTENING' && (
-          <div className="p-5 bg-stone-900/80 rounded-2xl border-2 border-red-500/60 text-white space-y-4 animate-in fade-in">
+          <div className="p-4 sm:p-5 bg-stone-900/90 rounded-2xl border-2 border-red-500/70 text-white space-y-3.5 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
                 <span className="text-xs font-black uppercase tracking-wider text-red-400">
                   {isTe ? 'వింటున్నాం... స్పష్టంగా మాట్లాడండి' : 'Listening... Speak naturally'}
@@ -760,29 +760,30 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             </div>
 
             {/* Live Transcript Box */}
-            <div className="min-h-[56px] p-3.5 bg-black/40 rounded-xl border border-white/10 flex items-center">
-              <p className="text-sm sm:text-base font-bold text-amber-200 tracking-wide">
+            <div className="min-h-[56px] p-3.5 bg-black/50 rounded-xl border border-white/10 flex items-center">
+              <p className="text-sm sm:text-base font-bold text-amber-200 tracking-wide telugu-text">
                 {transcript ? `"${transcript}"` : (isTe ? 'ధ్వని వినపడుతోంది...' : 'Hearing your voice...')}
               </p>
             </div>
 
+            {/* Full-width Done Speaking button on mobile */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2 pt-1 border-t border-white/10">
-              <span className="text-stone-400 text-[11px]">
+              <span className="text-stone-600 text-xs">
                 {isTe ? 'మీరు ఆపగానే ఆటోమేటిక్‌గా ప్రాసెస్ అవుతుంది' : 'Will auto-process when you finish'}
               </span>
               <button
                 type="button"
                 onClick={stopListening}
-                className="self-end px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl cursor-pointer min-touch-target flex items-center gap-1.5 shadow-md text-xs"
+                className="w-full sm:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl cursor-pointer flex items-center justify-center gap-2 shadow-md text-xs sm:text-sm active:scale-95 min-h-[42px]"
               >
-                <MicOff className="w-3.5 h-3.5" />
-                <span>{isTe ? 'పూర్తయింది' : 'Done Speaking'}</span>
+                <MicOff className="w-4 h-4" />
+                <span>{isTe ? 'పూర్తయింది (చెప్పడం ఆపండి)' : 'Done Speaking'}</span>
               </button>
             </div>
 
             {/* Quick Clickable Suggestions while listening */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-[11px] text-stone-400 font-bold">
+            <div className="flex items-center gap-1.5 pt-1 overflow-x-auto scrollbar-none pb-0.5">
+              <span className="text-xs text-stone-600 font-bold shrink-0">
                 {isTe ? 'లేదా నొక్కండి:' : 'Or tap:'}
               </span>
               <button
@@ -792,7 +793,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                   setTranscript(q);
                   processQuery(q);
                 }}
-                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[11px] font-bold text-amber-300 cursor-pointer min-touch-target"
+                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-xs font-bold text-amber-300 cursor-pointer shrink-0 min-h-[30px]"
               >
                 💰 {isTe ? 'ధర 35 చేయి' : 'Price to ₹35'}
               </button>
@@ -803,7 +804,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                   setTranscript(q);
                   processQuery(q);
                 }}
-                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[11px] font-bold text-amber-300 cursor-pointer min-touch-target"
+                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-xs font-bold text-amber-300 cursor-pointer shrink-0 min-h-[30px]"
               >
                 📦 {isTe ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Orders'}
               </button>
@@ -814,7 +815,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                   setTranscript(q);
                   processQuery(q);
                 }}
-                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[11px] font-bold text-amber-300 cursor-pointer min-touch-target"
+                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-xs font-bold text-amber-300 cursor-pointer shrink-0 min-h-[30px]"
               >
                 📈 {isTe ? 'అమ్మకాలు' : 'Sales'}
               </button>
@@ -848,7 +849,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                 <span>{isTe ? 'మార్పును ఖరారు చేయండి' : 'Please Confirm This Action'}</span>
               </div>
               {isConfirmListening && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[11px] font-bold animate-pulse shrink-0">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-bold animate-pulse shrink-0">
                   <Mic className="w-3 h-3" />
                   <span>{isTe ? '"అవును" / "వద్దు" వింటున్నాం' : 'Listening for Yes/No'}</span>
                 </div>
@@ -871,7 +872,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                     {isTe ? 'కొత్త ధర' : 'New Price'}:
                   </p>
                   <div className="flex items-baseline gap-1.5 justify-end">
-                    <span className="text-xs line-through text-stone-400 font-bold">
+                    <span className="text-xs line-through text-stone-600 font-bold">
                       ₹{activeAction.payload.oldPrice}
                     </span>
                     <span className="text-base sm:text-lg font-black text-emerald-800">
@@ -987,7 +988,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
                       : 'text-stone-400'
                   }`}
                 />
-                <span className="font-bold text-emerald-200 text-[11px]">
+                <span className="font-bold text-emerald-100 text-xs">
                   {isAudioLoading
                     ? (isTe ? 'సహజ వాయిస్ లోడ్ అవుతోంది...' : 'Loading human voice...')
                     : isSpeaking
@@ -1162,7 +1163,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               <button
                 type="button"
                 onClick={() => setShowKeyboard(false)}
-                className="text-stone-400 hover:text-stone-600 p-1 cursor-pointer"
+                className="text-stone-600 hover:text-stone-600 p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

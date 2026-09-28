@@ -189,7 +189,7 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold tracking-tight">{t.voiceOnboardTitle}</h2>
-              <p className="text-xs text-emerald-200 font-medium">{t.voiceOnboardSub}</p>
+              <p className="text-xs text-emerald-100 font-medium">{t.voiceOnboardSub}</p>
             </div>
           </div>
           <button
@@ -242,12 +242,12 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                 {isListening ? (
                   <>
                     <MicOff className="w-8 h-8 animate-pulse" />
-                    <span className="text-[10px] font-bold mt-1 text-white">Stop</span>
+                    <span className="text-xs font-bold mt-1 text-white">Stop</span>
                   </>
                 ) : (
                   <>
                     <Mic className="w-8 h-8" />
-                    <span className="text-[10px] font-bold mt-1 text-amber-300">Speak</span>
+                    <span className="text-xs font-bold mt-1 text-amber-300">Speak</span>
                   </>
                 )}
               </button>
@@ -262,7 +262,7 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
             {/* Live speech transcription */}
             {spokenText && (
               <div className="p-3 bg-white rounded-xl border border-stone-300 text-left text-xs font-medium text-stone-800">
-                <span className="text-[10px] uppercase font-bold text-stone-500 block mb-1">
+                <span className="text-xs uppercase font-bold text-stone-600 block mb-1">
                   {language === 'te' ? 'మీరు చెప్పినది:' : 'You said:'}
                 </span>
                 <p className="italic leading-relaxed">{spokenText}</p>
@@ -283,7 +283,7 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
 
           {/* Sample Prompts */}
           <div className="space-y-1.5">
-            <span className="text-[11px] font-bold text-stone-500 flex items-center gap-1">
+            <span className="text-xs font-bold text-stone-500 flex items-center gap-1">
               <Volume2 className="w-3.5 h-3.5 text-emerald-800" />
               <span>{language === 'te' ? 'లేదా ఈ క్రింది ఉదాహరణ నొక్కండి:' : 'Or tap a sample sentence to test:'}</span>
             </span>
@@ -298,7 +298,7 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                 className="p-2.5 text-left bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl transition-colors cursor-pointer min-touch-target"
               >
                 <p className="font-bold text-emerald-950">🌾 రాము - ఆనందపురం (Telugu)</p>
-                <p className="text-stone-500 text-[11px] truncate">{t.onboardSample2}</p>
+                <p className="text-stone-600 text-xs truncate">{t.onboardSample2}</p>
               </button>
 
               <button
@@ -310,7 +310,7 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                 className="p-2.5 text-left bg-stone-50 hover:bg-emerald-50 border border-stone-200 rounded-xl transition-colors cursor-pointer min-touch-target"
               >
                 <p className="font-bold text-emerald-950">🌾 Lakshmi - Sabbavaram (English)</p>
-                <p className="text-stone-500 text-[11px] truncate">{t.onboardSample1}</p>
+                <p className="text-stone-600 text-xs truncate">{t.onboardSample1}</p>
               </button>
             </div>
           </div>
@@ -331,18 +331,18 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                   <span>{language === 'te' ? 'గుర్తించిన వివరాలు (సరిచూసుకోండి):' : 'AI Extracted Details (Review & Confirm):'}</span>
                 </span>
-                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
                   100% Free
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
                     {t.farmerNameLabel} (English)
                   </label>
                   <div className="flex items-center gap-1.5 bg-white border border-stone-300 rounded-xl px-2.5 py-2">
-                    <User className="w-3.5 h-3.5 text-stone-400" />
+                    <User className="w-3.5 h-3.5 text-stone-600" />
                     <input
                       type="text"
                       value={formName}
@@ -353,11 +353,11 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
                     రైతు పేరు (Telugu)
                   </label>
                   <div className="flex items-center gap-1.5 bg-white border border-stone-300 rounded-xl px-2.5 py-2">
-                    <User className="w-3.5 h-3.5 text-stone-400" />
+                    <User className="w-3.5 h-3.5 text-stone-600" />
                     <input
                       type="text"
                       value={formTeluguName}
@@ -368,11 +368,11 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
                     {t.villageLocationLabel}
                   </label>
                   <div className="flex items-center gap-1.5 bg-white border border-stone-300 rounded-xl px-2.5 py-2">
-                    <MapPin className="w-3.5 h-3.5 text-stone-400" />
+                    <MapPin className="w-3.5 h-3.5 text-stone-600" />
                     <input
                       type="text"
                       value={formLocation}
@@ -383,11 +383,11 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
                     {t.acresLabel}
                   </label>
                   <div className="flex items-center gap-1.5 bg-white border border-stone-300 rounded-xl px-2.5 py-2">
-                    <Trees className="w-3.5 h-3.5 text-stone-400" />
+                    <Trees className="w-3.5 h-3.5 text-stone-600" />
                     <input
                       type="number"
                       value={formAcres}
@@ -398,11 +398,11 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
                     {t.cropsLabel}
                   </label>
                   <div className="flex items-center gap-1.5 bg-white border border-stone-300 rounded-xl px-2.5 py-2">
-                    <Sprout className="w-3.5 h-3.5 text-stone-400" />
+                    <Sprout className="w-3.5 h-3.5 text-stone-600" />
                     <input
                       type="text"
                       value={formCrops}
