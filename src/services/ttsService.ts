@@ -1,9 +1,11 @@
 /**
  * Vernacular Speech Synthesis (TTS) Service for Farm Trust
- * Multi-Tier Provider:
- * 1. AI Neural Voice (Gemini Audio / Indian Neural AI via Backend)
- * 2. Instant Pre-warmed & Local Disk Audio Cache (/audio/cache/...)
- * 3. Graceful Fallback to Browser SpeechSynthesis (never breaks)
+ * Pure browser-native Text-To-Speech (SpeechSynthesis API)
+ * - Zero paid APIs / zero API keys required
+ * - Intelligent voice ranking for Indian Telugu (te-IN) and Indian English (en-IN)
+ * - Robust handling of asynchronous voiceschanged lifecycle
+ * - Natural conversational rates (0.92 for Telugu, 0.96 for English) & natural pitch (1.0)
+ * - Phonetic text formatting for colloquial vernacular comprehension
  */
 
 export type TTSLanguage = 'te-IN' | 'en-IN';
@@ -20,64 +22,129 @@ export interface TTSOptions {
   context?: TTSContext;
 }
 
+/**
+ * Normalizes numbers, currency symbols, and jargon into natural conversational words.
+ * Prevents the synthesizer from reading punctuation marks, hashtags, or raw currency symbols.
+ */
 export function formatVernacularSpeech(text: string, lang: TTSLanguage): string {
+  if (!text) return '';
+
   if (lang === 'te-IN') {
     return text
-      .replace(/(\d+),(\d+)/g, '$1$2')
-      .replace(/₹\s*(\d+)\s*\/\s*(?:kg|కిలో|కేజీ)/gi, '$1 రూపాయలు కిలో')
+      // Order IDs: #FT-1024 or FT-1024 -> "ఆర్డర్ 1024"
+      .replace(/#?\s*FT-(\d+)/gi, 'ఆర్డర్ $1')
+      // Currency + rate: ₹ 35 / kg -> "కిలోకి 35 రూపాయలు"
+      .replace(/₹\s*(\d+)\s*\/\s*(?:kg|కిలో|కేజీ)/gi, 'కిలోకి $1 రూపాయలు')
+      // Currency alone: ₹ 35 -> "35 రూపాయలు"
       .replace(/₹\s*(\d+)/g, '$1 రూపాయలు')
-      .replace(/(\d+)\s*(?:kg|కిలోలు)/gi, '$1 కిలోలు')
+      // Quantities: 5 kg -> "5 కిలోలు"
+      .replace(/(\d+)\s*(?:kg|కిలోలు|కేజీలు)/gi, '$1 కిలోలు')
       .replace(/(\d+)\s*(?:liters|లీటర్లు)/gi, '$1 లీటర్లు')
-      .replace(/[*#_~`\[\]()]/g, ' ')
+      // Clean up symbols that cause robotic speech
+      .replace(/[*#_~`\[\]()""'']/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   } else {
     return text
-      .replace(/(\d+),(\d+)/g, '$1$2')
+      // Order IDs: #FT-1024 -> "Order 1024"
+      .replace(/#?\s*FT-(\d+)/gi, 'Order $1')
+      // Currency + rate: ₹ 35 / kg -> "35 rupees per kg"
       .replace(/₹\s*(\d+)\s*\/\s*(?:kg|kilogram)/gi, '$1 rupees per kg')
+      // Currency alone: ₹ 35 -> "35 rupees"
       .replace(/₹\s*(\d+)/g, '$1 rupees')
-      .replace(/(\d+)\s*kg/gi, '$1 kg')
-      .replace(/[*#_~`\[\]()]/g, ' ')
+      // Quantities: 5 kg -> "5 kg"
+      .replace(/(\d+)\s*kg\b/gi, '$1 kg')
+      .replace(/(\d+)\s*liters?\b/gi, '$1 liters')
+      // Clean up symbols
+      .replace(/[*#_~`\[\]()""'']/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
 }
 
 class VernacularTTSService {
-  private currentAudio: HTMLAudioElement | null = null;
-  private activeAbortController: AbortController | null = null;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
   private voices: SpeechSynthesisVoice[] = [];
   private isAudioPlaying: boolean = false;
-  private isAudioLoading: boolean = false;
-  private lastAudioUrl: string | null = null;
   private lastText: string = '';
   private lastLang: TTSLanguage = 'te-IN';
-  private memoryCache: Map<string, string> = new Map();
+  private keepAliveTimer: any = null;
+  private voicesLoadedPromise: Promise<SpeechSynthesisVoice[]> | null = null;
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.loadVoices();
-      window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
+      this.ensureVoicesLoaded();
+      if (window.speechSynthesis.addEventListener) {
+        window.speechSynthesis.addEventListener('voiceschanged', () => this.refreshVoices());
+      }
+      window.speechSynthesis.onvoiceschanged = () => this.refreshVoices();
     }
   }
 
-  private loadVoices() {
-    try {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        this.voices = window.speechSynthesis.getVoices();
+  private refreshVoices(): void {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length > 0) {
+        this.voices = v;
       }
-    } catch (_) {
-      this.voices = [];
     }
+  }
+
+  /**
+   * Safely awaits asynchronous voice population across Chrome, Edge, Safari, and Firefox.
+   */
+  public async ensureVoicesLoaded(): Promise<SpeechSynthesisVoice[]> {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return [];
+    }
+
+    const currentVoices = window.speechSynthesis.getVoices();
+    if (currentVoices && currentVoices.length > 0) {
+      this.voices = currentVoices;
+      return currentVoices;
+    }
+
+    if (this.voicesLoadedPromise) {
+      return this.voicesLoadedPromise;
+    }
+
+    this.voicesLoadedPromise = new Promise<SpeechSynthesisVoice[]>((resolve) => {
+      let resolved = false;
+
+      const onVoicesReady = () => {
+        if (resolved) return;
+        const v = window.speechSynthesis.getVoices();
+        if (v && v.length > 0) {
+          resolved = true;
+          this.voices = v;
+          resolve(v);
+        }
+      };
+
+      if (window.speechSynthesis.addEventListener) {
+        window.speechSynthesis.addEventListener('voiceschanged', onVoicesReady, { once: true });
+      }
+      window.speechSynthesis.onvoiceschanged = onVoicesReady;
+
+      // Fallback timeout in case voiceschanged already fired or is not implemented
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          this.voices = window.speechSynthesis.getVoices() || [];
+          resolve(this.voices);
+        }
+      }, 350);
+    });
+
+    return this.voicesLoadedPromise;
   }
 
   public isSupported(): boolean {
-    return typeof window !== 'undefined';
+    return typeof window !== 'undefined' && 'speechSynthesis' in window;
   }
 
   public isLoading(): boolean {
-    return this.isAudioLoading;
+    return false;
   }
 
   public isSpeaking(): boolean {
@@ -87,35 +154,118 @@ class VernacularTTSService {
     );
   }
 
+  /**
+   * Selects the highest quality natural voice for the target language.
+   * Prioritizes Natural, Neural, Online, and Google voice profiles.
+   */
   public getBestVoice(lang: TTSLanguage): SpeechSynthesisVoice | null {
-    if (this.voices.length === 0) this.loadVoices();
-
-    if (lang === 'te-IN') {
-      const teVoice = this.voices.find(
-        (v) => v.lang === 'te-IN' || v.lang === 'te_IN' || v.lang.toLowerCase().replace('_', '-') === 'te-in'
-      );
-      if (teVoice) return teVoice;
-
-      const teAny = this.voices.find((v) => v.lang.toLowerCase().startsWith('te'));
-      if (teAny) return teAny;
-
-      const indicVoice = this.voices.find(
-        (v) => v.lang === 'hi-IN' || v.lang === 'hi_IN' || v.lang.toLowerCase().startsWith('hi')
-      );
-      if (indicVoice) return indicVoice;
+    if (this.voices.length === 0 && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      this.voices = window.speechSynthesis.getVoices() || [];
     }
 
-    const enInVoice = this.voices.find(
-      (v) => v.lang === 'en-IN' || v.lang === 'en_IN' || v.lang.toLowerCase().replace('_', '-') === 'en-in'
-    );
-    if (enInVoice) return enInVoice;
+    if (!this.voices || this.voices.length === 0) {
+      return null;
+    }
 
-    return this.voices.find((v) => v.lang.toLowerCase().startsWith('en')) || null;
+    if (lang === 'te-IN') {
+      return this.selectBestTeluguVoice(this.voices);
+    } else {
+      return this.selectBestIndianEnglishVoice(this.voices);
+    }
+  }
+
+  private isHighQualityVoice(name: string): boolean {
+    const lower = name.toLowerCase();
+    return (
+      lower.includes('natural') ||
+      lower.includes('online') ||
+      lower.includes('neural') ||
+      lower.includes('google') ||
+      lower.includes('expressive')
+    );
+  }
+
+  private selectBestTeluguVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+    // 1. Natural / Neural Telugu voices (e.g. Google తెలుగు, Microsoft Mohan Online Natural, Microsoft Shruti Online Natural)
+    const teNatural = voices.find(
+      (v) =>
+        (v.lang.toLowerCase().replace('_', '-').startsWith('te') || v.name.toLowerCase().includes('telugu')) &&
+        this.isHighQualityVoice(v.name)
+    );
+    if (teNatural) return teNatural;
+
+    // 2. Exact match te-IN or te_IN
+    const teExact = voices.find((v) => {
+      const l = v.lang.toLowerCase().replace('_', '-');
+      return l === 'te-in' || l === 'te';
+    });
+    if (teExact) return teExact;
+
+    // 3. Named Telugu
+    const teNamed = voices.find(
+      (v) => v.name.toLowerCase().includes('telugu') || v.name.includes('తెలుగు')
+    );
+    if (teNamed) return teNamed;
+
+    // 4. Any voice starting with 'te'
+    const teAny = voices.find((v) => v.lang.toLowerCase().startsWith('te'));
+    if (teAny) return teAny;
+
+    // 5. Fallback: Indic natural voices (Hindi or Indian English with Natural/Google engine)
+    // Avoids falling back to an American English voice that destroys Telugu comprehension
+    const indicNatural = voices.find(
+      (v) =>
+        (v.lang.toLowerCase().replace('_', '-').startsWith('hi') ||
+          v.lang.toLowerCase().replace('_', '-').startsWith('en-in') ||
+          v.name.toLowerCase().includes('india')) &&
+        this.isHighQualityVoice(v.name)
+    );
+    if (indicNatural) return indicNatural;
+
+    const indicAny = voices.find(
+      (v) =>
+        v.lang.toLowerCase().replace('_', '-').startsWith('hi') ||
+        v.lang.toLowerCase().replace('_', '-').startsWith('en-in') ||
+        v.name.toLowerCase().includes('india')
+    );
+    if (indicAny) return indicAny;
+
+    return null;
+  }
+
+  private selectBestIndianEnglishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+    // 1. Natural / Neural Indian English voices (e.g. Google Indian English, Microsoft Neerja Online Natural)
+    const enInNatural = voices.find(
+      (v) =>
+        (v.lang.toLowerCase().replace('_', '-') === 'en-in' || v.name.toLowerCase().includes('india')) &&
+        this.isHighQualityVoice(v.name)
+    );
+    if (enInNatural) return enInNatural;
+
+    // 2. Exact match en-IN or contains 'India' in voice name
+    const enInExact = voices.find((v) => {
+      const l = v.lang.toLowerCase().replace('_', '-');
+      return l === 'en-in' || v.name.toLowerCase().includes('india');
+    });
+    if (enInExact) return enInExact;
+
+    // 3. Any English voice with Natural / Neural quality
+    const enNatural = voices.find(
+      (v) => v.lang.toLowerCase().startsWith('en') && this.isHighQualityVoice(v.name)
+    );
+    if (enNatural) return enNatural;
+
+    // 4. Any English voice
+    const enAny = voices.find((v) => v.lang.toLowerCase().startsWith('en'));
+    if (enAny) return enAny;
+
+    return null;
   }
 
   /**
-   * Unified speak API:
-   * speak(text, language, options)
+   * Speaks the provided text using natural browser SpeechSynthesis.
+   * Rate: 0.92 for Telugu (clear syllable delivery), 0.96 for English (conversational Indian cadence).
+   * Pitch: 1.0 (natural conversational human pitch).
    */
   public async speak(text: string, lang: TTSLanguage = 'te-IN', options?: TTSOptions): Promise<void> {
     if (!text || typeof window === 'undefined') return;
@@ -129,187 +279,104 @@ class VernacularTTSService {
     this.lastText = text;
     this.lastLang = lang;
 
-    const cacheKey = `${lang}:${options?.voiceGender || 'female'}:${cleanText.toLowerCase()}`;
-    const cachedUrl = this.memoryCache.get(cacheKey);
-
-    if (cachedUrl) {
-      this.playAudioFile(cachedUrl, options, cleanText, lang);
-      return;
-    }
-
-    // Attempt AI/Neural voice from backend
-    this.isAudioLoading = true;
-    options?.onLoading?.(true);
-
-    const controller = new AbortController();
-    this.activeAbortController = controller;
-
-    try {
-      const response = await fetch('/api/tts/speak', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: cleanText,
-          language: lang,
-          voiceGender: options?.voiceGender || 'female',
-          context: options?.context,
-        }),
-        signal: controller.signal,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.audioUrl) {
-          this.memoryCache.set(cacheKey, data.audioUrl);
-          this.isAudioLoading = false;
-          options?.onLoading?.(false);
-          this.playAudioFile(data.audioUrl, options, cleanText, lang);
-          return;
-        }
-      }
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        // User deliberately cancelled or requested another audio
-        return;
-      }
-      console.warn('AI Voice service call failed, falling back to browser synthesis:', err);
-    } finally {
-      this.isAudioLoading = false;
-      options?.onLoading?.(false);
-    }
-
-    // Graceful fallback to browser speechSynthesis
-    this.speakBrowserFallback(cleanText, lang, options);
-  }
-
-  private playAudioFile(url: string, options?: TTSOptions, fallbackText?: string, lang?: TTSLanguage): void {
-    try {
-      this.lastAudioUrl = url;
-      const audio = new Audio(url);
-      this.currentAudio = audio;
-
-      audio.onplay = () => {
-        this.isAudioPlaying = true;
-        options?.onStart?.();
-      };
-
-      audio.onended = () => {
-        this.isAudioPlaying = false;
-        this.currentAudio = null;
-        options?.onEnd?.();
-      };
-
-      audio.onerror = (e) => {
-        console.warn('Audio file playback failed, falling back to browser synthesis:', e);
-        this.isAudioPlaying = false;
-        this.currentAudio = null;
-        if (fallbackText && lang) {
-          this.speakBrowserFallback(fallbackText, lang, options);
-        } else {
-          options?.onError?.(e);
-        }
-      };
-
-      audio.play().catch((playErr) => {
-        console.warn('Audio play() interrupted or rejected:', playErr);
-        if (fallbackText && lang) {
-          this.speakBrowserFallback(fallbackText, lang, options);
-        } else {
-          options?.onError?.(playErr);
-        }
-      });
-    } catch (err) {
-      console.warn('Failed to initialize Audio element:', err);
-      if (fallbackText && lang) {
-        this.speakBrowserFallback(fallbackText, lang, options);
-      } else {
-        options?.onError?.(err);
-      }
-    }
-  }
-
-  private speakBrowserFallback(cleanText: string, lang: TTSLanguage, options?: TTSOptions): void {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    if (!('speechSynthesis' in window)) {
       options?.onError?.(new Error('Speech synthesis not supported in this browser'));
       return;
     }
 
+    // Await asynchronous voice resolution before creating utterance
+    await this.ensureVoicesLoaded();
+
     try {
       window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = lang;
-      utterance.rate = options?.rate || (lang === 'te-IN' ? 0.95 : 1.0);
-      utterance.pitch = options?.pitch || 1.0;
+
+      // Natural conversational rates (avoiding robotic, overly fast, or dragging delivery)
+      utterance.rate = options?.rate ?? (lang === 'te-IN' ? 0.92 : 0.96);
+      utterance.pitch = options?.pitch ?? 1.0;
 
       const voice = this.getBestVoice(lang);
       if (voice) {
         utterance.voice = voice;
+        if (voice.lang) {
+          utterance.lang = voice.lang;
+        } else {
+          utterance.lang = lang;
+        }
+      } else {
+        utterance.lang = lang;
       }
 
       utterance.onstart = () => {
         this.isAudioPlaying = true;
+        this.startKeepAlive();
         options?.onStart?.();
       };
 
       utterance.onend = () => {
         this.isAudioPlaying = false;
+        this.stopKeepAlive();
         this.currentUtterance = null;
         options?.onEnd?.();
       };
 
       utterance.onerror = (e) => {
         this.isAudioPlaying = false;
+        this.stopKeepAlive();
         this.currentUtterance = null;
-        options?.onError?.(e);
+        // Don't flag deliberate interruptions/cancellations as errors
+        if ((e as any).error !== 'canceled' && (e as any).error !== 'interrupted') {
+          options?.onError?.(e);
+        }
       };
 
+      // Retain reference on window object to prevent Chrome V8 garbage collection
       (window as any).__farmTrustUtterance = utterance;
       this.currentUtterance = utterance;
+
       window.speechSynthesis.speak(utterance);
     } catch (err) {
       this.isAudioPlaying = false;
-      console.warn('Browser TTS fallback error:', err);
+      this.stopKeepAlive();
+      console.warn('Browser TTS speech error:', err);
       options?.onError?.(err);
     }
   }
 
-  public pause(): void {
-    if (this.currentAudio && !this.currentAudio.paused) {
-      this.currentAudio.pause();
+  // Workaround for Chrome SpeechSynthesis 14s audio pause bug
+  private startKeepAlive(): void {
+    this.stopKeepAlive();
+    this.keepAliveTimer = setInterval(() => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }, 10000);
+  }
+
+  private stopKeepAlive(): void {
+    if (this.keepAliveTimer) {
+      clearInterval(this.keepAliveTimer);
+      this.keepAliveTimer = null;
     }
+  }
+
+  public pause(): void {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
       window.speechSynthesis.pause();
     }
   }
 
   public resume(): void {
-    if (this.currentAudio && this.currentAudio.paused) {
-      this.currentAudio.play().catch((err) => console.warn('Audio resume error:', err));
-    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
     }
   }
 
   public stop(): void {
-    // Abort active fetch request if any
-    if (this.activeAbortController) {
-      this.activeAbortController.abort();
-      this.activeAbortController = null;
-    }
+    this.stopKeepAlive();
 
-    // Stop and clear HTML Audio
-    if (this.currentAudio) {
-      try {
-        this.currentAudio.pause();
-        this.currentAudio.currentTime = 0;
-      } catch (_) {}
-      this.currentAudio = null;
-    }
-
-    // Stop browser synthesis
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -318,13 +385,10 @@ class VernacularTTSService {
     }
 
     this.isAudioPlaying = false;
-    this.isAudioLoading = false;
   }
 
   public replay(options?: TTSOptions): void {
-    if (this.lastAudioUrl) {
-      this.playAudioFile(this.lastAudioUrl, options, this.lastText, this.lastLang);
-    } else if (this.lastText) {
+    if (this.lastText) {
       this.speak(this.lastText, this.lastLang, options);
     }
   }
