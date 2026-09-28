@@ -29,14 +29,15 @@ export function speakOrderAloud(
   language: 'te' | 'en'
 ): void {
   TTSService.unlockAudio();
+  const enText = `Order from ${order.customerName}. ${order.quantity} ${order.unit} of ${order.productName}. You receive ${order.totalPrice} rupees.`;
   let text = '';
   if (language === 'te') {
     const customer = TELUGU_CUSTOMER_NAMES[order.customerName] || order.customerName;
     const prod = order.productTeluguName || order.productName;
     text = `${customer} నుండి ఆర్డర్. ${order.quantity} ${order.unit === 'kg' ? 'కిలోల' : order.unit} ${prod}. మీకు అందే మొత్తం ${order.totalPrice} రూపాయలు.`;
   } else {
-    text = `Order from ${order.customerName}. ${order.quantity} ${order.unit} of ${order.productName}. You receive ${order.totalPrice} rupees.`;
+    text = enText;
   }
 
-  TTSService.speak(text, language === 'te' ? 'te-IN' : 'en-IN');
+  TTSService.speak(text, language === 'te' ? 'te-IN' : 'en-IN', { fallbackText: enText });
 }

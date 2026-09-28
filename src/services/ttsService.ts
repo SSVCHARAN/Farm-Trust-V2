@@ -26,6 +26,7 @@ export interface TTSOptions {
   pitch?: number;
   voiceGender?: 'female' | 'male';
   context?: TTSContext;
+  fallbackText?: string;
 }
 
 /**
@@ -446,9 +447,46 @@ class VernacularTTSService {
   }
 
   /**
+   * Safety converter: If Telugu speech is attempted on a device lacking Telugu TTS voices,
+   * converts core transactional Telugu phrasing to clean English so the Indian English voice
+   * can speak it clearly without choking or producing Hindi garbled sounds.
+   */
+  private convertTeluguToEnglishPhrase(text: string): string {
+    if (!text) return '';
+    if (/[a-zA-Z]{3,}/.test(text)) {
+      return text;
+    }
+    const priceMatch = text.match(/ధర\s*కిలోకి\s*([₹\d]+)\s*రూపాయలు/i) || text.match(/కిలోకి\s*([₹\d]+)\s*రూపాయలు/i);
+    if (priceMatch) {
+      const p = priceMatch[1].replace(/₹/g, '').trim();
+      let crop = 'produce';
+      if (text.includes('టమాటా') || text.includes('టమాట')) crop = 'tomatoes';
+      else if (text.includes('ఉల్లి') || text.includes('ఉల్లిపాయ')) crop = 'onions';
+      else if (text.includes('మిరప') || text.includes('మిర్చి')) crop = 'red chillies';
+      else if (text.includes('బియ్యం') || text.includes('వరి')) crop = 'rice';
+      else if (text.includes('క్యారెట్')) crop = 'carrots';
+      else if (text.includes('బంగాళాదుంప') || text.includes('ఆలూ')) crop = 'potatoes';
+      return `Set ${crop} price to ${p} rupees per kg?`;
+    }
+
+    const stockMatch = text.match(/నిల్వకు\s*(\d+)\s*([^\s]+)\s*చేర్చమంటారా/i) || text.match(/(\d+)\s*(?:కిలోలు|కేజీలు|గ్రాములు)\s*జోడించు/i);
+    if (stockMatch) {
+      return `Add ${stockMatch[1]} to stock?`;
+    }
+
+    if (text.includes('మీ ఉత్పత్తుల జాబితాలో కనిపించలేదు')) {
+      return 'That produce is not in your produce list. You can only update produce you currently sell.';
+    }
+
+    return text;
+  }
+
+  /**
    * Primary Speech Invocation:
-   * First attempts server-side neural speech (/api/tts/speak) which provides human studio-quality audio.
-   * If offline or server unavailable, falls back to the browser's speech synthesis engine.
+   * Uses browser-native SpeechSynthesis with dynamic high-quality voice selection.
+   * NO API key required.
+   * Checks exact static cache first if available, otherwise immediately speaks
+   * using browser SpeechSynthesis with the best available voice.
    */
   public async speak(text: string, lang: TTSLanguage = 'te-IN', options?: TTSOptions): Promise<void> {
     if (!text || typeof window === 'undefined') return;
@@ -456,97 +494,28 @@ class VernacularTTSService {
     // Stop ongoing audio or speech
     this.stop();
 
-    const cleanText = formatVernacularSpeech(text, lang);
-    if (!cleanText) return;
-
-    this.lastText = text;
-    this.lastLang = lang;
-
-    // 0. Instant Synchronous Cache Check (preserves user interaction context for mobile autoplay)
-    const gender = options?.voiceGender || 'female';
-    const cleanLower = cleanText.toLowerCase().trim();
-    const rawLower = text.toLowerCase().trim();
-    const cacheKey = `${lang}:${gender}:${cleanLower}`;
-
-    let cachedUrl =
-      this.memoryCache.get(cacheKey) ||
-      this.memoryCache.get(`${lang}:${gender}:${rawLower}`) ||
-      this.memoryCache.get(`${lang}:${cleanLower}`) ||
-      this.memoryCache.get(`${lang}:${rawLower}`) ||
-      this.findFuzzyStaticAudio(cleanText, lang) ||
-      this.findFuzzyStaticAudio(text, lang);
-
-    if (cachedUrl) {
-      this.playAudioFile(cachedUrl, options, cleanText, lang);
+    if (!('speechSynthesis' in window)) {
+      options?.onError?.(new Error('Speech synthesis not supported in this browser'));
       return;
     }
 
-    // If manifest was still in flight on first launch, await it once and retry lookup
-    if (this.manifestPromise) {
-      try {
-        await this.manifestPromise;
-      } catch (_) {}
+    // 1. Check exact static cache (preserves pre-rendered audio if exact match exists)
+    const gender = options?.voiceGender || 'female';
+    const cleanLower = text.toLowerCase().trim();
+    const cacheKey = `${lang}:${gender}:${cleanLower}`;
 
-      cachedUrl =
-        this.memoryCache.get(cacheKey) ||
-        this.memoryCache.get(`${lang}:${gender}:${rawLower}`) ||
-        this.memoryCache.get(`${lang}:${cleanLower}`) ||
-        this.memoryCache.get(`${lang}:${rawLower}`) ||
-        this.findFuzzyStaticAudio(cleanText, lang) ||
-        this.findFuzzyStaticAudio(text, lang);
+    const cachedUrl =
+      this.memoryCache.get(cacheKey) ||
+      this.memoryCache.get(`${lang}:${cleanLower}`) ||
+      this.findFuzzyStaticAudio(text, lang);
 
-      if (cachedUrl) {
-        this.playAudioFile(cachedUrl, options, cleanText, lang);
-        return;
-      }
+    if (cachedUrl) {
+      this.playAudioFile(cachedUrl, options, text, lang);
+      return;
     }
 
-    // ─── TIER 1: Natural Neural Voice via Backend API ───
-    this.isAudioLoading = true;
-    options?.onLoading?.(true);
-
-    const controller = new AbortController();
-    this.activeAbortController = controller;
-
-    try {
-      const response = await fetch('/api/tts/speak', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: cleanText,
-          language: lang,
-          voiceGender: options?.voiceGender || 'female',
-          context: options?.context,
-        }),
-        signal: controller.signal,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.audioUrl) {
-          this.memoryCache.set(cacheKey, data.audioUrl);
-          this.memoryCache.set(`${lang}:${cleanLower}`, data.audioUrl);
-          this.isAudioLoading = false;
-          options?.onLoading?.(false);
-          this.playAudioFile(data.audioUrl, options, cleanText, lang);
-          return;
-        }
-      }
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        // User deliberately cancelled or requested another audio
-        return;
-      }
-      console.warn('Backend neural TTS call failed, falling back to browser synthesis:', err);
-    } finally {
-      this.isAudioLoading = false;
-      options?.onLoading?.(false);
-    }
-
-    // ─── TIER 2: Browser SpeechSynthesis Fallback ───
-    this.speakBrowserFallback(cleanText, lang, options);
+    // 2. Pure Browser SpeechSynthesis with Dynamic Voice Selection
+    await this.speakBrowserSpeech(text, lang, options);
   }
 
   private playAudioFile(url: string, options?: TTSOptions, _fallbackText?: string, _lang?: TTSLanguage): void {
@@ -568,19 +537,25 @@ class VernacularTTSService {
       };
 
       audio.onerror = (e) => {
-        console.warn('[TTS] Pre-rendered audio file playback failed (no browser TTS fallback):', e);
+        console.warn('[TTS] Audio file playback failed, falling back to browser synthesis:', e);
         this.isAudioPlaying = false;
         this.currentAudio = null;
-        // Silent end — never fall back to espeak/Hindi
-        options?.onEnd?.();
+        if (_fallbackText && _lang) {
+          this.speakBrowserSpeech(_fallbackText, _lang, options);
+        } else {
+          options?.onEnd?.();
+        }
       };
 
       audio.play().catch((playErr) => {
-        console.warn('[TTS] Audio play() rejected (autoplay policy or format):', playErr);
+        console.warn('[TTS] Audio play() blocked by autoplay, falling back to browser synthesis:', playErr);
         this.isAudioPlaying = false;
         this.currentAudio = null;
-        // Silent end — never fall back to espeak/Hindi
-        options?.onEnd?.();
+        if (_fallbackText && _lang) {
+          this.speakBrowserSpeech(_fallbackText, _lang, options);
+        } else {
+          options?.onEnd?.();
+        }
       });
     } catch (err) {
       console.warn('[TTS] Failed to initialize Audio element:', err);
@@ -588,12 +563,13 @@ class VernacularTTSService {
     }
   }
 
-  private async speakBrowserFallback(cleanText: string, lang: TTSLanguage, options?: TTSOptions): Promise<void> {
+  private async speakBrowserSpeech(text: string, lang: TTSLanguage, options?: TTSOptions): Promise<void> {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       options?.onEnd?.();
       return;
     }
 
+    // Await asynchronous voice resolution before creating utterance
     await this.ensureVoicesLoaded();
 
     try {
@@ -604,47 +580,51 @@ class VernacularTTSService {
         window.speechSynthesis.resume();
       } catch (_) {}
 
+      // Select best voice dynamically
       const voice = this.getBestVoice(lang);
 
-      // ── Telugu: no native te-IN voice → silent bail (never espeak/Hindi) ──
-      if (lang.startsWith('te')) {
-        if (!voice) {
-          console.info('[TTS] No Telugu voice available; skipping browser TTS for Telugu.');
-          options?.onEnd?.();
-          return;
-        }
-        const voiceIsTelugu = voice.lang.toLowerCase().startsWith('te') || voice.name.toLowerCase().includes('telugu');
-        if (!voiceIsTelugu) {
-          console.info('[TTS] Telugu guard: non-Telugu voice would play — aborting to prevent Hindi audio.');
-          options?.onEnd?.();
-          return;
+      // Check if a genuine Telugu voice was found
+      const hasTeluguVoice = voice && (
+        voice.lang.toLowerCase().replace('_', '-').startsWith('te') ||
+        voice.name.toLowerCase().includes('telugu') ||
+        voice.name.includes('తెలుగు')
+      );
+
+      let textToSpeak = text;
+      let utteranceLang: TTSLanguage = lang;
+      let selectedVoice = voice;
+
+      // If Telugu was requested but the device does not have a Telugu voice installed,
+      // fall back gracefully to the Indian English voice with the English fallback text.
+      // This prevents Hindi voices from reading Telugu text and producing nonsensical gibberish!
+      if (lang === 'te-IN' && !hasTeluguVoice) {
+        selectedVoice = this.selectBestIndianEnglishVoice(this.voices);
+        utteranceLang = 'en-IN';
+        if (options?.fallbackText) {
+          textToSpeak = options.fallbackText;
+        } else {
+          textToSpeak = this.convertTeluguToEnglishPhrase(text);
         }
       }
 
-      // ── English: on mobile Chrome, ensure natural, non-robotic playback ──
-      if (lang.startsWith('en')) {
-        if (!voice) {
-          console.info('[TTS] No English voice available; skipping browser TTS.');
-          options?.onEnd?.();
-          return;
-        }
-        if (this.isRoboticVoice(voice.name)) {
-          console.info('[TTS] Robotic voice detected; skipping browser TTS.');
-          options?.onEnd?.();
-          return;
-        }
-      }
+      const cleanText = formatVernacularSpeech(textToSpeak, utteranceLang);
+      if (!cleanText) return;
+
+      this.lastText = text;
+      this.lastLang = lang;
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = options?.rate ?? (lang === 'te-IN' ? 0.92 : 0.98);
+
+      // Natural conversational rates (avoiding robotic, overly fast, or dragging delivery)
+      utterance.rate = options?.rate ?? (utteranceLang === 'te-IN' ? 0.92 : 0.96);
       utterance.pitch = options?.pitch ?? 1.0;
       utterance.volume = 1.0;
 
-      if (voice) {
-        utterance.voice = voice;
-        utterance.lang = voice.lang || lang;
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice.lang || utteranceLang;
       } else {
-        utterance.lang = lang;
+        utterance.lang = utteranceLang;
       }
 
       utterance.onstart = () => {
@@ -669,6 +649,7 @@ class VernacularTTSService {
         }
       };
 
+      // Retain reference on window object to prevent Chrome V8 garbage collection
       (window as any).__farmTrustUtterance = utterance;
       this.currentUtterance = utterance;
 

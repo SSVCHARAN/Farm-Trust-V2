@@ -168,17 +168,23 @@ export function useVoice({
       setTranscript(clean);
 
       try {
+        const userSpokeTelugu = /[\u0C00-\u0C7F]/.test(clean);
+        const userSpokeEnglish = /[a-zA-Z]{3,}/.test(clean) && !userSpokeTelugu;
+        const respondInTelugu = userSpokeEnglish ? false : (userSpokeTelugu ? true : isTe);
+
         if (role === 'FARMER') {
-          const action = await callFarmerAIAssistant(clean, isTe ? 'te' : 'en', farmerContext || {});
+          const action = await callFarmerAIAssistant(clean, respondInTelugu ? 'te' : 'en', farmerContext || {});
           setParsedFarmerAction(action);
 
           // If the AI returned an informational message (e.g. crop not in produce list), speak it out loud!
           if (action.actionType === 'NONE') {
             if (action.message && !action.message.toLowerCase().includes("didn't catch") && !action.message.toLowerCase().includes('unrecognized')) {
-              const msg = isTe ? (action.messageTelugu || action.message) : action.message;
+              const msgTe = action.messageTelugu || action.message;
+              const msgEn = action.message;
+              const msg = respondInTelugu ? msgTe : msgEn;
               setVoiceState('done');
               setConfirmationSentence(msg);
-              TTSService.speak(msg, isTe ? 'te-IN' : 'en-IN');
+              TTSService.speak(msg, respondInTelugu ? 'te-IN' : 'en-IN', { fallbackText: msgEn });
               setTimeout(() => {
                 closeSheet();
               }, 4000);
@@ -189,33 +195,33 @@ export function useVoice({
           }
 
           // Build plain confirmation sentence
-          let sentence = isTe ? action.messageTelugu || action.message : action.message;
+          let sentenceTe = action.messageTelugu || action.message;
+          let sentenceEn = action.message;
 
           // Ensure standard question form only when confirmation is required
           if (action.confirmationRequired) {
             if (action.actionType === 'UPDATE_PRICE' && action.payload) {
-              sentence = isTe
-                ? `${action.payload.productTeluguName || 'పంట'} ధర కిలోకి ₹${action.payload.newPrice} చేయమంటారా?`
-                : `Set ${action.payload.productName || 'produce'} price to ₹${action.payload.newPrice}/kg?`;
+              sentenceTe = `${action.payload.productTeluguName || 'పంట'} ధర కిలోకి ₹${action.payload.newPrice} చేయమంటారా?`;
+              sentenceEn = `Set ${action.payload.productName || 'produce'} price to ₹${action.payload.newPrice}/kg?`;
             } else if ((action.actionType === 'SET_STOCK' || action.actionType === 'ADD_STOCK') && action.payload) {
-              sentence = isTe
-                ? `${action.payload.productTeluguName || 'పంట'} నిల్వకు ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} చేర్చమంటారా?`
-                : `Add ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} to stock?`;
+              sentenceTe = `${action.payload.productTeluguName || 'పంట'} నిల్వకు ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} చేర్చమంటారా?`;
+              sentenceEn = `Add ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} to stock?`;
             } else if (action.actionType === 'UPDATE_ORDER_STATUS' && action.payload) {
-              sentence = isTe
-                ? `${action.payload.customerName || 'కస్టమర్'} గారి ఆర్డర్ స్థితిని "${action.payload.statusNote || action.payload.targetStatus}"గా మార్చమంటారా?`
-                : `Update order for ${action.payload.customerName || 'customer'} to "${action.payload.targetStatus}"?`;
+              sentenceTe = `${action.payload.customerName || 'కస్టమర్'} గారి ఆర్డర్ స్థితిని "${action.payload.statusNote || action.payload.targetStatus}"గా మార్చమంటారా?`;
+              sentenceEn = `Update order for ${action.payload.customerName || 'customer'} to "${action.payload.targetStatus}"?`;
             }
           }
+
+          const sentence = respondInTelugu ? sentenceTe : sentenceEn;
 
           if (action.confirmationRequired) {
             setConfirmationSentence(sentence);
             setVoiceState('confirm');
-            TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
+            TTSService.speak(sentence, respondInTelugu ? 'te-IN' : 'en-IN', { fallbackText: sentenceEn });
           } else {
             // Non-confirmation actions (e.g. inquiries, summaries) -> speak result and apply
             setVoiceState('done');
-            TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
+            TTSService.speak(sentence, respondInTelugu ? 'te-IN' : 'en-IN', { fallbackText: sentenceEn });
             onExecuteFarmerAction?.(action);
             if (action.actionType === 'VIEW_PENDING_ORDERS') {
               setTimeout(() => {
@@ -225,16 +231,16 @@ export function useVoice({
           }
         } else {
           // Buyer Marketplace Search
-          const intent = await parseCustomerVoiceSearch(clean, isTe ? 'te' : 'en');
+          const intent = await parseCustomerVoiceSearch(clean, respondInTelugu ? 'te' : 'en');
           setParsedBuyerIntent(intent);
 
-          const sentence = isTe
-            ? `${intent.productTelugu || intent.product} కోసం మార్కెట్‌లో శోధించమంటారా?`
-            : `Search marketplace for ${intent.product}${intent.maxPrice ? ` under ₹${intent.maxPrice}` : ''}?`;
+          const sentenceTe = `${intent.productTelugu || intent.product} కోసం మార్కెట్‌లో శోధించమంటారా?`;
+          const sentenceEn = `Search marketplace for ${intent.product}${intent.maxPrice ? ` under ₹${intent.maxPrice}` : ''}?`;
+          const sentence = respondInTelugu ? sentenceTe : sentenceEn;
 
           setConfirmationSentence(sentence);
           setVoiceState('confirm');
-          TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
+          TTSService.speak(sentence, respondInTelugu ? 'te-IN' : 'en-IN', { fallbackText: sentenceEn });
         }
       } catch (err) {
         console.error('Error interpreting speech:', err);
