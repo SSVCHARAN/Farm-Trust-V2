@@ -90,11 +90,12 @@ class VernacularTTSService {
       this.manifestPromise = this.loadStaticManifest();
 
       if ('speechSynthesis' in window) {
-        this.ensureVoicesLoaded();
         if (window.speechSynthesis.addEventListener) {
           window.speechSynthesis.addEventListener('voiceschanged', () => this.refreshVoices());
+        } else {
+          window.speechSynthesis.onvoiceschanged = () => this.refreshVoices();
         }
-        window.speechSynthesis.onvoiceschanged = () => this.refreshVoices();
+        this.ensureVoicesLoaded();
       }
     }
   }
@@ -289,6 +290,10 @@ class VernacularTTSService {
       return currentVoices;
     }
 
+    if (this.voices.length > 0) {
+      return this.voices;
+    }
+
     if (this.voicesLoadedPromise) {
       return this.voicesLoadedPromise;
     }
@@ -296,29 +301,31 @@ class VernacularTTSService {
     this.voicesLoadedPromise = new Promise<SpeechSynthesisVoice[]>((resolve) => {
       let resolved = false;
 
-      const onVoicesReady = () => {
+      const finish = (v: SpeechSynthesisVoice[]) => {
         if (resolved) return;
+        resolved = true;
+        this.voicesLoadedPromise = null;
+        if (v && v.length > 0) {
+          this.voices = v;
+        }
+        resolve(this.voices);
+      };
+
+      const onVoicesReady = () => {
         const v = window.speechSynthesis.getVoices();
         if (v && v.length > 0) {
-          resolved = true;
-          this.voices = v;
-          resolve(v);
+          finish(v);
         }
       };
 
       if (window.speechSynthesis.addEventListener) {
         window.speechSynthesis.addEventListener('voiceschanged', onVoicesReady, { once: true });
       }
-      window.speechSynthesis.onvoiceschanged = onVoicesReady;
 
-      // Fallback timeout in case voiceschanged already fired or is not implemented
+      // Fallback timeout in case voiceschanged already fired or is slow
       setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          this.voices = window.speechSynthesis.getVoices() || [];
-          resolve(this.voices);
-        }
-      }, 350);
+        finish(window.speechSynthesis.getVoices() || []);
+      }, 500);
     });
 
     return this.voicesLoadedPromise;
@@ -426,7 +433,7 @@ class VernacularTTSService {
     const enIn = pool.find(
       (v) =>
         v.lang.toLowerCase().replace('_', '-') === 'en-in' ||
-        v.name.toLowerCase().includes('india')
+        (v.lang.toLowerCase().startsWith('en') && v.name.toLowerCase().includes('india'))
     );
     if (enIn) return enIn;
 
@@ -499,23 +506,29 @@ class VernacularTTSService {
       return;
     }
 
+    // Auto-detect actual language from text to prevent cross-language synthesizer mismatch
+    // (e.g. English text passed with default te-IN, or Telugu script passed with en-IN)
+    const isTeluguText = /[\u0C00-\u0C7F]/.test(text);
+    const isEnglishText = /[a-zA-Z]/.test(text) && !isTeluguText;
+    const targetLang: TTSLanguage = isTeluguText ? 'te-IN' : (isEnglishText ? 'en-IN' : lang);
+
     // 1. Check exact static cache (preserves pre-rendered audio if exact match exists)
     const gender = options?.voiceGender || 'female';
     const cleanLower = text.toLowerCase().trim();
-    const cacheKey = `${lang}:${gender}:${cleanLower}`;
+    const cacheKey = `${targetLang}:${gender}:${cleanLower}`;
 
     const cachedUrl =
       this.memoryCache.get(cacheKey) ||
-      this.memoryCache.get(`${lang}:${cleanLower}`) ||
-      this.findFuzzyStaticAudio(text, lang);
+      this.memoryCache.get(`${targetLang}:${cleanLower}`) ||
+      this.findFuzzyStaticAudio(text, targetLang);
 
     if (cachedUrl) {
-      this.playAudioFile(cachedUrl, options, text, lang);
+      this.playAudioFile(cachedUrl, options, text, targetLang);
       return;
     }
 
     // 2. Pure Browser SpeechSynthesis with Dynamic Voice Selection
-    await this.speakBrowserSpeech(text, lang, options);
+    await this.speakBrowserSpeech(text, targetLang, options);
   }
 
   private playAudioFile(url: string, options?: TTSOptions, _fallbackText?: string, _lang?: TTSLanguage): void {
@@ -575,10 +588,14 @@ class VernacularTTSService {
     try {
       if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
         window.speechSynthesis.cancel();
+        // Allow Chrome audio worker to flush cancellation queue before queueing new utterance
+        await new Promise((r) => setTimeout(r, 50));
       }
-      try {
-        window.speechSynthesis.resume();
-      } catch (_) {}
+      // Only resume if actually paused — unconditional resume() on an idle synth corrupts
+      // Chrome's internal utterance state machine and causes it to fire spurious onend after word 1
+      if (window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (_) {}
+      }
 
       // Select best voice dynamically
       const voice = this.getBestVoice(lang);
@@ -620,10 +637,18 @@ class VernacularTTSService {
       utterance.pitch = options?.pitch ?? 1.0;
       utterance.volume = 1.0;
 
-      if (selectedVoice) {
+      // Ensure the selected voice matches the target language family (en for English, te for Telugu)
+      const langFamily = utteranceLang.slice(0, 2).toLowerCase();
+      const voiceMatchesLang = Boolean(
+        selectedVoice &&
+        selectedVoice.lang.toLowerCase().startsWith(langFamily)
+      );
+
+      if (selectedVoice && voiceMatchesLang) {
         utterance.voice = selectedVoice;
-        utterance.lang = selectedVoice.lang || utteranceLang;
+        utterance.lang = selectedVoice.lang;
       } else {
+        utterance.voice = null;
         utterance.lang = utteranceLang;
       }
 

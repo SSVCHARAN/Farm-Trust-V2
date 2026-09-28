@@ -136,7 +136,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
     setIsAudioLoading(false);
   };
 
-  const playVoiceResponse = (text: string) => {
+  const playVoiceResponse = (text: string, customLang?: TTSLanguage) => {
     if (!text) return;
     stopVoiceAudio();
     setCurrentSpokenText(text);
@@ -144,7 +144,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
     setIsPaused(false);
     setIsAudioLoading(true);
 
-    TTSService.speak(text, voiceLang, {
+    TTSService.speak(text, customLang || voiceLang, {
       onLoading: (loading) => setIsAudioLoading(loading),
       onStart: () => {
         setIsAudioLoading(false);
@@ -255,7 +255,14 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
     setExecutionMessage('');
 
     try {
-      const langParam = voiceLang.startsWith('te') ? 'te' : 'en';
+      const userSpokeTelugu = /[\u0C00-\u0C7F]/.test(q);
+      const userSpokeEnglish = /[a-zA-Z]/.test(q) && !userSpokeTelugu;
+      const langParam = userSpokeEnglish ? 'en' : (userSpokeTelugu ? 'te' : (voiceLang.startsWith('te') ? 'te' : 'en'));
+      const activeTTSLang: TTSLanguage = langParam === 'te' ? 'te-IN' : 'en-IN';
+      if (activeTTSLang !== voiceLang) {
+        setVoiceLang(activeTTSLang);
+      }
+
       const action = await callFarmerAIAssistant(q, langParam, {
         farmer,
         products,
@@ -275,7 +282,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
         setCurrentSpokenText(spokenQuestion);
         setIsSpeaking(false);
         setIsAudioLoading(true);
-        TTSService.speak(spokenQuestion, voiceLang, {
+        TTSService.speak(spokenQuestion, activeTTSLang, {
           onLoading: (loading) => setIsAudioLoading(loading),
           onStart: () => {
             setIsAudioLoading(false);
@@ -294,7 +301,7 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
         });
       } else {
         setVoiceState('ANSWER');
-        playVoiceResponse(spokenQuestion);
+        playVoiceResponse(spokenQuestion, activeTTSLang);
       }
     } catch (err: any) {
       console.error('Failed to process voice query:', err);

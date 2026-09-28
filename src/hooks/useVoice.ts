@@ -169,7 +169,7 @@ export function useVoice({
 
       try {
         const userSpokeTelugu = /[\u0C00-\u0C7F]/.test(clean);
-        const userSpokeEnglish = /[a-zA-Z]{3,}/.test(clean) && !userSpokeTelugu;
+        const userSpokeEnglish = /[a-zA-Z]/.test(clean) && !userSpokeTelugu;
         const respondInTelugu = userSpokeEnglish ? false : (userSpokeTelugu ? true : isTe);
 
         if (role === 'FARMER') {
