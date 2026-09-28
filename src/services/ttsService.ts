@@ -126,16 +126,57 @@ class VernacularTTSService {
     const target = cleanText.toLowerCase().replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
     if (!target || target.length < 5) return null;
 
+    // 1. Direct normalized match or containment
     for (const [key, url] of this.memoryCache.entries()) {
       if (key.startsWith(lang)) {
         const textPart = key.split(':').pop() || '';
         const normalized = textPart.replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
-        if (normalized === target || (normalized.length > 10 && (normalized.includes(target) || target.includes(normalized)))) {
+        if (normalized === target || (normalized.length > 8 && (normalized.includes(target) || target.includes(normalized)))) {
           return url;
         }
       }
     }
-    return null;
+
+    // 2. Token overlap similarity for phrases with slightly different phrasing
+    const targetTokens = new Set(
+      cleanText
+        .toLowerCase()
+        .replace(/[^a-z0-9\u0C00-\u0C7F\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length >= 2)
+    );
+    if (targetTokens.size < 2) return null;
+
+    let bestUrl: string | null = null;
+    let highestScore = 0;
+
+    for (const [key, url] of this.memoryCache.entries()) {
+      if (key.startsWith(lang)) {
+        const textPart = key.split(':').pop() || '';
+        const candidateTokens = textPart
+          .toLowerCase()
+          .replace(/[^a-z0-9\u0C00-\u0C7F\s]/g, ' ')
+          .split(/\s+/)
+          .filter((w) => w.length >= 2);
+
+        if (candidateTokens.length < 2) continue;
+
+        let intersectionCount = 0;
+        for (const token of candidateTokens) {
+          if (targetTokens.has(token)) {
+            intersectionCount++;
+          }
+        }
+
+        const score = intersectionCount / Math.max(targetTokens.size, candidateTokens.length);
+        if (score > 0.55 && score > highestScore) {
+          highestScore = score;
+          bestUrl = url;
+        }
+      }
+    }
+
+    return bestUrl;
   }
 
   /**

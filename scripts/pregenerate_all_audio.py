@@ -131,8 +131,60 @@ PHRASES = [
         "lang": "te-IN"
     },
     {
-        "text": "Search marketplace for Fresh Tomatoes under ₹30?",
+        "text": "Search marketplace for Farm Fresh Tomatoes under ₹30?",
         "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Tomatoes under ₹30?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Rice?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Sona Masoori Heritage Rice?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Milk?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Desi A2 Cow Milk?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Mangoes?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Banganapalli Sweet Mangoes?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Chillies?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Search marketplace for Guntur Red Chillies?",
+        "lang": "en-IN"
+    },
+    {
+        "text": "సోనా మసూరి బియ్యం కోసం మార్కెట్‌లో శోధించమంటారా?",
+        "lang": "te-IN"
+    },
+    {
+        "text": "స్వచ్ఛమైన ఆవు పాలు కోసం మార్కెట్‌లో శోధించమంటారా?",
+        "lang": "te-IN"
+    },
+    {
+        "text": "బంగనపల్లి మామిడిపండ్లు కోసం మార్కెట్‌లో శోధించమంటారా?",
+        "lang": "te-IN"
+    },
+    {
+        "text": "గుంటూరు మిరప కోసం మార్కెట్‌లో శోధించమంటారా?",
+        "lang": "te-IN"
     },
     {
         "text": "Update order for Ananya Sharma to \"Accepted by Farmer\"?",
@@ -153,6 +205,10 @@ PHRASES = [
 
     # ─── ORDER READOUTS (speakOrderAloud) ───
     {
+        "text": "Order from Ananya Sharma. 2 kg of Farm Fresh Tomatoes. You receive 40 rupees.",
+        "lang": "en-IN"
+    },
+    {
         "text": "Order from Ananya Sharma. 2 kg of Fresh Tomatoes. You receive 40 rupees.",
         "lang": "en-IN"
     },
@@ -161,11 +217,63 @@ PHRASES = [
         "lang": "te-IN"
     },
     {
+        "text": "Ananya Sharma నుండి ఆర్డర్. 2 కిలోల నాటు టమాటాలు. మీకు అందే మొత్తం 40 రూపాయలు.",
+        "lang": "te-IN"
+    },
+    {
+        "text": "Ananya Sharma నుండి ఆర్డర్. 2 కిలోల Farm Fresh Tomatoes. మీకు అందే మొత్తం 40 రూపాయలు.",
+        "lang": "te-IN"
+    },
+    {
+        "text": "Order from K. Suresh Reddy. 10 kg of Sona Masoori Heritage Rice. You receive 580 rupees.",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Order from Suresh Reddy. 10 kg of Sona Masoori Heritage Rice. You receive 580 rupees.",
+        "lang": "en-IN"
+    },
+    {
+        "text": "Order from Suresh Reddy. 10 kg of Rice. You receive 580 rupees.",
+        "lang": "en-IN"
+    },
+    {
+        "text": "K. Suresh Reddy నుండి ఆర్డర్. 10 కిలోల సోనా మసూరి బియ్యం. మీకు అందే మొత్తం 580 రూపాయలు.",
+        "lang": "te-IN"
+    },
+    {
+        "text": "సురేష్ రెడ్డి నుండి ఆర్డర్. 10 కిలోల సోనా మసూరి బియ్యం. మీకు అందే మొత్తం 580 రూపాయలు.",
+        "lang": "te-IN"
+    },
+    {
         "text": "Order from Suresh Varma. 5 kg of Country Tomatoes. You receive 150 rupees.",
         "lang": "en-IN"
     },
     {
         "text": "సురేష్ వర్మ నుండి ఆర్డర్. 5 కిలోల నాటు టమాటాలు. మీకు అందే మొత్తం 150 రూపాయలు.",
+        "lang": "te-IN"
+    },
+    {
+        "text": "Order from Deepa Varma. 5 kg of Farm Fresh Tomatoes. You receive 100 rupees.",
+        "lang": "en-IN"
+    },
+    {
+        "text": "దీపా వర్మ నుండి ఆర్డర్. 5 కిలోల నాటు టమాటాలు. మీకు అందే మొత్తం 100 రూపాయలు.",
+        "lang": "te-IN"
+    },
+    {
+        "text": "Order from Venkatesh Babu. 2 liters of Desi A2 Cow Milk. You receive 130 rupees.",
+        "lang": "en-IN"
+    },
+    {
+        "text": "వెంకటేష్ బాబు నుండి ఆర్డర్. 2 లీటర్ల స్వచ్ఛమైన ఆవు పాలు. మీకు అందే మొత్తం 130 రూపాయలు.",
+        "lang": "te-IN"
+    },
+    {
+        "text": "Order from Sravani P. 4 kg of Banganapalli Sweet Mangoes. You receive 380 rupees.",
+        "lang": "en-IN"
+    },
+    {
+        "text": "శ్రావణి పి నుండి ఆర్డర్. 4 కిలోల బంగనపల్లి మామిడిపండ్లు. మీకు అందే మొత్తం 380 రూపాయలు.",
         "lang": "te-IN"
     },
     {

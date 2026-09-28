@@ -7,6 +7,16 @@
 
 import { TTSService } from '../services/ttsService';
 
+const TELUGU_CUSTOMER_NAMES: Record<string, string> = {
+  'Ananya Sharma': 'అనన్య శర్మ',
+  'K. Suresh Reddy': 'సురేష్ రెడ్డి',
+  'Suresh Reddy': 'సురేష్ రెడ్డి',
+  'Suresh Varma': 'సురేష్ వర్మ',
+  'Deepa Varma': 'దీపా వర్మ',
+  'Venkatesh Babu': 'వెంకటేష్ బాబు',
+  'Sravani P.': 'శ్రావణి పి',
+};
+
 export function speakOrderAloud(
   order: {
     customerName: string;
@@ -21,8 +31,9 @@ export function speakOrderAloud(
   TTSService.unlockAudio();
   let text = '';
   if (language === 'te') {
+    const customer = TELUGU_CUSTOMER_NAMES[order.customerName] || order.customerName;
     const prod = order.productTeluguName || order.productName;
-    text = `${order.customerName} నుండి ఆర్డర్. ${order.quantity} ${order.unit === 'kg' ? 'కిలోల' : order.unit} ${prod}. మీకు అందే మొత్తం ${order.totalPrice} రూపాయలు.`;
+    text = `${customer} నుండి ఆర్డర్. ${order.quantity} ${order.unit === 'kg' ? 'కిలోల' : order.unit} ${prod}. మీకు అందే మొత్తం ${order.totalPrice} రూపాయలు.`;
   } else {
     text = `Order from ${order.customerName}. ${order.quantity} ${order.unit} of ${order.productName}. You receive ${order.totalPrice} rupees.`;
   }
