@@ -124,68 +124,9 @@ export function useVoice({
     setParsedBuyerIntent(null);
   }, [clearTimers]);
 
-  // Process text through AI parser and transition to CONFIRM
-  const processRecognizedText = useCallback(
-    async (textToProcess: string) => {
-      clearTimers();
-      const clean = textToProcess.trim();
-      if (!clean) {
-        handleFailure('no-speech');
-        return;
-      }
-
-      setVoiceState('processing');
-      setTranscript(clean);
-
-      try {
-        if (role === 'FARMER') {
-          const action = await callFarmerAIAssistant(clean, isTe ? 'te' : 'en', farmerContext || {});
-          setParsedFarmerAction(action);
-
-          // Build plain confirmation sentence
-          let sentence = isTe ? action.messageTelugu || action.message : action.message;
-
-          // Ensure standard question form for confirmation
-          if (action.actionType === 'UPDATE_PRICE' && action.payload) {
-            sentence = isTe
-              ? `${action.payload.productTeluguName || 'టమాటాల'} ధర కిలోకి ₹${action.payload.newPrice} చేయమంటారా?`
-              : `Set ${action.payload.productName || 'produce'} price to ₹${action.payload.newPrice}/kg?`;
-          } else if ((action.actionType === 'SET_STOCK' || action.actionType === 'ADD_STOCK') && action.payload) {
-            sentence = isTe
-              ? `${action.payload.productTeluguName || 'పంట'} నిల్వకు ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} చేర్చమంటారా?`
-              : `Add ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} to stock?`;
-          } else if (action.actionType === 'VIEW_PENDING_ORDERS') {
-            sentence = isTe ? 'మీ పెండింగ్ ఆర్డర్లు చూపించమంటారా?' : 'Show pending buyer orders?';
-          }
-
-          setConfirmationSentence(sentence);
-          setVoiceState('confirm');
-          // Speak confirmation sentence aloud
-          TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
-        } else {
-          // Buyer Marketplace Search
-          const intent = await parseCustomerVoiceSearch(clean, isTe ? 'te' : 'en');
-          setParsedBuyerIntent(intent);
-
-          const sentence = isTe
-            ? `${intent.productTelugu || intent.product} కోసం మార్కెట్‌లో శోధించమంటారా?`
-            : `Search marketplace for ${intent.product}${intent.maxPrice ? ` under ₹${intent.maxPrice}` : ''}?`;
-
-          setConfirmationSentence(sentence);
-          setVoiceState('confirm');
-          TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
-        }
-      } catch (err) {
-        console.error('Error interpreting speech:', err);
-        handleFailure('error');
-      }
-    },
-    [clearTimers, isTe, role, farmerContext]
-  );
-
   // Failure ladder implementation
   const handleFailure = useCallback(
-    (reason: string) => {
+    (_reason: string) => {
       clearTimers();
       const nextFailCount = failureCount + 1;
       setFailureCount(nextFailCount);
@@ -210,6 +151,82 @@ export function useVoice({
       }
     },
     [clearTimers, failureCount, transcript, interimTranscript, closeSheet, onOpenManualForm, showToast, isTe]
+  );
+
+  // Process text through AI parser and transition to CONFIRM
+  const processRecognizedText = useCallback(
+    async (textToProcess: string) => {
+      clearTimers();
+      const clean = textToProcess.trim();
+      if (!clean) {
+        handleFailure('no-speech');
+        return;
+      }
+
+      setVoiceState('processing');
+      setTranscript(clean);
+
+      try {
+        if (role === 'FARMER') {
+          const action = await callFarmerAIAssistant(clean, isTe ? 'te' : 'en', farmerContext || {});
+          setParsedFarmerAction(action);
+
+          // If the AI classified the action as NONE (unrecognized or ambient noise), trigger failure ladder
+          // instead of trapping the user inside a false "Confirm Action" modal with Yes/No buttons!
+          if (action.actionType === 'NONE') {
+            handleFailure('no-match');
+            return;
+          }
+
+          // Build plain confirmation sentence
+          let sentence = isTe ? action.messageTelugu || action.message : action.message;
+
+          // Ensure standard question form for confirmation
+          if (action.actionType === 'UPDATE_PRICE' && action.payload) {
+            sentence = isTe
+              ? `${action.payload.productTeluguName || 'టమాటాల'} ధర కిలోకి ₹${action.payload.newPrice} చేయమంటారా?`
+              : `Set ${action.payload.productName || 'produce'} price to ₹${action.payload.newPrice}/kg?`;
+          } else if ((action.actionType === 'SET_STOCK' || action.actionType === 'ADD_STOCK') && action.payload) {
+            sentence = isTe
+              ? `${action.payload.productTeluguName || 'పంట'} నిల్వకు ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} చేర్చమంటారా?`
+              : `Add ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} to stock?`;
+          } else if (action.actionType === 'UPDATE_ORDER_STATUS' && action.payload) {
+            sentence = isTe
+              ? `${action.payload.customerName || 'కస్టమర్'} గారి ఆర్డర్ స్థితిని "${action.payload.statusNote || action.payload.targetStatus}"గా మార్చమంటారా?`
+              : `Update order for ${action.payload.customerName || 'customer'} to "${action.payload.targetStatus}"?`;
+          } else if (action.actionType === 'VIEW_PENDING_ORDERS') {
+            sentence = isTe ? 'మీ పెండింగ్ ఆర్డర్లు చూపించమంటారా?' : 'Show pending buyer orders?';
+          }
+
+          if (action.confirmationRequired) {
+            setConfirmationSentence(sentence);
+            setVoiceState('confirm');
+            TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
+          } else {
+            // Non-confirmation actions (e.g. inquiries, summaries) -> speak result and apply
+            setVoiceState('done');
+            TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
+            onExecuteFarmerAction?.(action);
+          }
+        } else {
+          // Buyer Marketplace Search
+          const intent = await parseCustomerVoiceSearch(clean, isTe ? 'te' : 'en');
+          setParsedBuyerIntent(intent);
+
+          const sentence = isTe
+            ? `${intent.productTelugu || intent.product} కోసం మార్కెట్‌లో శోధించమంటారా?`
+            : `Search marketplace for ${intent.product}${intent.maxPrice ? ` under ₹${intent.maxPrice}` : ''}?`;
+
+          setConfirmationSentence(sentence);
+          setVoiceState('confirm');
+          TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
+        }
+      } catch (err) {
+        console.error('Error interpreting speech:', err);
+        handleFailure('error');
+      }
+    },
+    [clearTimers, isTe, role, farmerContext, handleFailure, onExecuteFarmerAction]
   );
 
   // Fallback MediaRecorder -> /api/voice/transcribe (Firefox, Safari)
@@ -328,6 +345,9 @@ export function useVoice({
     setIsOpen(true);
     setTranscript('');
     setInterimTranscript('');
+    setConfirmationSentence('');
+    setParsedFarmerAction(null);
+    setParsedBuyerIntent(null);
     isStoppingRef.current = false;
 
     // Feature detect SpeechRecognition
@@ -390,28 +410,28 @@ export function useVoice({
           setAudioVolume(Math.floor(20 + Math.random() * 60));
         }
 
-        if (final) {
-          setTranscript(final);
+        if (final && final.trim().length > 1) {
+          setTranscript(final.trim());
           setInterimTranscript('');
           isStoppingRef.current = true;
           try {
             recognition.stop();
           } catch (_) {}
-          processRecognizedText(final);
+          processRecognizedText(final.trim());
           return;
         }
 
-        // Auto-stop on silence: 1500ms after last speech
+        // Auto-stop on silence: 3000ms after last speech (generous time for natural pauses)
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
-          if (!isStoppingRef.current && interim) {
+          if (!isStoppingRef.current && interim && interim.trim().length > 2) {
             isStoppingRef.current = true;
             try {
               recognition.stop();
             } catch (_) {}
-            processRecognizedText(interim);
+            processRecognizedText(interim.trim());
           }
-        }, 1500);
+        }, 3000);
       };
 
       recognition.onerror = (event: any) => {

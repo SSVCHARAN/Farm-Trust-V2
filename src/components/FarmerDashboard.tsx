@@ -175,42 +175,105 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   return (
     <div className="max-w-md md:max-w-2xl mx-auto px-4 py-3 pb-36 space-y-4 select-none">
       
-      {/* ─── 1. COMPACT GREETING WITH REAL AVATAR ─── */}
-      <div className="bg-[#1B3D27] text-white rounded-2xl p-4 shadow-sm border border-[#14321D] flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <img
-            src={farmer.avatar}
-            alt={farmer.name}
-            className="w-14 h-14 rounded-2xl object-cover border-2 border-[#F5B800] bg-white shrink-0"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/avatars/farmer-ravi.svg';
-            }}
-          />
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 className="text-[18px] font-black tracking-tight leading-tight truncate">
+      {/* ─── 1. COMMANDING AUTHENTICATED FARMER PROFILE HERO ─── */}
+      <div className="bg-gradient-to-br from-[#1B3D27] via-[#173823] to-[#122E1C] text-white rounded-3xl p-5 shadow-md border border-[#234F32] relative overflow-hidden">
+        {/* Subtle decorative glow */}
+        <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Explicit Session Verification Status Header */}
+        <div className="relative flex items-center justify-between pb-3.5 mb-3.5 border-b border-white/15 gap-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/35 text-emerald-200">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+            </span>
+            <span className="text-[12px] font-black tracking-wide">
+              {language === 'te' ? 'పూర్తిగా లాగిన్ అయ్యారు' : 'Logged In Completely'}
+            </span>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-200/90 font-mono bg-black/20 px-2.5 py-1 rounded-lg border border-white/10">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#F5B800]" />
+            <span>{language === 'te' ? 'రైతు ఖాతా' : 'Farmer ID'}: #{farmer.id.toUpperCase()}</span>
+          </div>
+        </div>
+
+        {/* Profile Info Row: 64px Avatar + Verified Name + Full Address */}
+        <div className="relative flex items-start gap-3.5">
+          <div className="relative shrink-0">
+            <img
+              src={farmer.avatar}
+              alt={farmer.name}
+              className="w-16 h-16 rounded-2xl object-cover border-2 border-[#F5B800] bg-white shadow-md ring-2 ring-emerald-400/20"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/avatars/farmer-ravi.svg';
+              }}
+            />
+            {farmer.identityVerified && (
+              <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#F5B800] border-2 border-[#1B3D27] flex items-center justify-center text-[#1A1A1A] shadow-xs">
+                <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />
+              </span>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-[20px] font-black tracking-tight leading-tight text-white">
                 {t.namaste}, {language === 'te' ? farmer.teluguName : farmer.name}!
               </h1>
               {farmer.identityVerified && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black bg-[#F5B800] text-[#1A1A1A]">
-                  <ShieldCheck className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-[#F5B800] text-[#1A1A1A]">
+                  <ShieldCheck className="w-3 h-3 stroke-[2.5]" />
                   {language === 'te' ? 'ధృవీకరించబడింది' : 'Verified'}
                 </span>
               )}
             </div>
-            <p className="text-[13px] text-emerald-100 font-medium truncate mt-0.5">
+
+            <p className="text-[14px] text-emerald-100 font-medium leading-snug mt-1 break-words">
               {language === 'te' ? farmer.farmNameTelugu : farmer.farmName} · {farmer.location}
             </p>
-            <div className="flex items-center gap-2 mt-1 text-[12px] font-bold text-amber-300">
+
+            <div className="flex items-center gap-2 mt-1.5 text-[12px] font-bold text-emerald-300/90 font-mono">
               <span className="flex items-center gap-1">
-                <Star className="w-3.5 h-3.5 fill-[#F5B800] text-[#F5B800]" />
-                {farmer.rating} ({farmer.reviewCount} {language === 'te' ? 'రివ్యూలు' : 'reviews'})
+                <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                {farmer.phone}
               </span>
-              <span className="text-white/40">·</span>
+              <span className="text-white/30">·</span>
               <span className="text-emerald-200">
-                {farmer.totalCompletedOrders || 42} {language === 'te' ? 'ఆర్డర్లు అందించారు' : 'orders delivered'}
+                {farmer.experienceYears || 12}+ {language === 'te' ? 'సంవత్సరాల అనుభవం' : 'yrs exp'}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Credibility and Performance Indicators */}
+        <div className="relative mt-3.5 pt-3 border-t border-white/10 grid grid-cols-3 gap-2 text-center">
+          <div className="bg-white/5 rounded-xl p-2 border border-white/10">
+            <div className="flex items-center justify-center gap-1 text-amber-300 text-[13px] font-black">
+              <Star className="w-3.5 h-3.5 fill-[#F5B800] text-[#F5B800]" />
+              <span>{farmer.rating}</span>
+            </div>
+            <span className="text-[11px] font-medium text-emerald-200 block mt-0.5">
+              {farmer.reviewCount} {language === 'te' ? 'రివ్యూలు' : 'reviews'}
+            </span>
+          </div>
+
+          <div className="bg-white/5 rounded-xl p-2 border border-white/10">
+            <span className="text-[13px] font-black text-white block">
+              {farmer.totalCompletedOrders || 42}
+            </span>
+            <span className="text-[11px] font-medium text-emerald-200 block mt-0.5">
+              {language === 'te' ? 'ఆర్డర్లు అందించారు' : 'delivered'}
+            </span>
+          </div>
+
+          <div className="bg-white/5 rounded-xl p-2 border border-white/10">
+            <span className="text-[13px] font-black text-[#68D391] block">
+              100%
+            </span>
+            <span className="text-[11px] font-medium text-emerald-200 block mt-0.5">
+              {language === 'te' ? 'డైరెక్ట్' : 'Direct (0% Cut)'}
+            </span>
           </div>
         </div>
       </div>
@@ -219,59 +282,61 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
       {activeTab === 'home' && (
         <div className="space-y-4">
 
-          {/* ONE PENDING ORDER CARD (If new orders waiting) */}
+          {/* ONE PENDING ORDER CARD (Clean balanced hierarchy) */}
           {pendingOrders.length > 0 && (
-            <Card variant="warning" padding="md" className="border-2 border-[#F5B800]">
-              <div className="flex items-center justify-between gap-2 border-b border-[#F5B800]/40 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#B3261E] animate-pulse" />
-                  <span className="text-[14px] font-black text-[#5C4300] uppercase tracking-wider">
+            <Card variant="default" padding="md" className="border border-[#E2DDCF] bg-white shadow-xs">
+              <div className="flex items-center justify-between gap-2 border-b border-[#E2DDCF] pb-2.5">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#FFF4D6] border border-[#F5B800]/50 text-[#5C4300]">
+                  <span className="w-2 h-2 rounded-full bg-[#E08A00] animate-pulse" />
+                  <span className="text-[12px] font-black uppercase tracking-wider">
                     {language === 'te' ? '1 కొత్త ఆర్డర్ వేచి ఉంది' : '1 New Order Pending'}
                   </span>
                 </div>
-                <span className="text-[12px] font-bold text-[#5C4300]/80">
+                <span className="text-[12px] font-semibold text-[#5B5B5B]">
                   {formatRelativeDate(pendingOrders[0].createdAt, language)}
                 </span>
               </div>
 
-              <div className="py-3 flex items-center gap-3">
+              <div className="py-3 flex items-start gap-3">
                 <img
                   src={pendingOrders[0].productImage}
                   alt={pendingOrders[0].productName}
-                  className="w-16 h-16 rounded-xl object-cover bg-white border border-[#F5B800]/40 shrink-0"
+                  className="w-14 h-14 rounded-xl object-cover bg-white border border-[#E2DDCF] shrink-0 mt-0.5"
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-[18px] font-black text-[#1A1A1A] leading-tight truncate">
+                  <h3 className="text-[16px] font-bold text-[#1A1A1A] leading-snug">
                     {pendingOrders[0].quantity} {pendingOrders[0].unit}{' '}
                     {language === 'te' ? (pendingOrders[0].productTeluguName || pendingOrders[0].productName) : pendingOrders[0].productName}
                   </h3>
-                  <p className="text-[14px] text-[#5B5B5B] mt-0.5 truncate">
+                  <p className="text-[13px] text-[#5B5B5B] mt-0.5 leading-snug">
                     {pendingOrders[0].customerName} · {pendingOrders[0].deliveryAddress}
                   </p>
-                  <p className="text-[15px] font-bold text-[#1B3D27] mt-1">
-                    {language === 'te' ? 'మీకు అందే మొత్తం:' : 'You receive:'}{' '}
-                    <span className="text-[22px] font-black text-[#1B3D27]">
+                  <div className="mt-1.5 flex items-baseline gap-1.5">
+                    <span className="text-[13px] font-semibold text-[#5B5B5B]">
+                      {language === 'te' ? 'మీకు అందే మొత్తం:' : 'You receive:'}
+                    </span>
+                    <span className="text-[18px] font-black text-[#1B3D27]">
                       ₹{pendingOrders[0].totalPrice}
                     </span>
-                  </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Action Buttons: Large 56px Accept + Smaller Reject */}
+              {/* Action Buttons */}
               <div className="flex items-center gap-2.5 pt-1">
                 <Button
                   variant="primary"
                   onClick={() => handleAcceptOrder(pendingOrders[0])}
-                  className="flex-1 min-h-[56px] text-[16px]"
+                  className="flex-1 min-h-[48px] text-[15px]"
                 >
-                  <CheckCircle2 className="w-5 h-5 mr-1" />
+                  <CheckCircle2 className="w-4 h-4 mr-1" />
                   <span>{language === 'te' ? 'ఆర్డర్ అంగీకరించండి' : 'Accept Order'}</span>
                 </Button>
 
                 <Button
                   variant="danger"
                   onClick={() => setRejectingOrder(pendingOrders[0])}
-                  className="min-h-[56px] px-4"
+                  className="min-h-[48px] px-4 text-[14px]"
                 >
                   <span>{language === 'te' ? 'తిరస్కరించు' : 'Reject'}</span>
                 </Button>
@@ -535,9 +600,9 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                 return (
                   <Card
                     key={order.id}
-                    variant={isPending ? 'warning' : 'default'}
+                    variant="default"
                     padding="md"
-                    className={`space-y-3.5 ${isPending ? 'border-2 border-[#F5B800]' : ''}`}
+                    className="space-y-3.5 border border-[#E2DDCF] shadow-xs"
                   >
                     {/* Header: Order ID + Status + Speaker Button */}
                     <div className="flex items-center justify-between border-b border-[#E2DDCF]/80 pb-3">

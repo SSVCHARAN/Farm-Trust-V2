@@ -83,13 +83,36 @@ class VernacularTTSService {
   private voicesLoadedPromise: Promise<SpeechSynthesisVoice[]> | null = null;
 
   constructor() {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.ensureVoicesLoaded();
-      if (window.speechSynthesis.addEventListener) {
-        window.speechSynthesis.addEventListener('voiceschanged', () => this.refreshVoices());
+    if (typeof window !== 'undefined') {
+      // Pre-seed static cache manifest for instant neural playback without server dependencies
+      this.loadStaticManifest();
+
+      if ('speechSynthesis' in window) {
+        this.ensureVoicesLoaded();
+        if (window.speechSynthesis.addEventListener) {
+          window.speechSynthesis.addEventListener('voiceschanged', () => this.refreshVoices());
+        }
+        window.speechSynthesis.onvoiceschanged = () => this.refreshVoices();
       }
-      window.speechSynthesis.onvoiceschanged = () => this.refreshVoices();
     }
+  }
+
+  private async loadStaticManifest(): Promise<void> {
+    try {
+      const res = await fetch('/audio/cache/manifest.json');
+      if (res.ok) {
+        const manifest = await res.json();
+        for (const item of Object.values(manifest as Record<string, any>)) {
+          if (item.text && item.url && item.lang) {
+            const clean = formatVernacularSpeech(item.text, item.lang as TTSLanguage);
+            this.memoryCache.set(`${item.lang}:female:${clean.toLowerCase()}`, item.url);
+            this.memoryCache.set(`${item.lang}:male:${clean.toLowerCase()}`, item.url);
+            this.memoryCache.set(`${item.lang}:female:${item.text.toLowerCase().trim()}`, item.url);
+            this.memoryCache.set(`${item.lang}:male:${item.text.toLowerCase().trim()}`, item.url);
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   private refreshVoices(): void {
@@ -415,9 +438,23 @@ class VernacularTTSService {
 
       const voice = this.getBestVoice(lang);
       if (voice) {
+        // Guard: Never pass Telugu unicode text to a non-Telugu browser voice (avoids robotic metallic pipes)
+        const isTe = lang.startsWith('te');
+        const voiceIsTelugu =
+          voice.lang.toLowerCase().startsWith('te') || voice.name.toLowerCase().includes('telugu');
+        if (isTe && !voiceIsTelugu) {
+          console.warn('No genuine Telugu browser voice installed; avoiding metallic pipe audio distortion.');
+          options?.onEnd?.();
+          return;
+        }
         utterance.voice = voice;
         utterance.lang = voice.lang || lang;
       } else {
+        if (lang.startsWith('te')) {
+          console.warn('No Telugu voice found in browser voices; avoiding robotic pipe fallback.');
+          options?.onEnd?.();
+          return;
+        }
         utterance.lang = lang;
       }
 

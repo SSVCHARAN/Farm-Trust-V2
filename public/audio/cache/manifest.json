@@ -148,5 +148,17 @@
     "lang": "en-IN",
     "voice": "en-IN-NeerjaExpressiveNeural",
     "url": "/audio/cache/fe5909b47bc99d0e.mp3"
+  },
+  "farmer_guidance_en": {
+    "text": "Namaste Ravi Kumar! You can say: Show pending orders, Change tomato price to 35, Set tomato stock to 20 kg, or Accept Ananya's order.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/farmer_guidance_en.mp3"
+  },
+  "farmer_guidance_te": {
+    "text": "నమస్కారం! మీరు కొత్త ఆర్డర్లు చెప్పు, టమాటాల ధర 35 చేయి, 20 కిలోల స్టాక్ ఉంది, లేదా అనన్య ఆర్డర్ అంగీకరించు అని మాట్లాడవచ్చు.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/farmer_guidance_te.mp3"
   }
 }
