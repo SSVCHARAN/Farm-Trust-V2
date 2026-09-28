@@ -9,14 +9,14 @@ import {
 } from '../data/mockData';
 
 const STORAGE_KEYS = {
-  FARMERS: 'farmtrust_farmers_v2',
-  PRODUCTS: 'farmtrust_products_v2',
-  ORDERS: 'farmtrust_orders_v2',
-  REVIEWS: 'farmtrust_reviews_v2',
-  REQUESTS: 'farmtrust_requests_v2',
-  DEMAND: 'farmtrust_demand_v2',
-  ROLE: 'farmtrust_active_role_v2',
-  LANG: 'farmtrust_lang_v2',
+  FARMERS: 'farmtrust_farmers_v3',
+  PRODUCTS: 'farmtrust_products_v3',
+  ORDERS: 'farmtrust_orders_v3',
+  REVIEWS: 'farmtrust_reviews_v3',
+  REQUESTS: 'farmtrust_requests_v3',
+  DEMAND: 'farmtrust_demand_v3',
+  ROLE: 'farmtrust_active_role_v3',
+  LANG: 'farmtrust_lang_v3',
 };
 
 // Safe memory store for headless environments, private mode, and crash-proof persistence

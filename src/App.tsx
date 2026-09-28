@@ -101,8 +101,17 @@ export default function App() {
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
-  const [orderModalProduct, setOrderModalProduct] = useState<Product | null>(null);
   const [orderModalQty, setOrderModalQty] = useState<number>(2);
+  const [orderModalProduct, setOrderModalProduct] = useState<Product | null>(() => {
+    if (typeof window !== 'undefined') {
+      const orderParam = new URLSearchParams(window.location.search).get('checkout');
+      if (orderParam) {
+        const prods = StorageService.getProducts();
+        return prods.find((p) => p.id === orderParam) || prods[0];
+      }
+    }
+    return null;
+  });
   const [isCustomerOrdersOpen, setIsCustomerOrdersOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return new URLSearchParams(window.location.search).get('orders') === 'true';
@@ -136,6 +145,12 @@ export default function App() {
       if (h === 'false') setShowHero(false);
       if (params.get('assistant') === 'true') {
         setIsFarmerAssistantOpen(true);
+      }
+      const chk = params.get('checkout');
+      if (chk) {
+        const prods = StorageService.getProducts();
+        const found = prods.find((p) => p.id === chk) || prods[0];
+        if (found) setOrderModalProduct(found);
       }
     }
   }, []);

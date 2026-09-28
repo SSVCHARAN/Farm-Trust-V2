@@ -2,32 +2,31 @@ import React, { useState } from 'react';
 import {
   X,
   CreditCard,
-  QrCode,
   Banknote,
   CheckCircle2,
   Clock,
   ShieldCheck,
   MapPin,
   Truck,
-  Sparkles,
   ArrowRight,
+  ArrowLeft,
   AlertTriangle,
-  Info,
   Plus,
+  Minus,
   KeyRound,
-  Check
+  Check,
+  Share2,
+  Phone,
+  MessageCircle,
+  QrCode
 } from 'lucide-react';
 import { Product, Order, OrderStatus } from '../types';
 import { DEMO_CUSTOMER } from '../data/mockData';
 import { Language, translations } from '../data/translations';
-
-// Configurable Pilot Delivery Rules (Easily modifiable)
-export const PILOT_DELIVERY_RULES = {
-  minOrderValue: 150, // ₹150 minimum order value
-  minOrderQuantity: 3, // 3 kg / units minimum
-  clusterDropFee: 20, // Consolidated cluster drop to community/gate point
-  expressDeliveryFee: 60, // Direct farm express to doorstep
-};
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { StepIndicator, StepItem } from './ui/StepIndicator';
 
 interface OrderModalProps {
   product: Product | null;
@@ -50,6 +49,15 @@ export const OrderModal: React.FC<OrderModalProps> = ({
 
   const t = translations[language];
 
+  // 4 Steps: 1: Basket -> 2: Delivery -> 3: Address -> 4: Payment & Review
+  const [checkoutStep, setCheckoutStep] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const s = new URLSearchParams(window.location.search).get('step');
+      if (s && ['1', '2', '3', '4'].includes(s)) return parseInt(s, 10);
+    }
+    return 1;
+  });
+
   const [quantity, setQuantity] = useState<number>(initialQuantity);
   const [deliveryOption, setDeliveryOption] = useState<'cluster' | 'express'>('cluster');
   const [deliveryAddress, setDeliveryAddress] = useState(DEMO_CUSTOMER.address);
@@ -57,62 +65,90 @@ export const OrderModal: React.FC<OrderModalProps> = ({
   const [customerName, setCustomerName] = useState(DEMO_CUSTOMER.name);
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'Card' | 'Cash on Delivery'>('UPI');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
+  const [placedOrder, setPlacedOrder] = useState<Order | null>(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('step') === 'success') {
+      return {
+        id: 'FT-1048',
+        customerId: DEMO_CUSTOMER.id,
+        customerName: DEMO_CUSTOMER.name,
+        customerPhone: DEMO_CUSTOMER.phone,
+        deliveryAddress: DEMO_CUSTOMER.address,
+        farmerId: product.farmerId,
+        farmerName: product.farmerName,
+        farmerLocation: product.farmerLocation,
+        productId: product.id,
+        productName: product.name,
+        productTeluguName: product.teluguName,
+        productImage: product.image,
+        quantity: 2,
+        unit: product.unit,
+        unitPrice: product.price,
+        totalPrice: product.price * 2 + 20,
+        paymentMethod: 'UPI',
+        paymentStatus: 'Paid (Simulated)',
+        status: 'Order Placed',
+        statusHistory: [
+          {
+            status: 'Order Placed',
+            timestamp: 'Just now',
+            note: 'Order placed directly with farmer. Awaiting confirmation.',
+          },
+        ],
+        createdAt: 'Just now',
+        deliveryOption: 'cluster',
+        deliveryFee: 20,
+        deliveryOtp: '7492',
+      };
+    }
+    return null;
+  });
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showDemoBanner, setShowDemoBanner] = useState<boolean>(true);
 
+  // Delivery Fees: Community Drop = ₹20, Home Delivery = ₹60
+  const deliveryFee = deliveryOption === 'cluster' ? 20 : 60;
   const subtotal = product.price * quantity;
-  const deliveryFee =
-    deliveryOption === 'cluster'
-      ? PILOT_DELIVERY_RULES.clusterDropFee
-      : PILOT_DELIVERY_RULES.expressDeliveryFee;
   const total = subtotal + deliveryFee;
 
-  const isBelowMov =
-    subtotal < PILOT_DELIVERY_RULES.minOrderValue &&
-    quantity < PILOT_DELIVERY_RULES.minOrderQuantity;
-
   const handlePlaceOrder = () => {
-    // Validation checks
+    // Validation
     if (!customerName.trim()) {
       setValidationError(language === 'te' ? 'దయచేసి మీ పేరు నమోదు చేయండి' : 'Please enter your name');
+      setCheckoutStep(3);
       return;
     }
     if (!customerPhone.trim() || customerPhone.trim().length < 8) {
-      setValidationError(language === 'te' ? 'దయచేసి సరైన ఫోన్ నంబర్ నమోదు చేయండి' : 'Please enter a valid phone number');
+      setValidationError(language === 'te' ? 'దయచేసి సరైన ఫోన్ నంబర్ నమోదు చేయండి' : 'Please enter valid phone number');
+      setCheckoutStep(3);
       return;
     }
     if (!deliveryAddress.trim()) {
       setValidationError(language === 'te' ? 'దయచేసి డెలివరీ చిరునామా నమోదు చేయండి' : 'Please enter delivery address');
-      return;
-    }
-    if (quantity <= 0 || quantity > product.availableQuantity) {
-      setValidationError(
-        language === 'te'
-          ? `పరిమాణం 1 నుండి ${product.availableQuantity} లోపు ఉండాలి`
-          : `Quantity must be between 1 and ${product.availableQuantity}`
-      );
+      setCheckoutStep(3);
       return;
     }
 
     setValidationError(null);
     setIsProcessing(true);
 
-    setTimeout(() => {
-      const orderId = `FT-${Math.floor(1000 + Math.random() * 9000)}`;
-      const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    // Haptic feedback if supported
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate([40, 60, 40]); } catch (e) {}
+    }
 
+    setTimeout(() => {
       const newOrder: Order = {
-        id: orderId,
+        id: `FT-${Math.floor(1000 + Math.random() * 9000)}`,
         customerId: DEMO_CUSTOMER.id,
-        customerName: customerName.trim() || DEMO_CUSTOMER.name,
-        customerPhone: customerPhone.trim() || DEMO_CUSTOMER.phone,
-        deliveryAddress: deliveryAddress.trim() || DEMO_CUSTOMER.address,
+        customerName,
+        customerPhone,
+        deliveryAddress,
         farmerId: product.farmerId,
         farmerName: product.farmerName,
         farmerLocation: product.farmerLocation,
         productId: product.id,
         productName: product.name,
-        productTeluguName: product.teluguName || product.name,
+        productTeluguName: product.teluguName,
         productImage: product.image,
         quantity,
         unit: product.unit,
@@ -121,480 +157,546 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         paymentMethod,
         paymentStatus: paymentMethod === 'Cash on Delivery' ? 'Pending Cash on Delivery' : 'Paid (Simulated)',
         status: 'Order Placed',
-        deliveryOption,
-        deliveryFee,
-        deliveryOtp,
         statusHistory: [
           {
             status: 'Order Placed',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            note: `${paymentMethod} confirmed (${deliveryOption === 'cluster' ? 'Cluster Drop ₹20' : 'Direct Express ₹60'}). Delivery OTP generated.`,
+            timestamp: 'Just now',
+            note: 'Order placed directly with farmer. Awaiting confirmation.',
           },
         ],
-        createdAt: new Date().toISOString(),
-        rated: false,
+        createdAt: 'Just now',
+        deliveryOption,
+        deliveryFee,
+        deliveryOtp: String(Math.floor(1000 + Math.random() * 9000)),
       };
 
       setIsProcessing(false);
       setPlacedOrder(newOrder);
       onOrderPlaced(newOrder);
-    }, 1200);
+    }, 700);
   };
 
-  const handleClose = () => {
-    setPlacedOrder(null);
-    setIsProcessing(false);
-    setValidationError(null);
-    onClose();
+  const handleShareWhatsApp = (order: Order) => {
+    const text = encodeURIComponent(
+      `Order #${order.id} for ${order.quantity} ${order.unit} ${order.productName} from ${order.farmerName} placed on Farm Trust! Total: ₹${order.totalPrice}`
+    );
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   };
+
+  const stepsList: StepItem[] = [
+    { id: 'basket', label: language === 'te' ? 'బుట్ట' : 'Basket' },
+    { id: 'delivery', label: language === 'te' ? 'డెలివరీ' : 'Delivery' },
+    { id: 'address', label: language === 'te' ? 'చిరునామా' : 'Address' },
+    { id: 'pay', label: language === 'te' ? 'చెల్లింపు' : 'Payment' },
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="relative bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full shadow-2xl border border-stone-200 overflow-hidden animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 max-h-[92vh] sm:max-h-[90vh] flex flex-col pb-safe sm:pb-0">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="relative bg-[#FBF8F1] rounded-t-3xl sm:rounded-2xl max-w-lg w-full shadow-2xl border border-[#E2DDCF] overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh] pb-safe sm:pb-0 animate-in fade-in slide-in-from-bottom-6 duration-200">
         
-        {/* Mobile handle indicator */}
-        <div className="sm:hidden pt-2.5 pb-1 bg-[#1e3a24] flex justify-center">
-          <div className="w-12 h-1 bg-white/30 rounded-full"></div>
-        </div>
-
         {/* Header */}
-        <div className="bg-[#1e3a24] text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold tracking-tight">
-              {placedOrder ? (language === 'te' ? 'ఆర్డర్ ఖరారైంది!' : 'Order Placed Directly!') : (language === 'te' ? 'రైతు నుంచి నేరుగా కొనుగోలు' : 'Direct Farm Checkout')}
-            </h2>
-            <p className="text-sm text-emerald-100 font-medium">
-              {product.farmerName} · {product.farmerLocation}
-            </p>
+        <div className="bg-[#1B3D27] text-white px-4 py-3.5 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-8 h-8 rounded-full bg-[#E6F2EA]/20 flex items-center justify-center text-[#F5B800] font-black text-sm">
+              {placedOrder ? '✓' : `${checkoutStep}/4`}
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-[17px] font-black leading-tight truncate">
+                {placedOrder
+                  ? (language === 'te' ? 'ఆర్డర్ ఖరారైంది!' : 'Order Placed Successfully!')
+                  : (language === 'te' ? 'నేరుగా చెక్అవుట్' : 'Direct Farm Checkout')}
+              </h2>
+              <p className="text-[12px] text-[#E6F2EA]/80 font-bold">
+                {placedOrder
+                  ? `#${placedOrder.id}`
+                  : (language === 'te' ? `దశ ${checkoutStep} / 4` : `Step ${checkoutStep} of 4`)}
+              </p>
+            </div>
           </div>
+
           <button
-            onClick={handleClose}
-            aria-label="Close"
-            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-white/80 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* PROCESSING SCREEN */}
-        {isProcessing && (
-          <div className="p-10 text-center space-y-4">
-            <div className="relative w-16 h-16 mx-auto">
-              <div className="w-16 h-16 rounded-full border-4 border-emerald-100 border-t-emerald-800 animate-spin"></div>
-              <Sparkles className="w-6 h-6 text-amber-500 absolute inset-0 m-auto animate-pulse" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-stone-900">{t.processingOrder}</h3>
-              <p className="text-xs text-stone-500 mt-1">
-                {language === 'te'
-                  ? 'సిమ్యులేటెడ్ చెల్లింపు మరియు డెలివరీ OTP ధృవీకరించబడుతున్నాయి...'
-                  : 'Verifying simulated payment and notifying the farmer directly...'}
-              </p>
-            </div>
+        {/* Step Indicator (when not placed) */}
+        {!placedOrder && (
+          <div className="px-4 py-2 bg-white border-b border-[#E2DDCF] shrink-0">
+            <StepIndicator steps={stepsList} currentStepIndex={checkoutStep - 1} />
           </div>
         )}
 
-        {/* ORDER SUCCESS SCREEN WITH DELIVERY OTP */}
-        {!isProcessing && placedOrder && (
-          <div className="p-6 space-y-5 text-center overflow-y-auto">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto shadow-xs">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-
-            <div>
-              <span className="text-sm font-bold text-emerald-800 uppercase tracking-wider block">
-                {language === 'te' ? 'ఆర్డర్ విజయవంతంగా నమోదైంది' : 'Order Confirmed · Direct with Farmer'}
-              </span>
-              <h3 className="text-2xl font-black text-stone-900 mt-1">
-                #{placedOrder.id}
-              </h3>
-              <p className="text-sm text-stone-600 mt-1.5 max-w-sm mx-auto">
-                {language === 'te'
-                  ? `${placedOrder.farmerName} కు సమాచారం పంపబడింది. పంటను సిద్ధం చేస్తున్నారు.`
-                  : `Notification sent to ${placedOrder.farmerName}. Farmer will harvest and pack fresh.`}
-              </p>
-            </div>
-
-            {/* TWO-WAY DELIVERY CONFIRMATION OTP BOX */}
-            <div className="bg-gradient-to-br from-amber-50 via-emerald-50/40 to-amber-50 rounded-2xl p-4 border-2 border-dashed border-amber-300 shadow-xs space-y-2 text-center">
-              <div className="flex items-center justify-center gap-1.5 text-sm font-bold text-amber-900 uppercase tracking-wider">
-                <KeyRound className="w-4 h-4 text-amber-700" />
-                <span>{language === 'te' ? 'డెలివరీ వెరిఫికేషన్ కోడ్' : 'Your Delivery Verification Code'}</span>
-              </div>
-              <div className="py-2">
-                <span className="font-mono text-3xl font-black tracking-widest text-[#1b3d27] bg-white px-5 py-1.5 rounded-xl border border-amber-200 shadow-inner inline-block">
-                  {placedOrder.deliveryOtp}
-                </span>
-              </div>
-              <p className="text-sm text-stone-600 leading-relaxed max-w-xs mx-auto">
-                {language === 'te'
-                  ? 'ఆర్డర్ అందుకున్నప్పుడు ఈ 4-అంకెల కోడ్‌ను రైతుకు చెప్పండి, లేదా మీ "ఆర్డర్లు" ట్యాబ్‌లో నేరుగా కన్ఫర్మ్ చేయండి.'
-                  : 'Share this 4-digit code with the farmer upon delivery, OR tap "Confirm Receipt" in your Orders tab to complete.'}
-              </p>
-            </div>
-
-            {/* Summary card */}
-            <div className="bg-stone-50 rounded-xl p-4 border border-stone-200/80 text-left text-sm space-y-2">
-              <div className="flex justify-between font-semibold text-stone-800">
-                <span>{placedOrder.quantity} {placedOrder.unit} {placedOrder.productName}</span>
-                <span className="font-bold text-emerald-950">₹{placedOrder.totalPrice}</span>
-              </div>
-              <div className="flex justify-between text-stone-500">
-                <span>Farmer:</span>
-                <span className="font-medium text-stone-800">{placedOrder.farmerName}</span>
-              </div>
-              <div className="flex justify-between text-stone-500">
-                <span>Delivery Mode:</span>
-                <span className="font-medium text-stone-800">
-                  {placedOrder.deliveryOption === 'cluster'
-                    ? 'Consolidated Cluster Drop (₹20)'
-                    : 'Direct Farm Express (₹60)'}
-                </span>
-              </div>
-              <div className="flex justify-between text-stone-500">
-                <span>Payment:</span>
-                <span className="font-medium text-stone-800">{placedOrder.paymentMethod} ({placedOrder.paymentStatus})</span>
-              </div>
-              <div className="flex justify-between text-stone-500">
-                <span>Address:</span>
-                <span className="font-medium text-stone-800 truncate max-w-[200px]">{placedOrder.deliveryAddress}</span>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={handleClose}
-                className="w-full py-3 min-h-[48px] bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-sm sm:text-base rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>{t.trackOrder}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+        {/* Single Dismissible Demo Banner */}
+        {showDemoBanner && !placedOrder && (
+          <div className="bg-[#FFF4D6] border-b border-[#F5B800]/40 px-4 py-2 flex items-center justify-between gap-2 shrink-0">
+            <span className="text-[12px] text-[#5C4300] font-bold">
+              {language === 'te'
+                ? 'డెమో: చెల్లింపులు సురక్షితంగా అనుకరించబడతాయి (Simulated).'
+                : 'Demo mode: payments and payouts are simulated safely.'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowDemoBanner(false)}
+              className="text-[#5C4300] hover:text-black font-black text-xs cursor-pointer p-1"
+            >
+              ✕
+            </button>
           </div>
         )}
 
-        {/* ORDER FORM */}
-        {!isProcessing && !placedOrder && (
-          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto">
-            {/* Selected Product Summary */}
-            <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-14 h-14 rounded-lg object-cover"
-              />
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-stone-900 truncate">{product.name}</h4>
-                <p className="text-sm text-stone-600">
-                  ₹{product.price} / {product.priceUnit} · Direct from {product.farmerName}
+        {/* Validation Error Banner */}
+        {validationError && (
+          <div className="bg-red-50 border-b border-red-200 px-4 py-2 flex items-center gap-2 text-red-800 text-[13px] font-bold shrink-0">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            <span>{validationError}</span>
+          </div>
+        )}
+
+        {/* Scrollable Modal Content */}
+        <div className="p-4 overflow-y-auto flex-1 space-y-4">
+
+          {/* ═════════════════════════════════════════════════ */}
+          {/* SUCCESS SCREEN */}
+          {/* ═════════════════════════════════════════════════ */}
+          {placedOrder && (
+            <div className="py-2 space-y-4 text-center animate-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 bg-[#E6F2EA] text-[#1E7B3F] rounded-full flex items-center justify-center mx-auto shadow-sm">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
+
+              <div>
+                <span className="text-[13px] font-black text-[#1E7B3F] uppercase tracking-wider block">
+                  {language === 'te' ? 'రైతుకు ఆర్డర్ అందింది' : 'Order Confirmed · 100% Direct'}
+                </span>
+                <h3 className="text-[26px] font-black text-[#1A1A1A] mt-0.5">
+                  #{placedOrder.id}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-1 max-w-sm mx-auto">
+                  {language === 'te'
+                    ? `${placedOrder.farmerName} గారికి సమాచారం చేరింది. పొలం నుంచి నేరుగా సిద్ధం చేస్తారు.`
+                    : `${placedOrder.farmerName} has been notified and will harvest fresh from the field.`}
                 </p>
-                <div className="flex items-center gap-2 mt-1 text-sm">
-                  <span className="text-stone-600 font-medium">Qty: {quantity} {product.unit}</span>
-                  <span>·</span>
-                  <span className="font-black text-emerald-950">Subtotal: ₹{subtotal}</span>
+              </div>
+
+              {/* Handover OTP Box */}
+              <div className="p-4 bg-[#FFF4D6] rounded-2xl border-2 border-dashed border-[#F5B800] space-y-1.5">
+                <div className="flex items-center justify-center gap-1.5 text-[13px] font-black text-[#5C4300]">
+                  <KeyRound className="w-4 h-4" />
+                  <span>{language === 'te' ? 'డెలివరీ నిర్ధారణ కోడ్ (OTP)' : 'Delivery Handover OTP'}</span>
                 </div>
+                <div className="py-1">
+                  <span className="font-mono text-[32px] font-black tracking-widest text-[#1B3D27] bg-white px-5 py-1 rounded-xl border border-[#F5B800] inline-block shadow-inner">
+                    {placedOrder.deliveryOtp}
+                  </span>
+                </div>
+                <p className="text-[12px] text-[#5C4300] leading-relaxed">
+                  {language === 'te'
+                    ? 'పంట అందినప్పుడు ఈ 4-అంకెల కోడ్‌ను రైతుకు చెప్పండి.'
+                    : 'Share this 4-digit code with the farmer upon delivery to confirm.'}
+                </p>
+              </div>
+
+              {/* Order Summary Details */}
+              <Card variant="default" padding="md" className="text-left space-y-2.5 bg-white">
+                <div className="flex justify-between font-black text-[#1A1A1A] text-[15px]">
+                  <span>{placedOrder.quantity} {placedOrder.unit} {placedOrder.productName}</span>
+                  <span className="text-[#1B3D27]">₹{placedOrder.totalPrice}</span>
+                </div>
+                <div className="flex justify-between text-[13px] text-[#5B5B5B]">
+                  <span>{language === 'te' ? 'రైతు:' : 'Farmer:'}</span>
+                  <span className="font-bold text-[#1A1A1A]">{placedOrder.farmerName}</span>
+                </div>
+                <div className="flex justify-between text-[13px] text-[#5B5B5B]">
+                  <span>{language === 'te' ? 'డెలివరీ విధానం:' : 'Delivery mode:'}</span>
+                  <span className="font-bold text-[#1A1A1A]">
+                    {placedOrder.deliveryOption === 'cluster'
+                      ? (language === 'te' ? 'కమ్యూనిటీ డ్రాప్ (₹20)' : 'Community drop (₹20)')
+                      : (language === 'te' ? 'హోమ్ డెలివరీ (₹60)' : 'Home delivery (₹60)')}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[13px] text-[#5B5B5B]">
+                  <span>{language === 'te' ? 'చిరునామా:' : 'Address:'}</span>
+                  <span className="font-bold text-[#1A1A1A] truncate max-w-[200px]">{placedOrder.deliveryAddress}</span>
+                </div>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-2">
+                <Button
+                  variant="primary"
+                  onClick={() => handleShareWhatsApp(placedOrder)}
+                  className="w-full min-h-[52px] text-[15px] bg-[#25D366] hover:bg-[#1ebd59] text-white border-none"
+                >
+                  <MessageCircle className="w-5 h-5 mr-1.5" />
+                  <span>{language === 'te' ? 'WhatsApp లో పంచుకోండి' : 'Share on WhatsApp'}</span>
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  onClick={onClose}
+                  className="w-full min-h-[52px] text-[15px]"
+                >
+                  <span>{language === 'te' ? 'ఆర్డర్ల పేజీకి వెళ్ళండి' : 'Track Order in My Orders'}</span>
+                  <ArrowRight className="w-4 h-4 ml-1.5" />
+                </Button>
               </div>
             </div>
+          )}
 
-            {/* Validation Error Alert */}
-            {validationError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{validationError}</span>
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 1: BASKET & QUANTITY */}
+          {/* ═════════════════════════════════════════════════ */}
+          {!placedOrder && checkoutStep === 1 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div>
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'పంట పరిమాణాన్ని సరిచూడండి' : 'Review Quantity in Basket'}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? 'నేరుగా తోట నుంచి తాజా కోత' : 'Harvested fresh directly for your order'}
+                </p>
               </div>
-            )}
 
-            {/* Minimum Order Value (MOV) Pilot Advisory */}
-            {isBelowMov && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm space-y-2">
-                <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-bold text-amber-950">
-                      {language === 'te' ? 'పైలట్ డెలివరీ సూచన' : 'Pilot Delivery Advisory'}
-                    </p>
-                    <p className="text-sm text-amber-800 mt-0.5 leading-relaxed">
-                      {language === 'te'
-                        ? `తోట నుంచి నేరుగా రవాణా చేయడానికి కనీసం ₹150 లేదా 3 ${product.unit} ఆర్డర్ సిఫార్సు చేయబడింది (ప్రస్తుతం: ₹${subtotal} / ${quantity} ${product.unit}). క్లస్టర్ డ్రాప్‌ను ఎంచుకోవడం ద్వారా రవాణా భారం తగ్గుతుంది.`
-                        : `To keep single-farm direct logistics viable, minimum ₹150 or 3 ${product.unit} is recommended (current: ₹${subtotal} / ${quantity} ${product.unit}). Consolidated Cluster Drop is recommended.`}
-                    </p>
-                  </div>
+              {/* Product Info Card */}
+              <Card variant="default" padding="md" className="bg-white flex items-center gap-3.5">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-16 h-16 rounded-2xl object-cover bg-stone-50 border border-[#E2DDCF] shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-[17px] font-black text-[#1A1A1A] leading-tight truncate">
+                    {language === 'te' ? product.teluguName : product.name}
+                  </h4>
+                  <p className="text-[13px] text-[#5B5B5B] mt-0.5">
+                    ₹{product.price} / {product.priceUnit} • {product.farmerName}
+                  </p>
+                  <p className="text-[12px] font-bold text-[#1E7B3F] mt-1">
+                    {product.availableQuantity} {product.unit} {language === 'te' ? 'అందుబాటులో ఉంది' : 'in stock'}
+                  </p>
                 </div>
-                {quantity < product.availableQuantity && (
+              </Card>
+
+              {/* Big Stepper */}
+              <Card variant="default" padding="lg" className="text-center space-y-4 bg-white">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-[44px] font-black text-[#1B3D27] tracking-tight">
+                    {quantity}
+                  </span>
+                  <span className="text-[20px] font-black text-[#5B5B5B]">
+                    {product.unit}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 5))}
+                    className="min-h-[48px] bg-stone-100 hover:bg-stone-200 text-[#1A1A1A] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    -5
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="min-h-[48px] bg-stone-100 hover:bg-stone-200 text-[#1A1A1A] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    -1
+                  </button>
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(product.availableQuantity, q + 1))}
-                    className="w-full py-1.5 min-h-[44px] bg-amber-200/70 hover:bg-amber-200 text-amber-950 rounded-lg text-sm font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    className="min-h-[48px] bg-[#E6F2EA] hover:bg-emerald-200 text-[#1B3D27] font-black rounded-xl text-[16px] cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>
-                      {language === 'te' ? `+1 ${product.unit} జోడించండి (సిఫార్సు చేయబడింది)` : `+ Add 1 ${product.unit} to meet pilot minimum`}
-                    </span>
+                    +1
                   </button>
-                )}
-              </div>
-            )}
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.min(product.availableQuantity, q + 5))}
+                    className="min-h-[48px] bg-[#E6F2EA] hover:bg-emerald-200 text-[#1B3D27] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    +5
+                  </button>
+                </div>
+              </Card>
 
-            {/* PILOT DELIVERY MODEL SELECTOR */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-600">
-                  {language === 'te' ? 'డెలివరీ విధానం (పైలట్ మోడల్)' : 'Delivery Mode (Pilot Model)'}
-                </h3>
-                <span className="text-xs text-stone-600 bg-stone-100 px-2 py-0.5 rounded font-medium">
-                  Direct Farm Logistics
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDeliveryOption('cluster')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative ${
-                    deliveryOption === 'cluster'
-                      ? 'border-emerald-700 bg-emerald-50/70 ring-1 ring-emerald-700 shadow-xs'
-                      : 'border-stone-200 hover:bg-stone-50 text-stone-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
-                      <Truck className="w-3.5 h-3.5 text-emerald-800" />
-                      {language === 'te' ? 'క్లస్టర్ డ్రాప్' : 'Cluster Drop'}
-                    </span>
-                    <span className="text-sm font-black text-emerald-900">
-                      ₹{PILOT_DELIVERY_RULES.clusterDropFee}
-                    </span>
-                  </div>
-                  <p className="text-xs text-stone-600 mt-1 leading-snug">
-                    {language === 'te'
-                      ? 'అపార్ట్‌మెంట్ గేట్ / స్థానిక డ్రాప్ పాయింట్ వద్ద కలెక్టివ్ డెలివరీ.'
-                      : 'Consolidated drop at apartment gate / community hub.'}
-                  </p>
-                  {deliveryOption === 'cluster' && (
-                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-600"></span>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDeliveryOption('express')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative ${
-                    deliveryOption === 'express'
-                      ? 'border-emerald-700 bg-emerald-50/70 ring-1 ring-emerald-700 shadow-xs'
-                      : 'border-stone-200 hover:bg-stone-50 text-stone-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                      {language === 'te' ? 'డైరెక్ట్ ఎక్స్‌ప్రెస్' : 'Direct Express'}
-                    </span>
-                    <span className="text-sm font-black text-stone-900">
-                      ₹{PILOT_DELIVERY_RULES.expressDeliveryFee}
-                    </span>
-                  </div>
-                  <p className="text-xs text-stone-600 mt-1 leading-snug">
-                    {language === 'te'
-                      ? 'తోట నుంచి నేరుగా మీ ఇంటి ముందుకు డెలివరీ.'
-                      : 'Dedicated runner straight from farm to your door.'}
-                  </p>
-                  {deliveryOption === 'express' && (
-                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-600"></span>
-                  )}
-                </button>
+              {/* Price Calculation Pill */}
+              <div className="p-3 bg-[#E6F2EA] rounded-xl flex items-center justify-between text-[14px] font-black text-[#1B3D27]">
+                <span>{language === 'te' ? 'పంట మొత్తం:' : 'Produce Subtotal:'}</span>
+                <span className="text-[18px]">₹{subtotal}</span>
               </div>
             </div>
+          )}
 
-            {/* Delivery Details */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-stone-600">
-                {language === 'te' ? 'డెలివరీ సమాచారం' : 'Delivery Details'}
-              </h3>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-sm font-medium text-stone-600 mb-0.5">
-                    {language === 'te' ? 'మీ పేరు' : 'Your Name'}
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 2: DELIVERY MODE RADIO CARDS */}
+          {/* ═════════════════════════════════════════════════ */}
+          {!placedOrder && checkoutStep === 2 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div>
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'డెలివరీ విధానాన్ని ఎంచుకోండి' : 'Choose Delivery Mode'}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? 'కమ్యూనిటీ డ్రాప్ లేదా ఇంటి వద్దకు డెలివరీ' : 'Community drop or home doorstep delivery'}
+                </p>
+              </div>
+
+              {/* Radio Card 1: Community Drop */}
+              <button
+                type="button"
+                onClick={() => setDeliveryOption('cluster')}
+                className={`w-full p-4 rounded-2xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                  deliveryOption === 'cluster'
+                    ? 'bg-[#E6F2EA] border-2 border-[#1B3D27] shadow-sm'
+                    : 'bg-white border-[#E2DDCF] hover:border-[#1B3D27]/40'
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                  deliveryOption === 'cluster'
+                    ? 'border-[#1B3D27] bg-[#1B3D27] text-white'
+                    : 'border-[#5B5B5B] bg-white'
+                }`}>
+                  {deliveryOption === 'cluster' && <Check className="w-3.5 h-3.5" />}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[16px] font-black text-[#1A1A1A]">
+                      {language === 'te' ? 'కమ్యూనిటీ డ్రాప్' : 'Community drop'}
+                    </span>
+                    <span className="text-[18px] font-black text-[#1B3D27]">
+                      ₹20
+                    </span>
+                  </div>
+                  <p className="text-[13px] text-[#5B5B5B] mt-1 leading-relaxed">
+                    {language === 'te'
+                      ? 'మీ అపార్ట్‌మెంట్ / కాలనీ మెయిన్ గేట్ వద్దకు బల్క్ డెలివరీ. తక్కువ రవాణా ఖర్చు.'
+                      : 'Delivered to your apartment gate or local community drop point. Eco-friendly & low fee.'}
+                  </p>
+                </div>
+              </button>
+
+              {/* Radio Card 2: Home Delivery */}
+              <button
+                type="button"
+                onClick={() => setDeliveryOption('express')}
+                className={`w-full p-4 rounded-2xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                  deliveryOption === 'express'
+                    ? 'bg-[#E6F2EA] border-2 border-[#1B3D27] shadow-sm'
+                    : 'bg-white border-[#E2DDCF] hover:border-[#1B3D27]/40'
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                  deliveryOption === 'express'
+                    ? 'border-[#1B3D27] bg-[#1B3D27] text-white'
+                    : 'border-[#5B5B5B] bg-white'
+                }`}>
+                  {deliveryOption === 'express' && <Check className="w-3.5 h-3.5" />}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[16px] font-black text-[#1A1A1A]">
+                      {language === 'te' ? 'హోమ్ డెలివరీ' : 'Home delivery'}
+                    </span>
+                    <span className="text-[18px] font-black text-[#1B3D27]">
+                      ₹60
+                    </span>
+                  </div>
+                  <p className="text-[13px] text-[#5B5B5B] mt-1 leading-relaxed">
+                    {language === 'te'
+                      ? 'నేరుగా తోట నుంచి మీ ఇంటి తలుపు ముందుకు ఎక్స్‌ప్రెస్ రవాణా.'
+                      : 'Direct farm transport straight to your doorstep.'}
+                  </p>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 3: ADDRESS & CONTACT */}
+          {/* ═════════════════════════════════════════════════ */}
+          {!placedOrder && checkoutStep === 3 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div>
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'డెలివరీ చిరునామా' : 'Delivery Address'}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? 'రైతు మీతో సంప్రదించడానికి వివరాలు' : 'Contact details for farmer handover'}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[14px] font-bold text-[#1A1A1A]">
+                    {language === 'te' ? 'మీ పేరు:' : 'Full Name:'}
                   </label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full px-3 py-2 text-base min-h-[48px] border border-stone-300 rounded-lg focus:ring-1 focus:ring-emerald-700"
+                    className="w-full min-h-[48px] px-3.5 bg-white border border-[#E2DDCF] rounded-xl text-[16px] text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1B3D27]"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-stone-600 mb-0.5">
-                    {language === 'te' ? 'ఫోన్ నంబర్' : 'Phone'}
+
+                <div className="space-y-1">
+                  <label className="text-[14px] font-bold text-[#1A1A1A]">
+                    {language === 'te' ? 'ఫోన్ నంబర్:' : 'Phone Number:'}
                   </label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="tel"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full px-3 py-2 text-base min-h-[48px] border border-stone-300 rounded-lg focus:ring-1 focus:ring-emerald-700"
+                    className="w-full min-h-[48px] px-3.5 bg-white border border-[#E2DDCF] rounded-xl text-[16px] text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1B3D27]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[14px] font-bold text-[#1A1A1A]">
+                    {language === 'te' ? 'డెలివరీ చిరునామా:' : 'Street Address / Colony:'}
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    className="w-full p-3.5 bg-white border border-[#E2DDCF] rounded-xl text-[16px] text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1B3D27]"
                   />
                 </div>
               </div>
+            </div>
+          )}
 
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 4: PAYMENT & TRANSPARENT SUMMARY */}
+          {/* ═════════════════════════════════════════════════ */}
+          {!placedOrder && checkoutStep === 4 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
               <div>
-                <label className="block text-sm font-medium text-stone-600 mb-0.5">
-                  {t.deliveryAddress}
-                </label>
-                <input
-                  type="text"
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  className="w-full px-3 py-2 text-base min-h-[48px] border border-stone-300 rounded-lg focus:ring-1 focus:ring-emerald-700"
-                />
-              </div>
-            </div>
-
-            {/* Payment Method Selector (Simulated) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-600">
-                  {t.paymentMethod}
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'చెల్లింపు విధానం & బిల్లు' : 'Payment & Direct Payout'}
                 </h3>
-                <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-semibold border border-amber-200">
-                  Pilot Simulation Mode
-                </span>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? '100% పారదర్శక విభజన' : '100% transparent fee breakdown'}
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('UPI')}
-                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer min-h-[44px] ${
-                    paymentMethod === 'UPI'
-                      ? 'border-emerald-700 bg-emerald-50 text-emerald-950 font-bold shadow-xs'
-                      : 'border-stone-200 hover:bg-stone-50 text-stone-700'
-                  }`}
-                >
-                  <QrCode className="w-5 h-5 mx-auto mb-1 text-emerald-800" />
-                  <span className="text-sm block">UPI / QR</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('Card')}
-                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer min-h-[44px] ${
-                    paymentMethod === 'Card'
-                      ? 'border-emerald-700 bg-emerald-50 text-emerald-950 font-bold shadow-xs'
-                      : 'border-stone-200 hover:bg-stone-50 text-stone-700'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5 mx-auto mb-1 text-emerald-800" />
-                  <span className="text-sm block">Debit / Card</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('Cash on Delivery')}
-                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer min-h-[44px] ${
-                    paymentMethod === 'Cash on Delivery'
-                      ? 'border-emerald-700 bg-emerald-50 text-emerald-950 font-bold shadow-xs'
-                      : 'border-stone-200 hover:bg-stone-50 text-stone-700'
-                  }`}
-                >
-                  <Banknote className="w-5 h-5 mx-auto mb-1 text-emerald-800" />
-                  <span className="text-sm block">Cash on Delivery</span>
-                </button>
+              {/* Compact Segmented Payment Row (UPI / Card / Cash) */}
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'UPI', label: 'UPI', icon: QrCode },
+                  { id: 'Card', label: language === 'te' ? 'కార్డు' : 'Card', icon: CreditCard },
+                  { id: 'Cash on Delivery', label: language === 'te' ? 'నగదు' : 'Cash', icon: Banknote },
+                ].map((pm) => {
+                  const isSelected = paymentMethod === pm.id;
+                  const Icon = pm.icon;
+                  return (
+                    <button
+                      key={pm.id}
+                      type="button"
+                      onClick={() => setPaymentMethod(pm.id as any)}
+                      className={`min-h-[48px] rounded-xl border font-black text-[14px] flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#1B3D27] text-white border-[#1B3D27] shadow-xs'
+                          : 'bg-white text-[#1A1A1A] border-[#E2DDCF] hover:bg-stone-50'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{pm.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* REALISTIC SIMULATED PAYMENT PREVIEW (Phase 3 Task 10) */}
+              {/* Transparent Direct Value Breakdown */}
+              <Card variant="mint" padding="md" className="space-y-2 bg-[#E6F2EA]">
+                <div className="flex justify-between text-[14px] text-[#1A1A1A]">
+                  <span>{language === 'te' ? 'రైతుకు అందే మొత్తం (100%):' : 'Farmer receives (100%):'}</span>
+                  <span className="font-black text-[#1B3D27]">₹{subtotal}</span>
+                </div>
+                <div className="flex justify-between text-[14px] text-[#5B5B5B]">
+                  <span>{language === 'te' ? 'ప్లాట్‌ఫారమ్ రుసుము:' : 'Platform fee:'}</span>
+                  <span className="font-bold text-[#1E7B3F]">₹0 (Free)</span>
+                </div>
+                <div className="flex justify-between text-[14px] text-[#5B5B5B]">
+                  <span>
+                    {deliveryOption === 'cluster'
+                      ? (language === 'te' ? 'కమ్యూనిటీ డ్రాప్ డెలివరీ:' : 'Community drop delivery:')
+                      : (language === 'te' ? 'హోమ్ డెలివరీ:' : 'Home delivery:')}
+                  </span>
+                  <span className="font-bold text-[#1A1A1A]">₹{deliveryFee}</span>
+                </div>
+                <div className="pt-2 border-t border-[#1B3D27]/20 flex justify-between text-[18px] font-black text-[#1B3D27]">
+                  <span>{language === 'te' ? 'మొత్తం చెల్లించాల్సింది:' : 'Total Payable:'}</span>
+                  <span>₹{total}</span>
+                </div>
+              </Card>
+
+              {/* Clean UPI One-Click Button */}
               {paymentMethod === 'UPI' && (
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 space-y-2 text-sm">
-                  <div className="flex items-center gap-3">
-                    {/* Stylized QR Visual */}
-                    <div className="w-14 h-14 bg-white p-1 rounded-lg border border-stone-300 flex items-center justify-center shadow-2xs shrink-0">
-                      <div className="w-full h-full bg-stone-900 rounded p-1 flex flex-col justify-between">
-                        <div className="flex justify-between">
-                          <div className="w-2.5 h-2.5 bg-white rounded-xs"></div>
-                          <div className="w-2.5 h-2.5 bg-white rounded-xs"></div>
-                        </div>
-                        <div className="flex justify-center">
-                          <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
-                        </div>
-                        <div className="flex justify-between">
-                          <div className="w-2.5 h-2.5 bg-white rounded-xs"></div>
-                          <div className="w-1.5 h-1.5 bg-white"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 font-bold text-stone-900">
-                        <span>UPI Direct VPA</span>
-                        <span className="text-xs text-emerald-700 bg-emerald-100 px-1 rounded">Live Demo</span>
-                      </div>
-                      <p className="text-sm font-mono text-stone-600 truncate">
-                        farmtrust.{product.farmerId || 'direct'}@upi
-                      </p>
-                      <p className="text-xs text-stone-600 mt-0.5">
-                        Payee: {product.farmerName} Direct
-                      </p>
-                    </div>
+                <div className="p-3 bg-white rounded-xl border border-[#E2DDCF] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-lg bg-stone-100 flex items-center justify-center font-bold text-[12px] text-[#1B3D27]">
+                      UPI
+                    </span>
+                    <span className="text-[13px] font-bold text-[#1A1A1A]">
+                      {DEMO_CUSTOMER.phone}@upi (Instant)
+                    </span>
                   </div>
-                  <div className="p-2 bg-amber-50 rounded-lg text-xs text-amber-900 border border-amber-200 leading-snug">
-                    <strong>Simulated Pilot UPI:</strong> No actual bank account is debited. Clicking place order will simulate instant UPI confirmation and notify the farmer directly.
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'Card' && (
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-sm space-y-1">
-                  <p className="font-mono text-stone-700 font-semibold">•••• •••• •••• 4242</p>
-                  <p className="text-xs text-stone-600">Simulated Test Visa Card · Exp: 12/28</p>
-                </div>
-              )}
-
-              {paymentMethod === 'Cash on Delivery' && (
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-sm space-y-1">
-                  <p className="font-semibold text-stone-800">
-                    {language === 'te' ? `డెలివరీ సమయంలో ₹${total} చెల్లించండి` : `Pay ₹${total} in Cash/UPI upon delivery`}
-                  </p>
-                  <p className="text-xs text-stone-600">
-                    {language === 'te'
-                      ? 'డెలివరీ వెరిఫికేషన్ కోడ్ సరిచూసిన తర్వాత నేరుగా రైతుకు చెల్లించండి.'
-                      : 'Pay the farmer directly after exchanging the 4-digit verification code.'}
-                  </p>
+                  <Badge variant="mint">Active</Badge>
                 </div>
               )}
             </div>
+          )}
 
-            {/* Price breakdown */}
-            <div className="pt-2 border-t border-stone-200 space-y-1.5 text-sm">
-              <div className="flex justify-between text-stone-600">
-                <span>Produce ({quantity} {product.unit}):</span>
-                <span className="font-medium text-stone-800">₹{subtotal}</span>
-              </div>
-              <div className="flex justify-between text-stone-600">
+        </div>
+
+        {/* Modal Sticky Footer CTA "Pay Rs X" */}
+        {!placedOrder && (
+          <div className="p-4 bg-white border-t border-[#E2DDCF] flex items-center justify-between gap-3 shrink-0">
+            {checkoutStep > 1 && (
+              <Button
+                variant="secondary"
+                onClick={() => setCheckoutStep((s) => s - 1)}
+                className="min-h-[52px] px-4 text-[15px]"
+              >
+                <ArrowLeft className="w-5 h-5 mr-1" />
+                <span>{language === 'te' ? 'వెనుకకు' : 'Back'}</span>
+              </Button>
+            )}
+
+            {checkoutStep < 4 ? (
+              <Button
+                variant="primary"
+                onClick={() => setCheckoutStep((s) => s + 1)}
+                className="flex-1 min-h-[52px] text-[16px]"
+              >
+                <span>{language === 'te' ? 'తరువాత' : 'Continue'}</span>
+                <ArrowRight className="w-5 h-5 ml-1" />
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={handlePlaceOrder}
+                disabled={isProcessing}
+                isLoading={isProcessing}
+                className="flex-1 min-h-[52px] text-[17px] font-black bg-[#1B3D27] hover:bg-[#14321D]"
+              >
                 <span>
-                  {deliveryOption === 'cluster'
-                    ? 'Consolidated Cluster Drop:'
-                    : 'Direct Farm Express:'}
+                  {language === 'te' ? `₹${total} చెల్లించండి` : `Pay ₹${total}`}
                 </span>
-                <span className="font-semibold text-stone-800">₹{deliveryFee}</span>
-              </div>
-              <div className="flex justify-between text-base font-extrabold text-stone-900 pt-1 border-t border-stone-100">
-                <span>{t.totalAmount}:</span>
-                <span className="text-emerald-950 font-black">₹{total}</span>
-              </div>
-            </div>
-
-            {/* Pay Button */}
-            <button
-              type="button"
-              onClick={handlePlaceOrder}
-              className="w-full py-3.5 min-h-[52px] bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 font-extrabold text-base rounded-xl shadow-md transition-all cursor-pointer active:scale-98 min-touch-target flex items-center justify-center gap-2"
-            >
-              <span>
-                {paymentMethod === 'Cash on Delivery'
-                  ? (language === 'te' ? `క్యాష్ ఆన్ డెలివరీ ఆర్డర్ (₹${total})` : `Confirm Cash on Delivery (₹${total})`)
-                  : (language === 'te' ? `చెల్లించి ఆర్డర్ చేయండి (₹${total})` : `Pay & Place Order (₹${total})`)}
-              </span>
-            </button>
+                <ArrowRight className="w-5 h-5 ml-1.5" />
+              </Button>
+            )}
           </div>
         )}
+
       </div>
     </div>
   );
