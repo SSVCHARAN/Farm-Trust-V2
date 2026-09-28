@@ -182,21 +182,21 @@ export function useVoice({
           // Build plain confirmation sentence
           let sentence = isTe ? action.messageTelugu || action.message : action.message;
 
-          // Ensure standard question form for confirmation
-          if (action.actionType === 'UPDATE_PRICE' && action.payload) {
-            sentence = isTe
-              ? `${action.payload.productTeluguName || 'టమాటాల'} ధర కిలోకి ₹${action.payload.newPrice} చేయమంటారా?`
-              : `Set ${action.payload.productName || 'produce'} price to ₹${action.payload.newPrice}/kg?`;
-          } else if ((action.actionType === 'SET_STOCK' || action.actionType === 'ADD_STOCK') && action.payload) {
-            sentence = isTe
-              ? `${action.payload.productTeluguName || 'పంట'} నిల్వకు ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} చేర్చమంటారా?`
-              : `Add ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} to stock?`;
-          } else if (action.actionType === 'UPDATE_ORDER_STATUS' && action.payload) {
-            sentence = isTe
-              ? `${action.payload.customerName || 'కస్టమర్'} గారి ఆర్డర్ స్థితిని "${action.payload.statusNote || action.payload.targetStatus}"గా మార్చమంటారా?`
-              : `Update order for ${action.payload.customerName || 'customer'} to "${action.payload.targetStatus}"?`;
-          } else if (action.actionType === 'VIEW_PENDING_ORDERS') {
-            sentence = isTe ? 'మీ పెండింగ్ ఆర్డర్లు చూపించమంటారా?' : 'Show pending buyer orders?';
+          // Ensure standard question form only when confirmation is required
+          if (action.confirmationRequired) {
+            if (action.actionType === 'UPDATE_PRICE' && action.payload) {
+              sentence = isTe
+                ? `${action.payload.productTeluguName || 'పంట'} ధర కిలోకి ₹${action.payload.newPrice} చేయమంటారా?`
+                : `Set ${action.payload.productName || 'produce'} price to ₹${action.payload.newPrice}/kg?`;
+            } else if ((action.actionType === 'SET_STOCK' || action.actionType === 'ADD_STOCK') && action.payload) {
+              sentence = isTe
+                ? `${action.payload.productTeluguName || 'పంట'} నిల్వకు ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} చేర్చమంటారా?`
+                : `Add ${action.payload.deltaQuantity || action.payload.quantity} ${action.payload.unit} to stock?`;
+            } else if (action.actionType === 'UPDATE_ORDER_STATUS' && action.payload) {
+              sentence = isTe
+                ? `${action.payload.customerName || 'కస్టమర్'} గారి ఆర్డర్ స్థితిని "${action.payload.statusNote || action.payload.targetStatus}"గా మార్చమంటారా?`
+                : `Update order for ${action.payload.customerName || 'customer'} to "${action.payload.targetStatus}"?`;
+            }
           }
 
           if (action.confirmationRequired) {
@@ -208,6 +208,11 @@ export function useVoice({
             setVoiceState('done');
             TTSService.speak(sentence, isTe ? 'te-IN' : 'en-IN');
             onExecuteFarmerAction?.(action);
+            if (action.actionType === 'VIEW_PENDING_ORDERS') {
+              setTimeout(() => {
+                closeSheet();
+              }, 1400);
+            }
           }
         } else {
           // Buyer Marketplace Search

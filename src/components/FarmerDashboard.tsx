@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Mic,
   Package,
@@ -20,11 +20,16 @@ import {
   HelpCircle,
   X,
   XCircle,
-  Plus
+  Plus,
+  Calendar,
+  IndianRupee,
+  Layers,
+  ShoppingBag,
+  Filter
 } from 'lucide-react';
 import { Farmer, Product, Order, OrderStatus, LocalDemandItem, CustomerRequest, FarmerOffer } from '../types';
 import { Language, translations } from '../data/translations';
-import { formatRelativeDate } from '../utils/dateUtils';
+import { formatRelativeDate, formatFullDateTime, formatDateHeader, formatTime } from '../utils/dateUtils';
 import { MANDI_PRICES_TODAY } from '../data/mandiPrices';
 import { speakOrderAloud } from '../utils/speakUtils';
 import { FarmerVoiceHub } from './FarmerVoiceHub';
@@ -51,6 +56,8 @@ interface FarmerDashboardProps {
   onSubmitFarmerOffer?: (requestId: string, offer: FarmerOffer) => void;
   activeTab?: 'home' | 'orders' | 'products' | 'demand' | 'profile';
   onTabChange?: (tab: 'home' | 'orders' | 'products' | 'demand' | 'profile') => void;
+  orderFilter?: 'all' | 'pending' | 'completed';
+  onOrderFilterChange?: (filter: 'all' | 'pending' | 'completed') => void;
   onTriggerVoiceCommand?: (text: string) => void;
 }
 
@@ -71,6 +78,8 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   onSubmitFarmerOffer,
   activeTab: controlledTab,
   onTabChange,
+  orderFilter: controlledOrderFilter,
+  onOrderFilterChange,
   onTriggerVoiceCommand,
 }) => {
   const t = translations[language];
@@ -79,6 +88,14 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   const setActiveTab = (tab: 'home' | 'orders' | 'products' | 'demand' | 'profile') => {
     setInternalTab(tab);
     onTabChange?.(tab);
+  };
+
+  // Internal and controlled order filter state ('all' | 'pending' | 'completed')
+  const [internalOrderFilter, setInternalOrderFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const activeOrderFilter = controlledOrderFilter !== undefined ? controlledOrderFilter : internalOrderFilter;
+  const setActiveOrderFilter = (filter: 'all' | 'pending' | 'completed') => {
+    if (onOrderFilterChange) onOrderFilterChange(filter);
+    setInternalOrderFilter(filter);
   };
 
   // Reject order confirmation & undo state
@@ -108,6 +125,86 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   );
   const completedOrders = farmerOrders.filter((o) => o.status === 'Completed');
   const totalSales = completedOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+
+  // Strictly sort orders by newest first (descending createdAt)
+  const sortedFarmerOrders = useMemo(() => {
+    return [...farmerOrders].sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime() || 0;
+      const timeB = new Date(b.createdAt).getTime() || 0;
+      return timeB - timeA;
+    });
+  }, [farmerOrders]);
+
+  // Daily Sales Summary Grouped by Date (Date & Time, Items Sold, Day's Earnings)
+  const dailySalesList = useMemo(() => {
+    const groups: {
+      [key: string]: {
+        dateKey: string;
+        dateHeader: string;
+        latestTime: string;
+        totalOrders: number;
+        completedOrders: number;
+        pendingOrders: number;
+        totalRupees: number;
+        completedRupees: number;
+        itemsMap: { [crop: string]: { qty: number; unit: string } };
+        orders: Order[];
+      };
+    } = {};
+
+    sortedFarmerOrders.forEach((order) => {
+      const d = new Date(order.createdAt);
+      const dateKey = isNaN(d.getTime()) ? 'unknown' : d.toISOString().split('T')[0];
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = {
+          dateKey,
+          dateHeader: formatDateHeader(order.createdAt, language),
+          latestTime: formatTime(order.createdAt),
+          totalOrders: 0,
+          completedOrders: 0,
+          pendingOrders: 0,
+          totalRupees: 0,
+          completedRupees: 0,
+          itemsMap: {},
+          orders: [],
+        };
+      }
+
+      const grp = groups[dateKey];
+      grp.totalOrders += 1;
+      grp.totalRupees += (order.totalPrice || 0);
+      grp.orders.push(order);
+
+      if (order.status === 'Completed') {
+        grp.completedOrders += 1;
+        grp.completedRupees += (order.totalPrice || 0);
+      } else if (order.status === 'Order Placed') {
+        grp.pendingOrders += 1;
+      }
+
+      const crop = language === 'te' ? (order.productTeluguName || order.productName) : order.productName;
+      if (!grp.itemsMap[crop]) {
+        grp.itemsMap[crop] = { qty: 0, unit: order.unit };
+      }
+      grp.itemsMap[crop].qty += order.quantity;
+    });
+
+    return Object.values(groups);
+  }, [sortedFarmerOrders, language]);
+
+  // Displayed orders filtered by active filter
+  const displayedOrders = useMemo(() => {
+    if (activeOrderFilter === 'pending') {
+      return sortedFarmerOrders.filter(
+        (o) => o.status === 'Order Placed' || o.status === 'Accepted by Farmer' || o.status === 'Preparing'
+      );
+    }
+    if (activeOrderFilter === 'completed') {
+      return sortedFarmerOrders.filter((o) => o.status === 'Completed');
+    }
+    return sortedFarmerOrders;
+  }, [sortedFarmerOrders, activeOrderFilter]);
 
   // Order status badge helper
   const getStatusBadge = (status: OrderStatus) => {
@@ -574,165 +671,367 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
 
       {/* ─── ORDERS TAB CONTENT ─── */}
       {activeTab === 'orders' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight">
-              {language === 'te' ? 'అన్ని ఆర్డర్లు' : 'Customer Orders'}
-            </h2>
-            <Badge variant="mint" icon={Package}>
-              {farmerOrders.length} {language === 'te' ? 'మొత్తం' : 'Total'}
-            </Badge>
+        <div className="space-y-6">
+          {/* Header & Overview Stats */}
+          <div className="bg-white rounded-2xl p-5 border border-[#E2DDCF] shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight flex items-center gap-2">
+                  <Package className="w-6 h-6 text-[#1B3D27]" />
+                  <span>{language === 'te' ? 'ఆర్డర్లు & రోజువారీ అమ్మకాలు' : 'Orders & Daily Sales'}</span>
+                </h2>
+                <p className="text-[13px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te'
+                    ? 'ప్రతిరోజు ఎంత అమ్మకం జరిగింది, ఎంత సంపాదన వచ్చిందో తేదీ మరియు సమయంతో సహా చూడండి.'
+                    : 'Track sales volume and rupees earned each day with date and time breakdown.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="mint" icon={Layers}>
+                  {farmerOrders.length} {language === 'te' ? 'మొత్తం ఆర్డర్లు' : 'Total Orders'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[#E2DDCF]/80">
+              <div className="bg-[#F8F5EE] rounded-xl p-3 border border-[#E2DDCF]/70">
+                <span className="text-[11px] font-bold text-[#5B5B5B] uppercase block">
+                  {language === 'te' ? 'మొత్తం సంపాదన' : 'Total Earned'}
+                </span>
+                <span className="text-[20px] font-black text-[#1B3D27] leading-tight block mt-0.5">
+                  ₹{totalSales}
+                </span>
+              </div>
+              <div className="bg-[#F8F5EE] rounded-xl p-3 border border-[#E2DDCF]/70">
+                <span className="text-[11px] font-bold text-[#5B5B5B] uppercase block">
+                  {language === 'te' ? 'పూర్తయినవి' : 'Completed'}
+                </span>
+                <span className="text-[20px] font-black text-[#1A1A1A] leading-tight block mt-0.5">
+                  {completedOrders.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveOrderFilter('pending')}
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  pendingOrders.length > 0
+                    ? 'bg-amber-50/80 border-amber-300 hover:bg-amber-100/60'
+                    : 'bg-[#F8F5EE] border-[#E2DDCF]/70'
+                }`}
+              >
+                <span className="text-[11px] font-bold text-amber-900 uppercase flex items-center gap-1">
+                  {language === 'te' ? 'పెండింగ్ ఆర్డర్లు' : 'Pending Action'}
+                  {pendingOrders.length > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  )}
+                </span>
+                <span className="text-[20px] font-black text-amber-900 leading-tight block mt-0.5">
+                  {pendingOrders.length}
+                </span>
+              </button>
+            </div>
           </div>
 
-          {farmerOrders.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 text-center border border-[#E2DDCF] space-y-3">
-              <Package className="w-12 h-12 text-stone-300 mx-auto" />
-              <p className="text-[16px] font-bold text-[#1A1A1A]">
-                {language === 'te' ? 'ఇంకా ఆర్డర్లు రాలేదు' : 'No orders yet'}
-              </p>
+          {/* ─── DAILY SALES & EARNINGS TABLE ─── */}
+          <div className="bg-white rounded-2xl border border-[#E2DDCF] shadow-xs overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-[#E2DDCF] bg-[#FAF8F3] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#E6F2EA] text-[#1B3D27] flex items-center justify-center shrink-0">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-black text-[#1A1A1A]">
+                    {language === 'te' ? 'రోజువారీ అమ్మకాలు & ఆదాయం పట్టిక' : 'Daily Sales & Earnings Log'}
+                  </h3>
+                  <p className="text-[12px] text-[#5B5B5B]">
+                    {language === 'te'
+                      ? 'ప్రతిరోజు ఎన్ని అమ్మకాలు జరిగాయి & ఎంత రూపాయలు వచ్చాయి'
+                      : 'Sales volume and rupees earned per day'}
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {farmerOrders.map((order) => {
-                const stepIndex = getOrderStepIndex(order.status);
-                const isPending = order.status === 'Order Placed';
 
-                return (
-                  <Card
-                    key={order.id}
-                    variant="default"
-                    padding="md"
-                    className="space-y-3.5 border border-[#E2DDCF] shadow-xs"
+            {dailySalesList.length === 0 ? (
+              <div className="p-6 text-center text-[#5B5B5B] text-[14px]">
+                {language === 'te' ? 'అమ్మకాల రికార్డులు లేవు' : 'No sales records found'}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-[13px] sm:text-[14px]">
+                  <thead>
+                    <tr className="bg-[#F8F5EE] border-b border-[#E2DDCF] text-[#5B5B5B] font-bold">
+                      <th className="py-3 px-4 whitespace-nowrap">{language === 'te' ? 'తేదీ & సమయం' : 'Date & Time'}</th>
+                      <th className="py-3 px-3 text-center whitespace-nowrap">{language === 'te' ? 'ఆర్డర్లు' : 'Orders'}</th>
+                      <th className="py-3 px-4">{language === 'te' ? 'అమ్మిన పంటలు' : 'Crops Sold'}</th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">{language === 'te' ? 'సంపాదన (రూ)' : 'Earnings (₹)'}</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">{language === 'te' ? 'స్థితి' : 'Status'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E2DDCF]/70">
+                    {dailySalesList.map((day) => {
+                      const itemsStr = Object.entries(day.itemsMap)
+                        .map(([crop, data]) => `${data.qty} ${data.unit} ${crop}`)
+                        .join(', ');
+
+                      return (
+                        <tr key={day.dateKey} className="hover:bg-stone-50 transition-colors">
+                          <td className="py-3.5 px-4 font-bold text-[#1A1A1A] whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <span>{day.dateHeader}</span>
+                            </div>
+                            <span className="text-[11px] font-normal text-[#5B5B5B] block mt-0.5">
+                              {day.latestTime ? `${language === 'te' ? 'తాజా' : 'Latest'}: ${day.latestTime}` : ''}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-3 text-center">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#E6F2EA] text-[#1B3D27] font-black text-[12px]">
+                              {day.totalOrders}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-[#1A1A1A] font-semibold">
+                            {itemsStr}
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <span className="text-[17px] font-black text-[#1B3D27]">
+                              ₹{day.totalRupees}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            {day.pendingOrders > 0 ? (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                                {day.pendingOrders} {language === 'te' ? 'వేచి ఉన్నాయి' : 'Pending'}
+                              </span>
+                            ) : (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#E6F2EA] text-[#1E7B3F] border border-[#1E7B3F]/20">
+                                ✓ {language === 'te' ? 'పూర్తయింది' : 'Paid'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* ─── RECENT ORDERS LIST SECTION ─── */}
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2">
+              <h3 className="text-[18px] font-black text-[#1A1A1A] tracking-tight">
+                {language === 'te' ? 'ఆర్డర్ల రికార్డులు (తేదీ & సమయం క్రమంలో)' : 'Recent Order Details'}
+              </h3>
+
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1.5 bg-stone-100 p-1 rounded-xl self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveOrderFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                    activeOrderFilter === 'all'
+                      ? 'bg-white text-[#1B3D27] shadow-xs'
+                      : 'text-[#5B5B5B] hover:text-[#1A1A1A]'
+                  }`}
+                >
+                  {language === 'te' ? 'అన్నీ' : 'All'} ({sortedFarmerOrders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveOrderFilter('pending')}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeOrderFilter === 'pending'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'text-[#5B5B5B] hover:text-amber-800'
+                  }`}
+                >
+                  <span>{language === 'te' ? 'పెండింగ్' : 'Pending'}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[11px] font-black ${
+                    activeOrderFilter === 'pending' ? 'bg-amber-800 text-white' : 'bg-amber-200 text-amber-900'
+                  }`}>
+                    {pendingOrders.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveOrderFilter('completed')}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all cursor-pointer ${
+                    activeOrderFilter === 'completed'
+                      ? 'bg-white text-[#1B3D27] shadow-xs'
+                      : 'text-[#5B5B5B] hover:text-[#1A1A1A]'
+                  }`}
+                >
+                  {language === 'te' ? 'పూర్తయినవి' : 'Completed'} ({completedOrders.length})
+                </button>
+              </div>
+            </div>
+
+            {displayedOrders.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center border border-[#E2DDCF] space-y-3">
+                <Package className="w-12 h-12 text-stone-300 mx-auto" />
+                <p className="text-[16px] font-bold text-[#1A1A1A]">
+                  {activeOrderFilter === 'pending'
+                    ? (language === 'te' ? 'ప్రస్తుతం పెండింగ్ ఆర్డర్లు లేవు! అన్ని ఆర్డర్లు పూర్తయ్యాయి.' : 'No pending orders right now. All orders are fulfilled!')
+                    : (language === 'te' ? 'ఇంకా ఆర్డర్లు రాలేదు' : 'No orders found')}
+                </p>
+                {activeOrderFilter !== 'all' && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setActiveOrderFilter('all')}
+                    className="mx-auto"
                   >
-                    {/* Header: Order ID + Status + Speaker Button */}
-                    <div className="flex items-center justify-between border-b border-[#E2DDCF]/80 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-mono font-bold text-[#5B5B5B]">
-                          #{order.id}
-                        </span>
-                        {getStatusBadge(order.status)}
-                      </div>
+                    {language === 'te' ? 'అన్ని ఆర్డర్లు చూడండి' : 'View All Orders'}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {displayedOrders.map((order) => {
+                  const stepIndex = getOrderStepIndex(order.status);
+                  const isPending = order.status === 'Order Placed';
 
-                      <div className="flex items-center gap-2">
-                        {/* Audio Readout Speaker Button */}
-                        <button
-                          type="button"
-                          onClick={() => speakOrderAloud(order, language)}
-                          aria-label={language === 'te' ? 'ఆర్డర్ వివరాలు వినండి' : 'Read order aloud'}
-                          className="w-10 h-10 rounded-xl bg-[#E6F2EA] hover:bg-[#d5ebdffe] text-[#1B3D27] flex items-center justify-center transition-colors cursor-pointer"
-                          title={language === 'te' ? 'వాయిస్‌లో వినండి' : 'Listen to order in voice'}
-                        >
-                          <Volume2 className="w-5 h-5 stroke-[2.2]" />
-                        </button>
-
-                        <span className="text-[12px] font-semibold text-[#5B5B5B]">
-                          {formatRelativeDate(order.createdAt, language)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Order Details Body */}
-                    <div className="flex items-center gap-3.5">
-                      <img
-                        src={order.productImage}
-                        alt={order.productName}
-                        className="w-16 h-16 rounded-2xl object-cover bg-white border border-[#E2DDCF] shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-[18px] font-black text-[#1A1A1A] leading-tight truncate">
-                          {order.quantity} {order.unit}{' '}
-                          {language === 'te' ? (order.productTeluguName || order.productName) : order.productName}
-                        </h3>
-                        <p className="text-[14px] font-bold text-[#1A1A1A] mt-0.5 truncate">
-                          {order.customerName}
-                        </p>
-                        <p className="text-[13px] text-[#5B5B5B] truncate">{order.deliveryAddress}</p>
-
-                        {/* Main prominent payout number */}
-                        <div className="mt-1.5 flex items-baseline gap-2">
-                          <span className="text-[13px] font-bold text-[#5B5B5B]">
-                            {language === 'te' ? 'మీకు అందేది:' : 'You receive:'}
+                  return (
+                    <Card
+                      key={order.id}
+                      variant="default"
+                      padding="md"
+                      className="space-y-3.5 border border-[#E2DDCF] shadow-xs"
+                    >
+                      {/* Header: Order ID + Status + Speaker Button + Date & Time */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E2DDCF]/80 pb-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[13px] font-mono font-black text-[#5B5B5B] bg-stone-100 px-2 py-0.5 rounded-md">
+                            #{order.id}
                           </span>
-                          <span className="text-[22px] font-black text-[#1B3D27] leading-none">
-                            ₹{order.totalPrice}
+                          {getStatusBadge(order.status)}
+                          <span className="text-[12px] font-bold text-[#5B5B5B]">
+                            {formatFullDateTime(order.createdAt, language)}
                           </span>
-                          <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-[#E6F2EA] text-[#1E7B3F]">
-                            {order.paymentStatus?.includes('Paid') ? 'UPI Received ✓' : 'Payment on Delivery'}
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                          {/* Audio Readout Speaker Button */}
+                          <button
+                            type="button"
+                            onClick={() => speakOrderAloud(order, language)}
+                            aria-label={language === 'te' ? 'ఆర్డర్ వివరాలు వినండి' : 'Read order aloud'}
+                            className="w-9 h-9 rounded-xl bg-[#E6F2EA] hover:bg-[#d5ebdffe] text-[#1B3D27] flex items-center justify-center transition-colors cursor-pointer"
+                            title={language === 'te' ? 'వాయిస్‌లో వినండి' : 'Listen to order in voice'}
+                          >
+                            <Volume2 className="w-4 h-4 stroke-[2.2]" />
+                          </button>
+
+                          <span className="text-[12px] font-semibold text-[#5B5B5B]">
+                            {formatRelativeDate(order.createdAt, language)}
                           </span>
                         </div>
                       </div>
-                    </div>
 
-                    {/* 4-Step Icon Stepper */}
-                    <div className="pt-2 border-t border-[#E2DDCF]/80">
-                      <StepIndicator steps={orderSteps} currentStepIndex={stepIndex} />
-                    </div>
+                      {/* Order Details Body */}
+                      <div className="flex items-center gap-3.5">
+                        <img
+                          src={order.productImage}
+                          alt={order.productName}
+                          className="w-16 h-16 rounded-2xl object-cover bg-white border border-[#E2DDCF] shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-[18px] font-black text-[#1A1A1A] leading-tight truncate">
+                            {order.quantity} {order.unit}{' '}
+                            {language === 'te' ? (order.productTeluguName || order.productName) : order.productName}
+                          </h3>
+                          <p className="text-[14px] font-bold text-[#1A1A1A] mt-0.5 truncate">
+                            {order.customerName}
+                          </p>
+                          <p className="text-[13px] text-[#5B5B5B] truncate">{order.deliveryAddress}</p>
 
-                    {/* Action Row: Call, WhatsApp, Advance Status */}
-                    <div className="flex items-center gap-2 pt-2">
-                      {order.customerPhone && (
-                        <a
-                          href={`tel:${order.customerPhone}`}
-                          className="min-h-[48px] px-3.5 rounded-xl border border-[#E2DDCF] bg-white hover:bg-stone-50 text-[#1B3D27] font-bold text-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                        >
-                          <Phone className="w-4 h-4" />
-                          <span>{language === 'te' ? 'కాల్' : 'Call'}</span>
-                        </a>
-                      )}
+                          {/* Main prominent payout number */}
+                          <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
+                            <span className="text-[13px] font-bold text-[#5B5B5B]">
+                              {language === 'te' ? 'మీకు అందేది:' : 'You receive:'}
+                            </span>
+                            <span className="text-[22px] font-black text-[#1B3D27] leading-none">
+                              ₹{order.totalPrice}
+                            </span>
+                            <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-[#E6F2EA] text-[#1E7B3F]">
+                              {order.paymentStatus?.includes('Paid') ? 'UPI Received ✓' : 'Payment on Delivery'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                      {order.customerPhone && (
-                        <a
-                          href={`https://wa.me/${order.customerPhone.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="min-h-[48px] px-3.5 rounded-xl border border-[#1E7B3F]/30 bg-[#E6F2EA] hover:bg-[#d5ebdffe] text-[#1E7B3F] font-bold text-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          <span>WhatsApp</span>
-                        </a>
-                      )}
+                      {/* 4-Step Icon Stepper */}
+                      <div className="pt-2 border-t border-[#E2DDCF]/80">
+                        <StepIndicator steps={orderSteps} currentStepIndex={stepIndex} />
+                      </div>
 
-                      {/* Advance Order Status Button */}
-                      {isPending && (
-                        <Button
-                          variant="primary"
-                          onClick={() => handleAcceptOrder(order)}
-                          className="flex-1 min-h-[48px] text-[15px]"
-                        >
-                          {language === 'te' ? 'అంగీకరించండి' : 'Accept Order'}
-                        </Button>
-                      )}
+                      {/* Action Row: Call, WhatsApp, Advance Status */}
+                      <div className="flex items-center gap-2 pt-2">
+                        {order.customerPhone && (
+                          <a
+                            href={`tel:${order.customerPhone}`}
+                            className="min-h-[48px] px-3.5 rounded-xl border border-[#E2DDCF] bg-white hover:bg-stone-50 text-[#1B3D27] font-bold text-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                          >
+                            <Phone className="w-4 h-4" />
+                            <span>{language === 'te' ? 'కాల్' : 'Call'}</span>
+                          </a>
+                        )}
 
-                      {order.status === 'Accepted by Farmer' && (
-                        <Button
-                          variant="primary"
-                          onClick={() => onUpdateOrderStatus(order.id, 'Ready')}
-                          className="flex-1 min-h-[48px] text-[15px]"
-                        >
-                          {language === 'te' ? 'ప్యాక్ చేసి సిద్ధం చేయండి' : 'Mark Ready'}
-                        </Button>
-                      )}
+                        {order.customerPhone && (
+                          <a
+                            href={`https://wa.me/${order.customerPhone.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="min-h-[48px] px-3.5 rounded-xl border border-[#1E7B3F]/30 bg-[#E6F2EA] hover:bg-[#d5ebdffe] text-[#1E7B3F] font-bold text-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
 
-                      {order.status === 'Ready' && (
-                        <Button
-                          variant="primary"
-                          onClick={() => {
-                            setVerifyingOrderId(order.id);
-                            setEnteredOtp('');
-                            setOtpError(null);
-                          }}
-                          className="flex-1 min-h-[48px] text-[15px] bg-[#1E7B3F]"
-                        >
-                          <KeyRound className="w-4 h-4 mr-1" />
-                          <span>{language === 'te' ? 'OTP నిర్ధారించండి' : 'Verify Handover'}</span>
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+                        {/* Advance Order Status Button */}
+                        {isPending && (
+                          <Button
+                            variant="primary"
+                            onClick={() => handleAcceptOrder(order)}
+                            className="flex-1 min-h-[48px] text-[15px]"
+                          >
+                            {language === 'te' ? 'అంగీకరించండి' : 'Accept Order'}
+                          </Button>
+                        )}
+
+                        {order.status === 'Accepted by Farmer' && (
+                          <Button
+                            variant="primary"
+                            onClick={() => onUpdateOrderStatus(order.id, 'Ready')}
+                            className="flex-1 min-h-[48px] text-[15px]"
+                          >
+                            {language === 'te' ? 'ప్యాక్ చేసి సిద్ధం చేయండి' : 'Mark Ready'}
+                          </Button>
+                        )}
+
+                        {order.status === 'Ready' && (
+                          <Button
+                            variant="primary"
+                            onClick={() => {
+                              setVerifyingOrderId(order.id);
+                              setEnteredOtp('');
+                              setOtpError(null);
+                            }}
+                            className="flex-1 min-h-[48px] text-[15px] bg-[#1E7B3F]"
+                          >
+                            <KeyRound className="w-4 h-4 mr-1" />
+                            <span>{language === 'te' ? 'OTP నిర్ధారించండి' : 'Verify Handover'}</span>
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

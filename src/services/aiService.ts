@@ -62,34 +62,71 @@ export async function parseCustomerVoiceSearch(
   let productTelugu = 'టమాటాలు';
   let unit = 'kg';
 
-  if (lower.includes('rice') || lower.includes('బియ్యం') || lower.includes('సోనా')) {
-    product = 'Sona Masoori Rice';
-    productTelugu = 'సోనా మసూరి బియ్యం';
+  if (lower.includes('rice') || lower.includes('బియ్యం') || lower.includes('వరి') || lower.includes('సోనా')) {
+    product = 'Rice';
+    productTelugu = 'బియ్యం';
   } else if (lower.includes('mango') || lower.includes('మామిడి')) {
-    product = 'Banganapalli Mangoes';
-    productTelugu = 'బంగనపల్లి మామిడి';
+    product = 'Mangoes';
+    productTelugu = 'మామిడి';
   } else if (lower.includes('milk') || lower.includes('పాలు')) {
-    product = 'Pure Cow Milk';
-    productTelugu = 'ఆవు పాలు';
+    product = 'Milk';
+    productTelugu = 'పాలు';
     unit = 'liters';
-  } else if (lower.includes('spinach') || lower.includes('పాలకూర')) {
-    product = 'Fresh Spinach';
-    productTelugu = 'తాజా పాలకూర';
-    unit = 'bunches';
   } else if (lower.includes('onion') || lower.includes('ఉల్లి')) {
-    product = 'Red Onions';
-    productTelugu = 'ఎర్ర ఉల్లిపాయలు';
+    product = 'Onions';
+    productTelugu = 'ఉల్లిపాయలు';
+  } else if (lower.includes('chilli') || lower.includes('chili') || lower.includes('మిరప') || lower.includes('మిర్చి')) {
+    product = 'Red Chillies';
+    productTelugu = 'ఎర్ర మిరపకాయలు';
+  } else if (lower.includes('okra') || lower.includes('బెండ')) {
+    product = 'Okra';
+    productTelugu = 'బెండకాయలు';
+  } else if (lower.includes('ghee') || lower.includes('నెయ్యి')) {
+    product = 'Ghee';
+    productTelugu = 'నెయ్యి';
   }
 
   const numbers = text.match(/\d+(\.\d+)?/g)?.map(Number) || [];
-  let quantity: number | null = 2;
-  let maxPrice: number | null = 40;
+  let quantity: number | null = null;
+  let maxPrice: number | null = null;
 
   if (numbers.length >= 2) {
     quantity = numbers[0];
     maxPrice = numbers[1];
   } else if (numbers.length === 1) {
-    if (lower.includes('under') || lower.includes('below') || lower.includes('లోపు') || lower.includes('ధర') || lower.includes('rupee') || lower.includes('రూ')) {
+    const isPrice =
+      lower.includes('under') ||
+      lower.includes('below') ||
+      lower.includes('less than') ||
+      lower.includes('upto') ||
+      lower.includes('up to') ||
+      lower.includes('for') ||
+      lower.includes('at') ||
+      lower.includes('rs') ||
+      lower.includes('rupee') ||
+      lower.includes('rupees') ||
+      lower.includes('₹') ||
+      lower.includes('inr') ||
+      lower.includes('bucks') ||
+      lower.includes('లోపు') ||
+      lower.includes('ధర') ||
+      lower.includes('రూ');
+
+    const isQty =
+      lower.includes('kg') ||
+      lower.includes('kilo') ||
+      lower.includes('కిలో') ||
+      lower.includes('liter') ||
+      lower.includes('లీటర్') ||
+      lower.includes('g') ||
+      lower.includes('gram') ||
+      lower.includes('గ్రాము');
+
+    if (isPrice && !isQty) {
+      maxPrice = numbers[0];
+    } else if (isQty && !isPrice) {
+      quantity = numbers[0];
+    } else if (isPrice) {
       maxPrice = numbers[0];
     } else {
       quantity = numbers[0];
@@ -152,13 +189,69 @@ export async function callFarmerAIAssistant(
     return null;
   };
 
-  const detectCrop = (text: string) => {
-    if (text.includes('టమాటా') || text.includes('tomato')) return { en: 'Tomatoes', te: 'నాటు టమాటాలు', id: 'prod-1' };
-    if (text.includes('బియ్యం') || text.includes('వరి') || text.includes('rice')) return { en: 'Sona Masoori Rice', te: 'సోనా మసూరి బియ్యం', id: 'prod-2' };
-    if (text.includes('మిరప') || text.includes('మిర్చి') || text.includes('chilli')) return { en: 'Guntur Chillies', te: 'గుంటూరు మిరప', id: 'prod-5' };
-    if (text.includes('మామిడి') || text.includes('mango')) return { en: 'Banganapalli Mangoes', te: 'బంగనపల్లి మామిడి', id: 'prod-4' };
-    if (text.includes('పాలు') || text.includes('milk')) return { en: 'Desi Cow Milk', te: 'స్వచ్ఛమైన ఆవు పాలు', id: 'prod-3' };
-    return products[0] ? { en: products[0].name, te: products[0].teluguName, id: products[0].id } : null;
+  const detectCrop = (text: string): { en: string; te: string; id: string; found: boolean; queryCropName?: string; queryCropNameTe?: string } | null => {
+    const lower = text.toLowerCase();
+
+    // 1. Search directly in farmer's active produce inventory
+    for (const p of products) {
+      const pName = (p.name || '').toLowerCase();
+      const pTelugu = (p.teluguName || '').toLowerCase();
+
+      if (pName && lower.includes(pName)) {
+        return { en: p.name, te: p.teluguName || p.name, id: p.id, found: true };
+      }
+      if (pTelugu && lower.includes(pTelugu)) {
+        return { en: p.name, te: p.teluguName || p.name, id: p.id, found: true };
+      }
+
+      // Root synonyms
+      const synonyms: Record<string, string[]> = {
+        tomato: ['tomato', 'tomatoes', 'టమాటా', 'టమాటాలు'],
+        onion: ['onion', 'onions', 'ఉల్లి', 'ఉల్లిపాయ', 'ఉల్లిపాయలు'],
+        rice: ['rice', 'paddy', 'బియ్యం', 'వరి', 'సోనా'],
+        chilli: ['chilli', 'chillies', 'chili', 'mirchi', 'మిరప', 'మిర్చి'],
+        mango: ['mango', 'mangoes', 'మామిడి', 'మామిడిపండ్లు'],
+        milk: ['milk', 'పాలు'],
+        ghee: ['ghee', 'నెయ్యి'],
+        okra: ['okra', 'bhendi', 'ladyfinger', 'బెండ', 'బెండకాయలు'],
+        potato: ['potato', 'potatoes', 'ఆలూ', 'బంగాళాదుంప', 'బంగాళాదుంపలు'],
+      };
+
+      for (const [, syns] of Object.entries(synonyms)) {
+        if (syns.some((s) => pName.includes(s) || pTelugu.includes(s))) {
+          if (syns.some((s) => lower.includes(s))) {
+            return { en: p.name, te: p.teluguName || p.name, id: p.id, found: true };
+          }
+        }
+      }
+    }
+
+    // 2. If not found in farmer's products, check if user mentioned a known crop they do NOT produce
+    const allKnownProduces: { en: string; te: string; synonyms: string[] }[] = [
+      { en: 'Tomatoes', te: 'టమాటాలు', synonyms: ['tomato', 'tomatoes', 'టమాటా', 'టమాటాలు'] },
+      { en: 'Onions', te: 'ఉల్లిపాయలు', synonyms: ['onion', 'onions', 'ఉల్లి', 'ఉల్లిపాయ', 'ఉల్లిపాయలు'] },
+      { en: 'Potatoes', te: 'బంగాళాదుంపలు', synonyms: ['potato', 'potatoes', 'ఆలూ', 'బంగాళాదుంప', 'బంగాళాదుంపలు'] },
+      { en: 'Rice', te: 'బియ్యం', synonyms: ['rice', 'paddy', 'బియ్యం', 'వరి'] },
+      { en: 'Red Chillies', te: 'ఎర్ర మిరపకాయలు', synonyms: ['chilli', 'chillies', 'chili', 'mirchi', 'మిరప', 'మిర్చి'] },
+      { en: 'Mangoes', te: 'మామిడి', synonyms: ['mango', 'mangoes', 'మామిడి', 'మామిడిపండ్లు'] },
+      { en: 'Milk', te: 'పాలు', synonyms: ['milk', 'పాలు'] },
+      { en: 'Ghee', te: 'నెయ్యి', synonyms: ['ghee', 'నెయ్యి'] },
+      { en: 'Okra', te: 'బెండకాయలు', synonyms: ['okra', 'bhendi', 'ladyfinger', 'బెండ', 'బెండకాయలు'] },
+      { en: 'Apples', te: 'ఆపిల్స్', synonyms: ['apple', 'apples', 'ఆపిల్'] },
+      { en: 'Bananas', te: 'అరటిపండ్లు', synonyms: ['banana', 'bananas', 'అరటి'] },
+      { en: 'Brinjal', te: 'వంకాయలు', synonyms: ['brinjal', 'eggplant', 'వంకాయ'] },
+      { en: 'Carrots', te: 'క్యారెట్లు', synonyms: ['carrot', 'carrots', 'క్యారెట్'] },
+      { en: 'Garlic', te: 'వెల్లుల్లి', synonyms: ['garlic', 'వెల్లుల్లి'] },
+      { en: 'Ginger', te: 'అల్లం', synonyms: ['ginger', 'అల్లం'] },
+    ];
+
+    for (const kp of allKnownProduces) {
+      if (kp.synonyms.some((s) => lower.includes(s))) {
+        return { en: kp.en, te: kp.te, id: '', found: false, queryCropName: kp.en, queryCropNameTe: kp.te };
+      }
+    }
+
+    return null;
   };
 
   // 1. Onboarding
@@ -168,8 +261,8 @@ export async function callFarmerAIAssistant(
     const farmerTelugu = q.includes('లక్ష్మి') ? 'లక్ష్మీ దేవి' : farmerName;
     const acres = wordToNum(q) || 3;
     const location = q.includes('సబ్బవరం') ? 'Sabbavaram, Visakhapatnam' : 'Anandapuram, Visakhapatnam';
-    const crops = ['Tomatoes', 'Chillies'];
-    const cropsTelugu = ['నాటు టమాటాలు', 'గుంటూరు మిరపకాయలు'];
+    const crops = ['Tomatoes', 'Red Chillies'];
+    const cropsTelugu = ['టమాటాలు', 'ఎర్ర మిరపకాయలు'];
 
     return {
       actionType: 'VOICE_ONBOARDING',
@@ -196,7 +289,17 @@ export async function callFarmerAIAssistant(
   // 2. Mark Out of Stock
   if (q.includes('అయిపోయాయి') || q.includes('ఖాళీ') || q.includes('స్టాక్ లేదు') || q.includes('out of stock')) {
     const crop = detectCrop(q);
-    const targetProd = products.find((p: any) => p.id === crop?.id) || products[0] || { id: 'prod-1', name: 'Tomatoes', teluguName: 'టమాటాలు', unit: 'kg' };
+    if (!crop || !crop.found) {
+      const missing = crop?.queryCropName || 'That produce';
+      const missingTe = crop?.queryCropNameTe || 'ఆ పంట';
+      return {
+        actionType: 'NONE',
+        confirmationRequired: false,
+        message: `${missing} is not in your produce list. You can only update produce you currently sell.`,
+        messageTelugu: `${missingTe} మీ ఉత్పత్తుల జాబితాలో కనిపించలేదు. దయచేసి మీ ఉత్పత్తుల విభాగం తనిఖీ చేయండి.`
+      };
+    }
+    const targetProd = products.find((p: any) => p.id === crop.id) || products[0];
     return {
       actionType: 'MARK_OUT_OF_STOCK',
       confirmationRequired: true,
@@ -205,6 +308,7 @@ export async function callFarmerAIAssistant(
       payload: {
         productId: targetProd.id,
         productName: targetProd.name,
+        productTeluguName: targetProd.teluguName || targetProd.name,
         quantity: 0,
         unit: targetProd.unit,
         executedMessage: `Marked ${targetProd.name} as out of stock.`,
@@ -214,45 +318,71 @@ export async function callFarmerAIAssistant(
   }
 
   // 3. Add Stock
-  if (q.includes('వచ్చాయి') || q.includes('చేరాయి') || q.includes('జోడించు') || q.includes('add stock')) {
+  if (q.includes('వచ్చాయి') || q.includes('చేరాయి') || q.includes('జోడించు') || q.includes('add stock') || q.includes('చేర్చు')) {
     const qty = wordToNum(q) || 10;
     const crop = detectCrop(q);
-    const targetProd = products.find((p: any) => p.id === crop?.id) || products[0] || { id: 'prod-1', name: 'Tomatoes', teluguName: 'టమాటాలు', unit: 'kg', availableQuantity: 20 };
-    const newStock = (targetProd.availableQuantity || 0) + qty;
+    if (!crop || !crop.found) {
+      const missing = crop?.queryCropName || 'That produce';
+      const missingTe = crop?.queryCropNameTe || 'ఆ పంట';
+      return {
+        actionType: 'NONE',
+        confirmationRequired: false,
+        message: `${missing} is not in your produce list. You can only update produce you currently sell.`,
+        messageTelugu: `${missingTe} మీ ఉత్పత్తుల జాబితాలో కనిపించలేదు. దయచేసి మీ ఉత్పత్తుల విభాగం తనిఖీ చేయండి.`
+      };
+    }
+    const targetProd = products.find((p: any) => p.id === crop.id) || products[0];
+    const isGrams = q.includes('gram') || q.includes('గ్రాము') || q.includes('50g');
+    const unit = isGrams ? 'g' : (targetProd.unit || 'kg');
+    const newStock = (targetProd.availableQuantity || 0) + (isGrams ? qty / 1000 : qty);
+
     return {
       actionType: 'ADD_STOCK',
       confirmationRequired: true,
-      message: `Add ${qty} ${targetProd.unit} to ${targetProd.name}? Total stock will be ${newStock} ${targetProd.unit}.`,
-      messageTelugu: `${targetProd.teluguName || targetProd.name}కు ఇంకా ${qty} ${targetProd.unit} జోడించమంటారా? మొత్తం నిల్వ ${newStock} ${targetProd.unit} అవుతుంది.`,
+      message: `Add ${qty} ${unit} to ${targetProd.name}? Total stock will be ${newStock} ${targetProd.unit}.`,
+      messageTelugu: `${targetProd.teluguName || targetProd.name}కు ఇంకా ${qty} ${unit} జోడించమంటారా? మొత్తం నిల్వ ${newStock} ${targetProd.unit} అవుతుంది.`,
       payload: {
         productId: targetProd.id,
         productName: targetProd.name,
+        productTeluguName: targetProd.teluguName || targetProd.name,
         deltaQuantity: qty,
         quantity: newStock,
-        unit: targetProd.unit,
-        executedMessage: `Added ${qty} ${targetProd.unit} to ${targetProd.name}. Total stock is now ${newStock} ${targetProd.unit}.`,
-        executedMessageTelugu: `${targetProd.teluguName || targetProd.name} నిల్వకు ${qty} ${targetProd.unit} జోడించాను. మొత్తం నిల్వ ${newStock} ${targetProd.unit}.`
+        unit,
+        executedMessage: `Added ${qty} ${unit} to ${targetProd.name}. Total stock is now ${newStock} ${targetProd.unit}.`,
+        executedMessageTelugu: `${targetProd.teluguName || targetProd.name} నిల్వకు ${qty} ${unit} జోడించాను. మొత్తం నిల్వ ${newStock} ${targetProd.unit}.`
       }
     };
   }
 
   // 4. Set Absolute Stock
-  if ((q.includes('ఉన్నాయి') || q.includes('మిగిలాయి') || q.includes('నిల్వ') || q.includes('stock')) && (q.includes('కిలో') || q.includes('kg') || q.includes('లీటర్') || q.includes('liters'))) {
+  if ((q.includes('ఉన్నాయి') || q.includes('మిగిలాయి') || q.includes('నిల్వ') || q.includes('stock')) && (q.includes('కిలో') || q.includes('kg') || q.includes('లీటర్') || q.includes('liters') || q.includes('g') || q.includes('gram'))) {
     const qty = wordToNum(q) || 20;
     const crop = detectCrop(q);
-    const targetProd = products.find((p: any) => p.id === crop?.id) || products[0] || { id: 'prod-1', name: 'Tomatoes', teluguName: 'టమాటాలు', unit: 'kg' };
+    if (!crop || !crop.found) {
+      const missing = crop?.queryCropName || 'That produce';
+      const missingTe = crop?.queryCropNameTe || 'ఆ పంట';
+      return {
+        actionType: 'NONE',
+        confirmationRequired: false,
+        message: `${missing} is not in your produce list. You can only update produce you currently sell.`,
+        messageTelugu: `${missingTe} మీ ఉత్పత్తుల జాబితాలో కనిపించలేదు. దయచేసి మీ ఉత్పత్తుల విభాగం తనిఖీ చేయండి.`
+      };
+    }
+    const targetProd = products.find((p: any) => p.id === crop.id) || products[0];
+    const unit = targetProd.unit || 'kg';
     return {
       actionType: 'SET_STOCK',
       confirmationRequired: true,
-      message: `Set available stock for ${targetProd.name} to ${qty} ${targetProd.unit}?`,
-      messageTelugu: `${targetProd.teluguName || targetProd.name} లభ్యమైన నిల్వను ${qty} ${targetProd.unit}గా సెట్ చేయమంటారా?`,
+      message: `Set available stock for ${targetProd.name} to ${qty} ${unit}?`,
+      messageTelugu: `${targetProd.teluguName || targetProd.name} లభ్యమైన నిల్వను ${qty} ${unit}గా సెట్ చేయమంటారా?`,
       payload: {
         productId: targetProd.id,
         productName: targetProd.name,
+        productTeluguName: targetProd.teluguName || targetProd.name,
         quantity: qty,
-        unit: targetProd.unit,
-        executedMessage: `Updated ${targetProd.name} available stock to ${qty} ${targetProd.unit}.`,
-        executedMessageTelugu: `${targetProd.teluguName || targetProd.name} నిల్వను ${qty} ${targetProd.unit}గా నమోదు చేశాను.`
+        unit,
+        executedMessage: `Updated ${targetProd.name} available stock to ${qty} ${unit}.`,
+        executedMessageTelugu: `${targetProd.teluguName || targetProd.name} నిల్వను ${qty} ${unit}గా నమోదు చేశాను.`
       }
     };
   }
@@ -261,20 +391,31 @@ export async function callFarmerAIAssistant(
   if ((q.includes('ధర') || q.includes('రూపాయ') || q.includes('price')) && !q.includes('ఆఫర్') && !q.includes('offer')) {
     const newPrice = wordToNum(q) || 35;
     const crop = detectCrop(q);
-    const targetProd = products.find((p: any) => p.id === crop?.id) || products[0] || { id: 'prod-1', name: 'Tomatoes', teluguName: 'టమాటాలు', price: 30, priceUnit: 'kg' };
+    if (!crop || !crop.found) {
+      const missing = crop?.queryCropName || 'That produce';
+      const missingTe = crop?.queryCropNameTe || 'ఆ పంట';
+      return {
+        actionType: 'NONE',
+        confirmationRequired: false,
+        message: `${missing} is not in your produce list. You can only update produce you currently sell.`,
+        messageTelugu: `${missingTe} మీ ఉత్పత్తుల జాబితాలో కనిపించలేదు. దయచేసి మీ ఉత్పత్తుల విభాగం తనిఖీ చేయండి.`
+      };
+    }
+    const targetProd = products.find((p: any) => p.id === crop.id) || products[0];
     return {
       actionType: 'UPDATE_PRICE',
       confirmationRequired: true,
-      message: `Change price of ${targetProd.name} to ₹${newPrice} per ${targetProd.priceUnit}?`,
-      messageTelugu: `${targetProd.teluguName || 'టమాటాల'} ధర ${newPrice} రూపాయలు చేయనా?`,
+      message: `Change price of ${targetProd.name} to ₹${newPrice} per ${targetProd.priceUnit || 'kg'}?`,
+      messageTelugu: `${targetProd.teluguName || targetProd.name} ధర కిలోకి ${newPrice} రూపాయలు చేయమంటారా?`,
       payload: {
         productId: targetProd.id,
         productName: targetProd.name,
+        productTeluguName: targetProd.teluguName || targetProd.name,
         oldPrice: targetProd.price,
         newPrice,
-        unit: targetProd.priceUnit,
-        executedMessage: `Sure, I have updated the tomato price to ${newPrice} rupees per kg.`,
-        executedMessageTelugu: `సరే, టమాటాల ధర కిలోకి ${newPrice} రూపాయలు చేశాను.`
+        unit: targetProd.priceUnit || 'kg',
+        executedMessage: `Sure, I have updated the ${targetProd.name.toLowerCase()} price to ${newPrice} rupees per ${targetProd.priceUnit || 'kg'}.`,
+        executedMessageTelugu: `సరే, ${targetProd.teluguName || targetProd.name} ధర కిలోకి ${newPrice} రూపాయలు చేశాను.`
       }
     };
   }

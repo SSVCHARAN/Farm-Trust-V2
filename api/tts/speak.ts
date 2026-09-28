@@ -73,10 +73,42 @@ export default async function handler(req: any, res: any) {
     const cleaned = cleanText(text);
     const normalizedTarget = cleaned.replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
 
+    const extractNumbers = (str: string): number[] => {
+      const matches = str.match(/\d+/g) || [];
+      return matches.map(Number).sort((a, b) => a - b);
+    };
+
+    const targetNumbers = extractNumbers(cleaned);
+
+    const extractProduce = (str: string): string => {
+      const lower = str.toLowerCase();
+      if (lower.includes('tomato') || lower.includes('టమాటా')) return 'tomato';
+      if (lower.includes('onion') || lower.includes('ఉల్లి')) return 'onion';
+      if (lower.includes('rice') || lower.includes('బియ్యం') || lower.includes('వరి')) return 'rice';
+      if (lower.includes('chilli') || lower.includes('chili') || lower.includes('మిరప') || lower.includes('మిర్చి')) return 'chilli';
+      if (lower.includes('mango') || lower.includes('మామిడి')) return 'mango';
+      if (lower.includes('milk') || lower.includes('పాలు')) return 'milk';
+      if (lower.includes('ghee') || lower.includes('నెయ్యి')) return 'ghee';
+      if (lower.includes('okra') || lower.includes('బెండ')) return 'okra';
+      if (lower.includes('potato') || lower.includes('బంగాళాదుంప')) return 'potato';
+      return '';
+    };
+
+    const targetProduce = extractProduce(cleaned);
+
     // 1. Direct or normalized match in pre-rendered static clips
     for (const item of Object.values(manifest)) {
       if (item.url && item.lang === langKey) {
         const itemClean = cleanText(item.text || item.cleaned || '');
+        const candidateNumbers = extractNumbers(itemClean);
+
+        if (targetNumbers.length > 0 || candidateNumbers.length > 0) {
+          if (targetNumbers.length !== candidateNumbers.length) continue;
+          if (!targetNumbers.every((val, idx) => val === candidateNumbers[idx])) continue;
+        }
+
+        if (targetProduce && extractProduce(itemClean) !== targetProduce) continue;
+
         const itemNorm = itemClean.replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
 
         if (itemNorm === normalizedTarget || (itemNorm.length > 8 && (itemNorm.includes(normalizedTarget) || normalizedTarget.includes(itemNorm)))) {
@@ -104,6 +136,15 @@ export default async function handler(req: any, res: any) {
     for (const item of Object.values(manifest)) {
       if (item.url && item.lang === langKey) {
         const itemClean = cleanText(item.text || item.cleaned || '');
+        const candidateNumbers = extractNumbers(itemClean);
+
+        if (targetNumbers.length > 0 || candidateNumbers.length > 0) {
+          if (targetNumbers.length !== candidateNumbers.length) continue;
+          if (!targetNumbers.every((val, idx) => val === candidateNumbers[idx])) continue;
+        }
+
+        if (targetProduce && extractProduce(itemClean) !== targetProduce) continue;
+
         const candidateTokens = itemClean
           .replace(/[^a-z0-9\u0C00-\u0C7F\s]/g, ' ')
           .split(/\s+/)
@@ -117,7 +158,7 @@ export default async function handler(req: any, res: any) {
         }
 
         const score = intersection / Math.max(targetTokens.size, candidateTokens.length);
-        if (score > 0.55 && score > highestScore) {
+        if (score > 0.6 && score > highestScore) {
           highestScore = score;
           bestMatch = item;
         }

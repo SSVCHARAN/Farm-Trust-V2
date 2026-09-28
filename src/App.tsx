@@ -82,6 +82,8 @@ export default function App() {
     return 'home';
   });
 
+  const [farmerOrderFilter, setFarmerOrderFilter] = useState<'all' | 'pending' | 'completed'>('all');
+
   // Entities state (initialized synchronously to avoid empty flash)
   const [farmers, setFarmers] = useState<Farmer[]>(() => StorageService.getFarmers());
   const [products, setProducts] = useState<Product[]>(() => StorageService.getProducts());
@@ -356,6 +358,7 @@ export default function App() {
       }
     } else if (action.actionType === 'VIEW_PENDING_ORDERS') {
       setFarmerTab('orders');
+      setFarmerOrderFilter('pending');
     } else if (action.actionType === 'UPDATE_ORDER_STATUS' && action.payload?.orderId && action.payload.targetStatus) {
       handleUpdateOrderStatus(action.payload.orderId, action.payload.targetStatus);
     } else if (action.actionType === 'VOICE_ONBOARDING') {
@@ -458,6 +461,8 @@ export default function App() {
               onSubmitFarmerOffer={handleSubmitFarmerOffer}
               activeTab={farmerTab}
               onTabChange={setFarmerTab}
+              orderFilter={farmerOrderFilter}
+              onOrderFilterChange={setFarmerOrderFilter}
               onTriggerVoiceCommand={(cmd) => voice.simulateCommand(cmd)}
             />
           )

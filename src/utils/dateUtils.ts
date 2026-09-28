@@ -62,3 +62,69 @@ export function formatRelativeDate(
   const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
   return date.toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-IN', options);
 }
+
+export function formatTime(dateInput: string | number | undefined): string {
+  if (!dateInput) return '';
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+export function formatFullDateTime(
+  dateInput: string | number | undefined,
+  lang: 'te' | 'en' = 'en'
+): string {
+  if (!dateInput) return '';
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return String(dateInput);
+
+  const dayStr = date.toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const timeStr = date.toLocaleTimeString('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  return `${dayStr}, ${timeStr}`;
+}
+
+export function formatDateHeader(
+  dateInput: string | number | undefined,
+  lang: 'te' | 'en' = 'en'
+): string {
+  if (!dateInput) return '';
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return String(dateInput);
+
+  const today = new Date();
+  const isToday =
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  const dateStr = date.toLocaleDateString(lang === 'te' ? 'te-IN' : 'en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  if (isToday) {
+    return lang === 'te' ? `ఈ రోజు - ${dateStr}` : `Today - ${dateStr}`;
+  }
+  if (isYesterday) {
+    return lang === 'te' ? `నిన్న - ${dateStr}` : `Yesterday - ${dateStr}`;
+  }
+  return dateStr;
+}
+

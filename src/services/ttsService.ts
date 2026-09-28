@@ -126,10 +126,44 @@ class VernacularTTSService {
     const target = cleanText.toLowerCase().replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
     if (!target || target.length < 5) return null;
 
-    // 1. Direct normalized match or containment
+    const extractNumbers = (str: string): number[] => {
+      const matches = str.match(/\d+/g) || [];
+      return matches.map(Number).sort((a, b) => a - b);
+    };
+
+    const targetNumbers = extractNumbers(cleanText);
+
+    const extractProduce = (str: string): string => {
+      const lower = str.toLowerCase();
+      if (lower.includes('tomato') || lower.includes('టమాటా')) return 'tomato';
+      if (lower.includes('onion') || lower.includes('ఉల్లి')) return 'onion';
+      if (lower.includes('rice') || lower.includes('బియ్యం') || lower.includes('వరి')) return 'rice';
+      if (lower.includes('chilli') || lower.includes('chili') || lower.includes('మిరప') || lower.includes('మిర్చి')) return 'chilli';
+      if (lower.includes('mango') || lower.includes('మామిడి')) return 'mango';
+      if (lower.includes('milk') || lower.includes('పాలు')) return 'milk';
+      if (lower.includes('ghee') || lower.includes('నెయ్యి')) return 'ghee';
+      if (lower.includes('okra') || lower.includes('బెండ')) return 'okra';
+      if (lower.includes('potato') || lower.includes('బంగాళాదుంప')) return 'potato';
+      return '';
+    };
+
+    const targetProduce = extractProduce(cleanText);
+
+    // 1. Direct normalized match or containment (with strict number and produce checks)
     for (const [key, url] of this.memoryCache.entries()) {
       if (key.startsWith(lang)) {
         const textPart = key.split(':').pop() || '';
+        const candidateNumbers = extractNumbers(textPart);
+
+        // NUMBERS MUST MATCH: If target specifies numbers (e.g. 67, 100), candidate MUST have the exact same numbers
+        if (targetNumbers.length > 0 || candidateNumbers.length > 0) {
+          if (targetNumbers.length !== candidateNumbers.length) continue;
+          if (!targetNumbers.every((val, idx) => val === candidateNumbers[idx])) continue;
+        }
+
+        // PRODUCE MUST MATCH: If target specifies a crop, candidate MUST match that crop
+        if (targetProduce && extractProduce(textPart) !== targetProduce) continue;
+
         const normalized = textPart.replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
         if (normalized === target || (normalized.length > 8 && (normalized.includes(target) || target.includes(normalized)))) {
           return url;
@@ -137,7 +171,7 @@ class VernacularTTSService {
       }
     }
 
-    // 2. Token overlap similarity for phrases with slightly different phrasing
+    // 2. Token overlap similarity for phrases with slight wording differences
     const targetTokens = new Set(
       cleanText
         .toLowerCase()
@@ -153,6 +187,17 @@ class VernacularTTSService {
     for (const [key, url] of this.memoryCache.entries()) {
       if (key.startsWith(lang)) {
         const textPart = key.split(':').pop() || '';
+        const candidateNumbers = extractNumbers(textPart);
+
+        // NUMBERS MUST MATCH: Never play audio with wrong prices or quantities
+        if (targetNumbers.length > 0 || candidateNumbers.length > 0) {
+          if (targetNumbers.length !== candidateNumbers.length) continue;
+          if (!targetNumbers.every((val, idx) => val === candidateNumbers[idx])) continue;
+        }
+
+        // PRODUCE MUST MATCH: Never play tomato audio for onions
+        if (targetProduce && extractProduce(textPart) !== targetProduce) continue;
+
         const candidateTokens = textPart
           .toLowerCase()
           .replace(/[^a-z0-9\u0C00-\u0C7F\s]/g, ' ')
@@ -169,7 +214,7 @@ class VernacularTTSService {
         }
 
         const score = intersectionCount / Math.max(targetTokens.size, candidateTokens.length);
-        if (score > 0.55 && score > highestScore) {
+        if (score > 0.6 && score > highestScore) {
           highestScore = score;
           bestUrl = url;
         }
@@ -503,14 +548,8 @@ class VernacularTTSService {
       options?.onLoading?.(false);
     }
 
-    // ─── TIER 2: Browser SpeechSynthesis Fallback (English only, never Telugu) ───
-    // For Telugu: pre-rendered audio is the ONLY allowed source. If it's missing, silent end.
-    if (lang.startsWith('te')) {
-      console.info('[TTS] No pre-rendered Telugu clip found. Ending silently (no espeak fallback).');
-      options?.onEnd?.();
-    } else {
-      this.speakBrowserFallback(cleanText, lang, options);
-    }
+    // ─── TIER 2: Browser SpeechSynthesis Fallback ───
+    this.speakBrowserFallback(cleanText, lang, options);
   }
 
   private playAudioFile(url: string, options?: TTSOptions, _fallbackText?: string, _lang?: TTSLanguage): void {
