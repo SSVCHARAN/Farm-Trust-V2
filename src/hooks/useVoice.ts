@@ -212,36 +212,72 @@ export function useVoice({
     [clearTimers, failureCount, transcript, interimTranscript, closeSheet, onOpenManualForm, showToast, isTe]
   );
 
-  // Fallback MediaRecorder -> /api/voice/transcribe
+  // Fallback MediaRecorder -> /api/voice/transcribe (Firefox, Safari)
   const startMediaRecorderFallback = useCallback(() => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setVoiceState('unsupported');
       return;
     }
 
+    setVoiceState('requesting_permission');
+
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then((stream) => {
         setVoiceState('listening');
+        setTranscript('');
+        setInterimTranscript(isTe ? 'వింటున్నాము... మాట్లాడండి' : 'Listening... Speak now');
+
+        // Bouncing waveform animation
+        let animVol = 20;
+        let dir = 1;
+        const volInterval = setInterval(() => {
+          animVol += dir * 4;
+          if (animVol > 75) dir = -1;
+          if (animVol < 25) dir = 1;
+          setAudioVolume(animVol);
+        }, 100);
+
         audioChunksRef.current = [];
-        const recorder = new MediaRecorder(stream);
+
+        let chosenMime = 'audio/webm';
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+          if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            chosenMime = 'audio/webm;codecs=opus';
+          } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+            chosenMime = 'audio/ogg;codecs=opus';
+          } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            chosenMime = 'audio/webm';
+          } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+            chosenMime = 'audio/ogg';
+          }
+        }
+
+        const recorder = chosenMime
+          ? new MediaRecorder(stream, { mimeType: chosenMime })
+          : new MediaRecorder(stream);
         mediaRecorderRef.current = recorder;
 
         recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
+          if (e.data && e.data.size > 0) {
             audioChunksRef.current.push(e.data);
           }
         };
 
         recorder.onstop = async () => {
+          clearInterval(volInterval);
           stream.getTracks().forEach((track) => track.stop());
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          if (audioBlob.size < 1000) {
+
+          const actualMime = recorder.mimeType || chosenMime || 'audio/webm';
+          const audioBlob = new Blob(audioChunksRef.current, { type: actualMime });
+          if (audioBlob.size < 500) {
             handleFailure('no-speech');
             return;
           }
 
           setVoiceState('processing');
+          setInterimTranscript(isTe ? 'మాట గుర్తిస్తున్నాము...' : 'Transcribing voice...');
+
           try {
             const reader = new FileReader();
             reader.readAsDataURL(audioBlob);
@@ -252,13 +288,13 @@ export function useVoice({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   audioBase64: base64Audio,
-                  mimeType: 'audio/webm',
+                  mimeType: actualMime,
                   language: isTe ? 'te-IN' : 'en-IN',
                 }),
               });
               const data = await res.json();
-              if (data.success && data.transcript) {
-                processRecognizedText(data.transcript);
+              if (data.success && data.transcript?.trim()) {
+                processRecognizedText(data.transcript.trim());
               } else {
                 handleFailure('transcribe-fail');
               }
@@ -268,7 +304,7 @@ export function useVoice({
           }
         };
 
-        recorder.start();
+        recorder.start(250);
 
         // 8s no-speech timeout
         noSpeechTimeoutRef.current = setTimeout(() => {
