@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="200" height="150">
+  <rect width="200" height="150" fill="#FFFDF0" rx="16"/>
+  <!-- Sweet Mangoes -->
+  <g transform="translate(45, 20)">
+    <path d="M65 30c-25-10-50 15-45 45 6 35 45 45 55 35 15-15 20-35 15-55-4-15-15-20-25-25z" fill="#F39C12"/>
+    <path d="M45 40c-15 5-25 25-20 40 4 12 18 18 28 10" fill="#E67E22" opacity="0.4"/>
+    <path d="M68 25c-2-10 4-15 10-15" stroke="#795548" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Green Leaf -->
+    <path d="M72 20c15-10 30-2 30 8-10 12-25 2-30-8z" fill="#27AE60"/>
+  </g>
+</svg>

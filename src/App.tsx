@@ -70,7 +70,13 @@ export default function App() {
     return false;
   });
 
-  const [farmerTab, setFarmerTab] = useState<'home' | 'orders' | 'products' | 'demand' | 'profile'>('home');
+  const [farmerTab, setFarmerTab] = useState<'home' | 'orders' | 'products' | 'demand' | 'profile'>(() => {
+    if (typeof window !== 'undefined') {
+      const tab = new URLSearchParams(window.location.search).get('tab');
+      if (tab === 'orders' || tab === 'products' || tab === 'demand' || tab === 'profile') return tab;
+    }
+    return 'home';
+  });
 
   // Entities state (initialized synchronously to avoid empty flash)
   const [farmers, setFarmers] = useState<Farmer[]>(() => StorageService.getFarmers());

@@ -1,26 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Mic,
   MicOff,
   Sparkles,
   CheckCircle2,
   AlertTriangle,
-  RotateCcw,
-  Edit3,
+  ArrowRight,
+  ArrowLeft,
   X,
-  ShieldCheck,
-  Tag,
-  Scale,
-  IndianRupee,
-  Leaf,
-  Volume2,
   Camera,
-  Upload
+  Upload,
+  ShieldCheck,
+  Check,
+  TrendingUp,
+  Tag
 } from 'lucide-react';
-import { Product, VoiceExtractionResult, ProductCategory } from '../types';
-import { parseVoiceProductInput, analyzeProductDescription } from '../services/aiService';
+import { Product, ProductCategory, VoiceExtractionResult } from '../types';
+import { parseVoiceProductInput } from '../services/aiService';
 import { UniversalVoiceInput } from '../services/voiceInputService';
-import { Language, translations } from '../data/translations';
+import { Language } from '../data/translations';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { StepIndicator, StepItem } from './ui/StepIndicator';
+import { MANDI_PRICES_TODAY } from '../data/mandiPrices';
 
 interface VoiceProductModalProps {
   isOpen: boolean;
@@ -35,32 +38,90 @@ interface VoiceProductModalProps {
   farmerVerified?: boolean;
 }
 
-// Representative high-res produce images
-const PRODUCE_IMAGE_MAP: Record<string, string> = {
-  tomatoes: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80',
-  tomato: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80',
-  rice: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80',
-  mango: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=600&q=80',
-  milk: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80',
-  onion: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=600&q=80',
-  chilli: 'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?auto=format&fit=crop&w=600&q=80',
-  okra: 'https://images.unsplash.com/photo-1628773822503-930a84d9f0f9?auto=format&fit=crop&w=600&q=80',
-  banana: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=600&q=80',
-  vegetables: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
-  fruits: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=600&q=80',
-  grains: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600&q=80',
-  dairy: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80',
-  organic: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&w=600&q=80',
-};
-
-function getProduceImage(name: string, category: string): string {
-  const lower = name.toLowerCase();
-  for (const [key, url] of Object.entries(PRODUCE_IMAGE_MAP)) {
-    if (lower.includes(key)) return url;
-  }
-  const catKey = category.toLowerCase();
-  return PRODUCE_IMAGE_MAP[catKey] || PRODUCE_IMAGE_MAP.vegetables;
+interface CropPreset {
+  id: string;
+  name: string;
+  teluguName: string;
+  category: ProductCategory;
+  unit: string;
+  defaultPrice: number;
+  image: string;
 }
+
+const CROP_PRESETS: CropPreset[] = [
+  {
+    id: 'tomatoes',
+    name: 'Country Tomatoes',
+    teluguName: 'నాటు టమాటాలు',
+    category: 'Vegetables',
+    unit: 'kg',
+    defaultPrice: 30,
+    image: '/products/tomatoes.svg',
+  },
+  {
+    id: 'rice',
+    name: 'Sona Masoori Rice',
+    teluguName: 'సోనా మసూరి బియ్యం',
+    category: 'Grains',
+    unit: 'kg',
+    defaultPrice: 55,
+    image: '/products/rice.svg',
+  },
+  {
+    id: 'mangoes',
+    name: 'Banganapalli Mangoes',
+    teluguName: 'బంగనపల్లి మామిడి',
+    category: 'Fruits',
+    unit: 'kg',
+    defaultPrice: 90,
+    image: '/products/mangoes.svg',
+  },
+  {
+    id: 'milk',
+    name: 'Pure Desi Cow Milk',
+    teluguName: 'స్వచ్ఛమైన ఆవు పాలు',
+    category: 'Dairy',
+    unit: 'liters',
+    defaultPrice: 60,
+    image: '/products/milk.svg',
+  },
+  {
+    id: 'onions',
+    name: 'Red Onions',
+    teluguName: 'నాటు ఉల్లిపాయలు',
+    category: 'Vegetables',
+    unit: 'kg',
+    defaultPrice: 28,
+    image: '/products/onions.svg',
+  },
+  {
+    id: 'chillies',
+    name: 'Red Chillies',
+    teluguName: 'గుంటూరు ఎండుమిరప',
+    category: 'Organic',
+    unit: 'kg',
+    defaultPrice: 180,
+    image: '/products/chillies.svg',
+  },
+  {
+    id: 'okra',
+    name: 'Fresh Okra',
+    teluguName: 'తాజా బెండకాయలు',
+    category: 'Vegetables',
+    unit: 'kg',
+    defaultPrice: 40,
+    image: '/products/okra.svg',
+  },
+  {
+    id: 'ghee',
+    name: 'Desi Cow Ghee',
+    teluguName: 'స్వచ్ఛమైన ఆవు నెయ్యి',
+    category: 'Dairy',
+    unit: 'liters',
+    defaultPrice: 850,
+    image: '/products/ghee.svg',
+  },
+];
 
 export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
   isOpen,
@@ -74,19 +135,150 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
   farmerAvatar,
   farmerVerified = true,
 }) => {
-  const t = translations[language];
+  // Wizard Step: 1 (Crop) -> 2 (Quantity) -> 3 (Price & Trust) -> 4 (Photo & Review)
+  const [currentStep, setCurrentStep] = useState<number>(1);
 
-  // Steps: 'input' -> 'processing' -> 'preview' -> 'manual-edit'
-  const [step, setStep] = useState<'input' | 'processing' | 'preview' | 'manual-edit'>('input');
-  const [isListening, setIsListening] = useState(false);
-  const [speechError, setSpeechError] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState('');
-  const [manualText, setManualText] = useState('');
-  const [voiceLang, setVoiceLang] = useState<'te-IN' | 'en-IN'>(language === 'te' ? 'te-IN' : 'en-IN');
-
-  // Custom photo upload state
+  // Listing Data
+  const [selectedCropId, setSelectedCropId] = useState<string>('tomatoes');
+  const [cropName, setCropName] = useState<string>('Country Tomatoes');
+  const [cropTeluguName, setCropTeluguName] = useState<string>('నాటు టమాటాలు');
+  const [category, setCategory] = useState<ProductCategory>('Vegetables');
+  const [quantity, setQuantity] = useState<number>(20);
+  const [unit, setUnit] = useState<string>('kg');
+  const [price, setPrice] = useState<number>(30);
+  const [organicClaim, setOrganicClaim] = useState<boolean>(false);
   const [customImage, setCustomImage] = useState<string | null>(null);
 
+  // Voice State
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const [voiceTranscript, setVoiceTranscript] = useState<string>('');
+  const [voiceLang, setVoiceLang] = useState<'te-IN' | 'en-IN'>(language === 'te' ? 'te-IN' : 'en-IN');
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [isParsingVoice, setIsParsingVoice] = useState<boolean>(false);
+
+  // Reset when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(1);
+      setSelectedCropId('tomatoes');
+      setCropName('Country Tomatoes');
+      setCropTeluguName('నాటు టమాటాలు');
+      setCategory('Vegetables');
+      setQuantity(20);
+      setUnit('kg');
+      setPrice(30);
+      setOrganicClaim(false);
+      setCustomImage(null);
+      setVoiceTranscript('');
+      setSpeechError(null);
+      setVoiceLang(language === 'te' ? 'te-IN' : 'en-IN');
+    }
+  }, [isOpen, language]);
+
+  // Clean up voice on unmount
+  useEffect(() => {
+    return () => {
+      UniversalVoiceInput.stopListening();
+    };
+  }, []);
+
+  if (!isOpen) return null;
+
+  // Selected crop details
+  const currentPreset = CROP_PRESETS.find((c) => c.id === selectedCropId);
+  const activeImage = customImage || currentPreset?.image || '/products/tomatoes.svg';
+
+  // Find mandi benchmark
+  const mandiRef = MANDI_PRICES_TODAY.find(
+    (m) => m.cropName.toLowerCase().includes(cropName.toLowerCase()) ||
+           cropName.toLowerCase().includes(m.cropName.toLowerCase())
+  );
+
+  // Select crop preset
+  const handleSelectCrop = (preset: CropPreset) => {
+    setSelectedCropId(preset.id);
+    setCropName(preset.name);
+    setCropTeluguName(preset.teluguName);
+    setCategory(preset.category);
+    setUnit(preset.unit);
+    setPrice(preset.defaultPrice);
+  };
+
+  // Voice listening
+  const startListening = () => {
+    setSpeechError(null);
+    setIsListening(true);
+    setVoiceTranscript('');
+
+    UniversalVoiceInput.startListening({
+      lang: voiceLang,
+      silenceTimeoutMs: 1500,
+      onInterim: (text) => setVoiceTranscript(text),
+      onFinal: (text) => {
+        setIsListening(false);
+        setVoiceTranscript(text);
+        handleProcessVoice(text);
+      },
+      onError: (code, msg) => {
+        setIsListening(false);
+        if (code === 'permission-denied') {
+          setSpeechError(
+            language === 'te'
+              ? 'మైక్రోఫోన్ అనుమతి అవసరం. దయచేసి అనుమతించండి.'
+              : 'Microphone permission blocked. Please allow microphone access.'
+          );
+        } else {
+          setSpeechError(msg || (language === 'te' ? 'వాయిస్ గుర్తించలేకపోయాము' : 'Could not hear voice clearly'));
+        }
+      },
+    });
+  };
+
+  const stopListening = () => {
+    UniversalVoiceInput.stopListening();
+    setIsListening(false);
+    if (voiceTranscript.trim()) {
+      handleProcessVoice(voiceTranscript.trim());
+    }
+  };
+
+  const handleProcessVoice = async (text: string) => {
+    if (!text.trim()) return;
+    setIsParsingVoice(true);
+    try {
+      const langParam = voiceLang.startsWith('te') ? 'te' : 'en';
+      const extracted: VoiceExtractionResult = await parseVoiceProductInput(text, langParam);
+
+      if (extracted.productName) {
+        setCropName(extracted.productName);
+        setCropTeluguName(extracted.productNameTelugu || extracted.productName);
+      }
+      if (extracted.category) setCategory(extracted.category);
+      if (extracted.quantity) setQuantity(extracted.quantity);
+      if (extracted.unit) setUnit(extracted.unit);
+      if (extracted.price) setPrice(extracted.price);
+      if (extracted.organicClaim !== undefined) setOrganicClaim(extracted.organicClaim);
+
+      // Match preset for image
+      const matched = CROP_PRESETS.find(
+        (c) =>
+          extracted.productName.toLowerCase().includes(c.id) ||
+          c.name.toLowerCase().includes(extracted.productName.toLowerCase())
+      );
+      if (matched) {
+        setSelectedCropId(matched.id);
+      }
+
+      // Jump straight to photo/review step
+      setCurrentStep(4);
+    } catch (e) {
+      console.warn('Voice parse fallback error:', e);
+    } finally {
+      setIsParsingVoice(false);
+    }
+  };
+
+  // Image Upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -98,147 +290,8 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
     }
   };
 
-  // Extracted Result
-  const [extracted, setExtracted] = useState<VoiceExtractionResult | null>(null);
-
-  // Editable Form fields for manual review
-  const [editName, setEditName] = useState('');
-  const [editTeluguName, setEditTeluguName] = useState('');
-  const [editCategory, setEditCategory] = useState<ProductCategory>('Vegetables');
-  const [editQuantity, setEditQuantity] = useState<number>(10);
-  const [editUnit, setEditUnit] = useState('kg');
-  const [editPrice, setEditPrice] = useState<number>(30);
-  const [editPriceUnit, setEditPriceUnit] = useState('kg');
-  const [editDescription, setEditDescription] = useState('');
-  const [editOrganic, setEditOrganic] = useState(false);
-  const [trustScreeningNote, setTrustScreeningNote] = useState('');
-  const [trustStatus, setTrustStatus] = useState<
-    'verified' | 'review_recommended' | 'standard' | 'potentially_exaggerated'
-  >('verified');
-
-  // Sync language selection when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setStep('input');
-      setTranscript('');
-      setManualText('');
-      setExtracted(null);
-      setSpeechError(null);
-      setCustomImage(null);
-      setVoiceLang(language === 'te' ? 'te-IN' : 'en-IN');
-    }
-  }, [isOpen, language]);
-
-  // Clean up recognition
-  useEffect(() => {
-    return () => {
-      UniversalVoiceInput.stopListening();
-    };
-  }, []);
-
-  const startListening = () => {
-    setSpeechError(null);
-    setIsListening(true);
-    setTranscript('');
-
-    UniversalVoiceInput.startListening({
-      lang: voiceLang,
-      silenceTimeoutMs: 1500,
-      onInterim: (text) => {
-        setTranscript(text);
-      },
-      onFinal: (text) => {
-        setIsListening(false);
-        setTranscript(text);
-        processUtterance(text);
-      },
-      onError: (code, msg) => {
-        setIsListening(false);
-        if (code === 'permission-denied') {
-          setSpeechError(
-            language === 'te'
-              ? 'మైక్రోఫోన్ అనుమతి నిరాకరించబడింది. దయచేసి బ్రౌజర్ అడ్రస్ బార్‌లో మైక్ అనుమతి ఇవ్వండి.'
-              : 'Microphone permission blocked. Please allow microphone access in your browser address bar.'
-          );
-        } else if (code === 'network') {
-          setSpeechError(
-            language === 'te'
-              ? 'వాయిస్ నెట్‌వర్క్ సమస్య. దయచేసి ఇంటర్నెట్ తనిఖీ చేసి మళ్ళీ ప్రయత్నించండి.'
-              : 'Speech service network error. Please check your internet connection.'
-          );
-        } else if (code !== 'no-speech') {
-          setSpeechError(
-            msg || (language === 'te'
-              ? 'వాయిస్ గుర్తించలేకపోయాము. దయచేసి మళ్ళీ ప్రయత్నించండి లేదా శాంపిల్ నొక్కండి.'
-              : 'Could not catch voice. Try again or tap a sample preset.')
-          );
-        }
-      },
-    });
-  };
-
-  const stopListening = () => {
-    const textToProcess = (transcript || UniversalVoiceInput.getCurrentTranscript()).trim();
-    UniversalVoiceInput.stopListening();
-    setIsListening(false);
-    if (textToProcess) {
-      setTranscript(textToProcess);
-      processUtterance(textToProcess);
-    }
-  };
-
-  const processUtterance = async (inputText: string) => {
-    const textToProcess = inputText.trim();
-    if (!textToProcess) return;
-
-    setStep('processing');
-    try {
-      const langParam = voiceLang.startsWith('te') ? 'te' : 'en';
-      const result = await parseVoiceProductInput(textToProcess, langParam);
-      setExtracted(result);
-
-      // Populate editable fields
-      setEditName(result.productName);
-      setEditTeluguName(result.productNameTelugu || result.productName);
-      setEditCategory(result.category);
-      setEditQuantity(result.quantity || 10);
-      setEditUnit(result.unit || 'kg');
-      setEditPrice(result.price || 30);
-      setEditPriceUnit(result.priceUnit || 'kg');
-      setEditDescription(result.description);
-      setEditOrganic(result.organicClaim);
-      setTrustScreeningNote(result.trustScreening.note);
-      setTrustStatus(
-        result.trustScreening.status === 'flagged' ? 'review_recommended' : 'verified'
-      );
-
-      setStep('preview');
-    } catch (err) {
-      console.error('Error extracting product info:', err);
-      setStep('input');
-      setSpeechError('Failed to process harvest information. Please try again.');
-    }
-  };
-
-  const handleConfirmListing = () => {
-    if (!editName.trim()) {
-      setSpeechError(language === 'te' ? 'దయచేసి పంట పేరు నమోదు చేయండి' : 'Please provide product name');
-      setStep('manual-edit');
-      return;
-    }
-    if (isNaN(Number(editPrice)) || Number(editPrice) <= 0 || Number(editPrice) > 50000) {
-      setSpeechError(language === 'te' ? 'సరైన ధరను నమోదు చేయండి (₹1 - ₹50,000)' : 'Please enter a valid price (₹1 - ₹50,000)');
-      setStep('manual-edit');
-      return;
-    }
-    if (isNaN(Number(editQuantity)) || Number(editQuantity) <= 0 || Number(editQuantity) > 10000) {
-      setSpeechError(language === 'te' ? 'సరైన పంట నిల్వ పరిమాణం నమోదు చేయండి' : 'Please enter a valid quantity (1 - 10,000)');
-      setStep('manual-edit');
-      return;
-    }
-
-    const finalImage = customImage || getProduceImage(editName, editCategory);
-
+  // Publish Listing
+  const handlePublish = () => {
     const newProduct: Product = {
       id: `prod-${Date.now()}`,
       farmerId,
@@ -247,20 +300,23 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
       farmerRating,
       farmerAvatar,
       farmerVerified: Boolean(farmerVerified),
-      name: editName,
-      teluguName: editTeluguName || editName,
-      category: editCategory,
-      price: Number(editPrice),
-      unit: editUnit,
-      priceUnit: editPriceUnit,
-      availableQuantity: Number(editQuantity),
-      image: finalImage,
-      description: editDescription,
-      harvestDate: language === 'te' ? 'ఈ రోజే కోసినది' : 'Freshly harvested today',
-      organicClaim: editOrganic,
-      organicDetails: editOrganic ? 'Zero synthetic chemicals · Direct from field' : undefined,
-      trustStatus,
-      trustNote: trustScreeningNote || 'Farmer verified · Fresh harvest',
+      name: cropName,
+      teluguName: cropTeluguName,
+      category,
+      price,
+      unit,
+      priceUnit: unit,
+      availableQuantity: quantity,
+      image: activeImage,
+      description: `Freshly harvested ${cropName} directly from ${farmerName}'s farm in ${farmerLocation}.`,
+      descriptionTelugu: `${farmerName} గారి పొలం నుంచి నేరుగా తాజా ${cropTeluguName}.`,
+      harvestDate: 'Today',
+      organicClaim,
+      organicDetails: organicClaim ? 'Grown with natural cow-dung manure, neem oil, zero chemical sprays.' : undefined,
+      trustStatus: organicClaim ? 'verified' : 'standard',
+      trustNote: organicClaim
+        ? 'Verified Natural Farm — Peer inspected by village cooperative.'
+        : 'Standard small-holder farmer direct produce.',
       createdAt: Date.now(),
     };
 
@@ -268,553 +324,509 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
     onClose();
   };
 
-  if (!isOpen) return null;
+  const wizardSteps: StepItem[] = [
+    { id: 'crop', label: language === 'te' ? 'పంట' : 'Crop' },
+    { id: 'qty', label: language === 'te' ? 'పరిమాణం' : 'Quantity' },
+    { id: 'price', label: language === 'te' ? 'ధర' : 'Price' },
+    { id: 'photo', label: language === 'te' ? 'సమీక్ష' : 'Review' },
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="relative bg-white rounded-t-3xl sm:rounded-2xl max-w-xl w-full shadow-2xl border border-stone-200 overflow-hidden animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 max-h-[92vh] sm:max-h-[90vh] flex flex-col pb-safe sm:pb-0">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="relative bg-[#FBF8F1] rounded-t-3xl sm:rounded-2xl max-w-lg w-full shadow-2xl border border-[#E2DDCF] overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh] pb-safe sm:pb-0 animate-in fade-in slide-in-from-bottom-6 duration-200">
         
-        {/* Mobile handle indicator */}
-        <div className="sm:hidden pt-2 pb-1 bg-[#1e3a24] flex justify-center">
-          <div className="w-12 h-1 bg-white/30 rounded-full"></div>
-        </div>
-
-        {/* Header Bar */}
-        <div className="bg-[#1e3a24] text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-amber-400 text-stone-900 flex items-center justify-center font-bold shadow-xs shrink-0">
-              <Mic className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-xl font-bold tracking-tight">
-                {step === 'preview' ? t.productPreviewTitle : t.voiceModalTitle}
+        {/* Modal Header */}
+        <div className="bg-[#1B3D27] text-white px-4 py-3.5 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-8 h-8 rounded-full bg-[#E6F2EA]/20 flex items-center justify-center text-[#F5B800] font-black text-sm">
+              {currentStep}/4
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-[17px] font-black leading-tight truncate">
+                {language === 'te' ? 'పంట వివరాలు చేర్చండి' : 'Add Produce Listing'}
               </h2>
-              <p className="text-xs text-emerald-100 font-medium">
-                {language === 'te' ? 'రైతు సులభ వాయిస్ అసిస్టెంట్' : 'AI-assisted voice listing for farmers'}
+              <p className="text-[12px] text-[#E6F2EA]/80 font-bold">
+                {language === 'te' ? `దశ ${currentStep} / 4` : `Step ${currentStep} of 4`}
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Quick Voice Bar */}
+            <button
+              type="button"
+              onClick={isListening ? stopListening : startListening}
+              className={`p-2 rounded-full cursor-pointer transition-all ${
+                isListening
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'bg-[#F5B800] text-[#1A1A1A] hover:bg-amber-300'
+              }`}
+              title={language === 'te' ? 'వాయిస్‌తో చెప్పండి' : 'Speak to fill'}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-white/80 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Content body based on current step */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-          {/* STEP 1: VOICE / TEXT INPUT */}
-          {step === 'input' && (
-            <div className="space-y-5">
-              <div className="text-center py-2">
-                <p className="text-sm sm:text-base text-stone-700 font-medium">
-                  {t.voiceInstructions}
+        {/* Stepper Indicator */}
+        <div className="px-4 py-2.5 bg-white border-b border-[#E2DDCF] shrink-0">
+          <StepIndicator steps={wizardSteps} currentStepIndex={currentStep - 1} />
+        </div>
+
+        {/* Voice Listening Bar if Active */}
+        {isListening && (
+          <div className="bg-amber-100 border-b border-amber-300 px-4 py-2 flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping shrink-0" />
+              <p className="text-[13px] font-bold text-[#1A1A1A] truncate">
+                {voiceTranscript || (language === 'te' ? 'వింటున్నాము... మాట్లాడండి' : 'Listening... Speak crop & price')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={stopListening}
+              className="px-2.5 py-1 rounded bg-[#1B3D27] text-white text-[11px] font-bold shrink-0 cursor-pointer"
+            >
+              {language === 'te' ? 'పూర్తి' : 'Done'}
+            </button>
+          </div>
+        )}
+
+        {/* Scrollable Content Body */}
+        <div className="p-4 overflow-y-auto flex-1 space-y-4">
+
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 1: CROP SELECTION */}
+          {/* ═════════════════════════════════════════════════ */}
+          {currentStep === 1 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div>
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'మీరు ఏ పంటను విక్రయించాలనుకుంటున్నారు?' : 'What crop are you listing today?'}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? 'క్రింది వాటిలో ఒకదాన్ని ఎంచుకోండి లేదా పేరు నమోదు చేయండి' : 'Select a crop below or type custom name'}
                 </p>
-                <div className="mt-2 inline-flex items-center gap-1.5 bg-stone-100 p-1 rounded-lg text-xs">
-                  <span className="text-stone-500 font-medium px-2">
-                    {language === 'te' ? 'వాయిస్ భాష:' : 'Speaking language:'}
+              </div>
+
+              {/* Grid of Big Crop Tiles */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {CROP_PRESETS.map((preset) => {
+                  const isSelected = selectedCropId === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectCrop(preset)}
+                      className={`min-h-[72px] p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#E6F2EA] border-2 border-[#1B3D27] shadow-sm'
+                          : 'bg-white border-[#E2DDCF] hover:border-[#1B3D27]/50'
+                      }`}
+                    >
+                      <img
+                        src={preset.image}
+                        alt={preset.name}
+                        className="w-12 h-12 rounded-xl object-cover bg-stone-50 border border-stone-200 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[15px] font-black text-[#1A1A1A] leading-tight truncate">
+                          {language === 'te' ? preset.teluguName : preset.name}
+                        </p>
+                        <p className="text-[12px] font-bold text-[#5B5B5B] mt-0.5">
+                          ₹{preset.defaultPrice}/{preset.unit}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Custom Crop Name */}
+              <div className="space-y-1.5 pt-2">
+                <label className="text-[14px] font-bold text-[#1A1A1A]">
+                  {language === 'te' ? 'లేదా ఇతర పంట పేరు నమోదు చేయండి:' : 'Or enter other crop name:'}
+                </label>
+                <input
+                  type="text"
+                  value={language === 'te' ? cropTeluguName : cropName}
+                  onChange={(e) => {
+                    setCropName(e.target.value);
+                    setCropTeluguName(e.target.value);
+                  }}
+                  placeholder={language === 'te' ? 'ఉదా. క్యారెట్, బంగాళాదుంప...' : 'E.g. Fresh Spinach, Carrots...'}
+                  className="w-full min-h-[48px] px-3.5 text-[16px] bg-white border border-[#E2DDCF] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B3D27]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 2: QUANTITY & UNIT */}
+          {/* ═════════════════════════════════════════════════ */}
+          {currentStep === 2 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div>
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'ఎంత పరిమాణం అందుబాటులో ఉంది?' : 'How much stock do you have ready?'}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? `${cropTeluguName} నిల్వ పరిమాణాన్ని నమోదు చేయండి` : `Enter available quantity for ${cropName}`}
+                </p>
+              </div>
+
+              {/* Big Quantity Stepper */}
+              <Card variant="default" padding="lg" className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-[44px] font-black text-[#1B3D27] tracking-tight">
+                    {quantity}
                   </span>
+                  <span className="text-[22px] font-black text-[#5B5B5B]">
+                    {unit}
+                  </span>
+                </div>
+
+                {/* +/- Steppers */}
+                <div className="grid grid-cols-4 gap-2">
                   <button
-                    onClick={() => setVoiceLang('te-IN')}
-                    className={`px-3 py-1 rounded font-semibold transition-all ${
-                      voiceLang === 'te-IN'
-                        ? 'bg-[#1e3a24] text-amber-300 shadow-xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 10))}
+                    className="min-h-[48px] bg-stone-100 hover:bg-stone-200 text-[#1A1A1A] font-black rounded-xl text-[16px] cursor-pointer"
                   >
-                    తెలుగు (Telugu)
+                    -10
                   </button>
                   <button
-                    onClick={() => setVoiceLang('en-IN')}
-                    className={`px-3 py-1 rounded font-semibold transition-all ${
-                      voiceLang === 'en-IN'
-                        ? 'bg-[#1e3a24] text-amber-300 shadow-xs'
-                        : 'text-stone-600 hover:text-stone-900'
-                    }`}
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="min-h-[48px] bg-stone-100 hover:bg-stone-200 text-[#1A1A1A] font-black rounded-xl text-[16px] cursor-pointer"
                   >
-                    English
+                    -1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="min-h-[48px] bg-[#E6F2EA] hover:bg-emerald-200 text-[#1B3D27] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    +1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => q + 10)}
+                    className="min-h-[48px] bg-[#E6F2EA] hover:bg-emerald-200 text-[#1B3D27] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    +10
                   </button>
                 </div>
-              </div>
 
-              {/* Big Microphone Push Button */}
-              <div className="flex flex-col items-center justify-center my-3">
-                <button
-                  type="button"
-                  onClick={isListening ? stopListening : startListening}
-                  className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full flex flex-col items-center justify-center transition-all duration-300 cursor-pointer shadow-lg active:scale-95 ${
-                    isListening
-                      ? 'bg-red-500 text-white ring-8 ring-red-200 animate-pulse'
-                      : 'bg-gradient-to-br from-emerald-600 to-[#1e3a24] text-amber-300 hover:shadow-xl hover:scale-105'
-                  }`}
-                >
-                  {isListening ? (
-                    <>
-                      <MicOff className="w-10 h-10 mb-1" />
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {t.stopSpeaking}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-11 h-11 mb-1" />
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {t.pressToSpeak}
-                      </span>
-                    </>
-                  )}
-                </button>
+                {/* Direct Number Input */}
+                <div className="pt-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+                    className="w-full min-h-[48px] text-center text-[18px] font-black text-[#1A1A1A] bg-white border border-[#E2DDCF] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B3D27]"
+                  />
+                </div>
+              </Card>
 
-                {isListening && (
-                  <div className="mt-4 flex items-center gap-2 text-sm text-red-600 font-semibold animate-pulse">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
-                    {t.listening}
-                  </div>
-                )}
-
-                {/* Live Transcript Display */}
-                {transcript && (
-                  <div className="mt-4 p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-stone-800 text-sm w-full text-center font-medium">
-                    <p className="text-xs text-amber-700 font-semibold mb-1">
-                      {language === 'te' ? 'మీరు చెప్పినది:' : 'You said:'}
-                    </p>
-                    <p className="text-base italic">“{transcript}”</p>
+              {/* Unit Picker Chips */}
+              <div className="space-y-1.5">
+                <label className="text-[14px] font-bold text-[#1A1A1A]">
+                  {language === 'te' ? 'కొలత యూనిట్:' : 'Unit of measure:'}
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { val: 'kg', label: language === 'te' ? 'కిలో (kg)' : 'kg' },
+                    { val: 'quintal', label: language === 'te' ? 'క్వింటాల్' : 'quintal' },
+                    { val: 'liters', label: language === 'te' ? 'లీటర్లు' : 'liters' },
+                    { val: 'bunches', label: language === 'te' ? 'కట్టలు' : 'bunches' },
+                  ].map((u) => (
                     <button
-                      onClick={() => processUtterance(transcript)}
-                      className="mt-3 px-4 py-2 bg-[#1e3a24] hover:bg-emerald-900 text-amber-300 text-xs font-bold rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                      key={u.val}
+                      type="button"
+                      onClick={() => setUnit(u.val)}
+                      className={`min-h-[48px] px-2 rounded-xl text-[14px] font-bold border transition-colors cursor-pointer ${
+                        unit === u.val
+                          ? 'bg-[#1B3D27] text-white border-[#1B3D27]'
+                          : 'bg-white text-[#1A1A1A] border-[#E2DDCF] hover:bg-stone-50'
+                      }`}
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {t.extractDetails}
+                      {u.label}
                     </button>
-                  </div>
-                )}
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 3: PRICE & TRUST CLAIM */}
+          {/* ═════════════════════════════════════════════════ */}
+          {currentStep === 3 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div>
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'మీరు ఆశించే ధర ఎంత?' : 'What is your selling price?'}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? 'మార్కెట్ ధర కంటే 100% పారదర్శక ప్రత్యక్ష చెల్లింపు' : 'Set your fair direct price per unit'}
+                </p>
               </div>
 
-              {speechError && (
-                <div className="p-3 bg-amber-50 border border-amber-300/80 rounded-xl text-xs text-amber-900 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span>{speechError}</span>
+              {/* Price Stepper Card */}
+              <Card variant="default" padding="lg" className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-[44px] font-black text-[#1B3D27] tracking-tight">
+                    ₹{price}
+                  </span>
+                  <span className="text-[20px] font-black text-[#5B5B5B]">
+                    / {unit}
+                  </span>
+                </div>
+
+                {/* +/- Price Buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPrice((p) => Math.max(1, p - 5))}
+                    className="min-h-[48px] bg-stone-100 hover:bg-stone-200 text-[#1A1A1A] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    -₹5
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrice((p) => Math.max(1, p - 1))}
+                    className="min-h-[48px] bg-stone-100 hover:bg-stone-200 text-[#1A1A1A] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    -₹1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrice((p) => p + 1)}
+                    className="min-h-[48px] bg-[#E6F2EA] hover:bg-emerald-200 text-[#1B3D27] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    +₹1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrice((p) => p + 5)}
+                    className="min-h-[48px] bg-[#E6F2EA] hover:bg-emerald-200 text-[#1B3D27] font-black rounded-xl text-[16px] cursor-pointer"
+                  >
+                    +₹5
+                  </button>
+                </div>
+
+                {/* Direct Number Input */}
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={price}
+                  onChange={(e) => setPrice(Math.max(1, Number(e.target.value)))}
+                  className="w-full min-h-[48px] text-center text-[18px] font-black text-[#1A1A1A] bg-white border border-[#E2DDCF] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B3D27]"
+                />
+              </Card>
+
+              {/* Mandi Benchmark Banner */}
+              {mandiRef && (
+                <div className="p-3 bg-[#E6F2EA] border border-[#1B3D27]/20 rounded-xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-[#1B3D27] shrink-0" />
+                    <div>
+                      <p className="text-[13px] font-bold text-[#1B3D27]">
+                        {language === 'te' ? `నేటి మండీ ధర: ₹${mandiRef.mandiPrice}/${mandiRef.unit}` : `Today's Mandi rate: ₹${mandiRef.mandiPrice}/${mandiRef.unit}`}
+                      </p>
+                      <p className="text-[12px] text-[#5B5B5B]">
+                        {language === 'te' ? `సిఫార్సు పరిధి: ₹${mandiRef.suggestedMinPrice} - ₹${mandiRef.suggestedMaxPrice}` : `Benchmark range: ₹${mandiRef.suggestedMinPrice} - ₹${mandiRef.suggestedMaxPrice}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="mint">
+                    {language === 'te' ? 'రైతుకు లాభం' : 'No broker fee'}
+                  </Badge>
                 </div>
               )}
 
-              {/* Sample Voice Presets for Instant 1-Click Demo Evaluation */}
-              <div className="pt-2 border-t border-stone-200">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 mb-2">
-                  <Volume2 className="w-4 h-4 text-emerald-700" />
-                  <span>{t.trySampleVoice}</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTranscript(t.sample1);
-                      processUtterance(t.sample1);
-                    }}
-                    className="p-2.5 text-left text-xs bg-emerald-50/70 hover:bg-emerald-100/90 border border-emerald-200 rounded-xl transition-colors cursor-pointer"
-                  >
-                    <div className="font-semibold text-emerald-950 flex items-center gap-1 mb-0.5">
-                      🍅 {language === 'te' ? 'నాటు టమాటాలు (10 కిలోలు)' : 'Tomatoes (10 kg @ ₹30)'}
-                    </div>
-                    <p className="text-stone-600 line-clamp-2">{t.sample1}</p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTranscript(t.sample2);
-                      processUtterance(t.sample2);
-                    }}
-                    className="p-2.5 text-left text-xs bg-emerald-50/70 hover:bg-emerald-100/90 border border-emerald-200 rounded-xl transition-colors cursor-pointer"
-                  >
-                    <div className="font-semibold text-emerald-950 flex items-center gap-1 mb-0.5">
-                      🌾 {language === 'te' ? 'సోనా మసూరి బియ్యం (25 కిలోలు)' : 'Sona Masoori Rice (25 kg)'}
-                    </div>
-                    <p className="text-stone-600 line-clamp-2">{t.sample2}</p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTranscript(t.sample3);
-                      processUtterance(t.sample3);
-                    }}
-                    className="p-2.5 text-left text-xs bg-emerald-50/70 hover:bg-emerald-100/90 border border-emerald-200 rounded-xl transition-colors cursor-pointer"
-                  >
-                    <div className="font-semibold text-emerald-950 flex items-center gap-1 mb-0.5">
-                      🥭 {language === 'te' ? 'బంగనపల్లి మామిడి (20 కిలోలు)' : 'Mangoes (20 kg @ ₹90)'}
-                    </div>
-                    <p className="text-stone-600 line-clamp-2">{t.sample3}</p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTranscript(t.sample4);
-                      processUtterance(t.sample4);
-                    }}
-                    className="p-2.5 text-left text-xs bg-emerald-50/70 hover:bg-emerald-100/90 border border-emerald-200 rounded-xl transition-colors cursor-pointer"
-                  >
-                    <div className="font-semibold text-emerald-950 flex items-center gap-1 mb-0.5">
-                      🥛 {language === 'te' ? 'ఆవు పాలు (50 లీటర్లు)' : 'Cow Milk (50 Liters @ ₹60)'}
-                    </div>
-                    <p className="text-stone-600 line-clamp-2">{t.sample4}</p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const testClaim = language === 'te'
-                        ? 'నా దగ్గర 15 కిలోల 100% సేంద్రీయ టమాటాలు ఉన్నాయి, అనేక రోగాలను నయం చేస్తాయి, కిలో 40 రూపాయలు.'
-                        : 'I have 15 kg of 100% organic tomatoes that cure many diseases, 40 rupees per kg.';
-                      setTranscript(testClaim);
-                      processUtterance(testClaim);
-                    }}
-                    className="p-2.5 text-left text-xs bg-amber-50 hover:bg-amber-100/90 border border-amber-300 rounded-xl transition-colors cursor-pointer sm:col-span-2"
-                  >
-                    <div className="font-semibold text-amber-950 flex items-center gap-1 mb-0.5">
-                      ⚠️ {language === 'te' ? 'క్లెయిమ్ టెస్ట్: 100% ఆర్గానిక్ & రోగాల నివారణ (AI స్క్రీనింగ్)' : 'Test AI Trust Screening: "100% organic & cures diseases"'}
-                    </div>
-                    <p className="text-amber-800 line-clamp-1">
-                      {language === 'te' ? '“100% సేంద్రీయ టమాటాలు, అనేక రోగాలను నయం చేస్తాయి...”' : '“100% organic tomatoes that cure many diseases, 40 rupees/kg”'}
-                    </p>
-                  </button>
-                </div>
-              </div>
-
-              {/* Text Fallback */}
-              <div className="pt-2 border-t border-stone-200">
-                <label className="block text-xs font-semibold text-stone-600 mb-1.5">
-                  {t.manualInputFallback}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={manualText}
-                    onChange={(e) => setManualText(e.target.value)}
-                    placeholder={t.typePlaceholder}
-                    className="flex-1 px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && manualText.trim()) {
-                        processUtterance(manualText);
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => manualText.trim() && processUtterance(manualText)}
-                    disabled={!manualText.trim()}
-                    className="px-4 py-2 bg-[#1e3a24] text-amber-300 text-xs font-bold rounded-lg hover:bg-emerald-900 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {t.extractDetails}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: PROCESSING ANIMATION */}
-          {step === 'processing' && (
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="relative w-16 h-16">
-                <div className="w-16 h-16 rounded-full border-4 border-emerald-100 border-t-emerald-700 animate-spin"></div>
-                <div className="absolute inset-0 flex items-center justify-center text-amber-500">
-                  <Sparkles className="w-6 h-6 animate-pulse" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-stone-900">{t.analyzingSpeech}</h3>
-                <p className="text-xs text-stone-500 mt-1">
-                  {language === 'te'
-                    ? 'ఉత్పత్తి పేరు, పరిమాణం, కిలో ధర మరియు సేంద్రీయ స్థితిని నిర్ధారిస్తున్నాము...'
-                    : 'Extracting product name, quantity, unit price, and trust claims...'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: PRODUCT PREVIEW & CONFIRMATION */}
-          {(step === 'preview' || step === 'manual-edit') && (
-            <div className="space-y-4">
-              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 text-xs text-emerald-950 font-medium flex items-center justify-between">
-                <span>{t.previewSubtext}</span>
-                <span className="text-xs px-2 py-0.5 bg-emerald-600 text-white rounded font-bold">
-                  {language === 'te' ? 'AI పరిశీలన పూర్తయింది' : 'AI Extracted'}
-                </span>
-              </div>
-
-              {/* Product Preview Card */}
-              <div className="border border-stone-200 rounded-xl overflow-hidden shadow-xs bg-stone-50/50">
-                <div className="flex flex-col sm:flex-row">
-                  <div className="sm:w-40 h-36 sm:h-auto relative bg-stone-200">
-                    <img
-                      src={customImage || getProduceImage(editName, editCategory)}
-                      alt={editName}
-                      className="w-full h-full object-cover"
-                    />
-                    {editOrganic && (
-                      <div className="absolute top-2 left-2 bg-emerald-800 text-amber-300 text-xs font-bold px-2 py-0.5 rounded shadow-xs flex items-center gap-1">
-                        <Leaf className="w-3 h-3" />
-                        <span>{t.organicClaimBadge}</span>
-                      </div>
-                    )}
-                    <label className="absolute bottom-2 right-2 bg-black/75 hover:bg-black text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 cursor-pointer shadow-md transition-colors">
-                      <Camera className="w-3 h-3 text-amber-300" />
-                      <span>{customImage ? (language === 'te' ? 'మార్చు' : 'Change') : (language === 'te' ? 'ఫోటో తీయి' : 'Add Photo')}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="p-4 flex-1 space-y-2.5">
-                    <div>
-                      <div className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-                        {editCategory}
-                      </div>
-                      <h3 className="text-lg font-bold text-stone-900">
-                        {editName}
-                      </h3>
-                      {editTeluguName && editTeluguName !== editName && (
-                        <p className="text-xs text-stone-500 font-medium">
-                          {editTeluguName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-stone-200/70">
-                      <div>
-                        <span className="text-xs text-stone-600 block">{t.quantityAvailable}</span>
-                        <span className="text-sm font-bold text-stone-800">
-                          {editQuantity} {editUnit}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-xs text-stone-600 block">{t.pricePerUnit}</span>
-                        <span className="text-base font-extrabold text-emerald-900">
-                          ₹{editPrice} / {editPriceUnit}
-                        </span>
-                      </div>
-                    </div>
-
-                    {editDescription && (
-                      <p className="text-xs text-stone-600 line-clamp-2">
-                        {editDescription}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Trust Screening Notice (Feature 4) */}
-                <div className={`border-t p-3 text-xs space-y-2 ${
-                  trustStatus === 'review_recommended'
-                    ? 'bg-amber-50/90 border-amber-200 text-amber-950'
-                    : trustStatus === 'potentially_exaggerated'
-                    ? 'bg-red-50/90 border-red-200 text-red-950'
-                    : 'bg-white border-stone-200 text-stone-700'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 font-bold">
-                      {trustStatus === 'verified' || trustStatus === 'standard' ? (
-                        <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-amber-700" />
-                      )}
-                      <span>AI TRUST SCREENING</span>
-                    </div>
-
-                    <span className={`px-2 py-0.5 rounded text-xs font-extrabold uppercase ${
-                      trustStatus === 'verified'
-                        ? 'bg-emerald-100 text-emerald-900'
-                        : trustStatus === 'potentially_exaggerated'
-                        ? 'bg-red-200 text-red-950'
-                        : 'bg-amber-200 text-amber-950'
-                    }`}>
-                      {trustStatus === 'verified'
-                        ? 'NORMAL CLAIM'
-                        : trustStatus === 'potentially_exaggerated'
-                        ? 'POTENTIALLY EXAGGERATED'
-                        : 'REVIEW RECOMMENDED'}
+              {/* Organic Claim with Plain Language Explanation */}
+              <div className="p-4 bg-white border border-[#E2DDCF] rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-5 h-5 text-[#1B3D27]" />
+                    <span className="text-[16px] font-black text-[#1A1A1A]">
+                      {language === 'te' ? 'సేంద్రీయ / సహజ పద్ధతిలో పండించారా?' : 'Is this 100% Organically Grown?'}
                     </span>
                   </div>
 
-                  <p className="text-xs leading-relaxed">
-                    {trustScreeningNote || 'This description contains claims that will be labeled transparently as Farmer-Declared.'}
-                  </p>
+                  <input
+                    type="checkbox"
+                    checked={organicClaim}
+                    onChange={(e) => setOrganicClaim(e.target.checked)}
+                    className="w-6 h-6 rounded text-[#1B3D27] focus:ring-[#1B3D27] cursor-pointer"
+                  />
+                </div>
 
-                  {(trustStatus === 'review_recommended' || trustStatus === 'potentially_exaggerated') && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setStep('manual-edit')}
-                        className="px-3 py-1 bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold rounded border border-amber-300 cursor-pointer"
-                      >
-                        [Edit Description]
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTrustScreeningNote('Recorded as unverified farmer-declared statement.');
-                        }}
-                        className="px-3 py-1 bg-amber-200 hover:bg-amber-300 text-amber-950 text-xs font-bold rounded cursor-pointer"
-                      >
-                        [Keep as Farmer Claim]
-                      </button>
-                    </div>
+                <p className="text-[13px] text-[#5B5B5B] leading-relaxed">
+                  {language === 'te'
+                    ? 'సేంద్రీయ క్లెయిమ్‌కు కృత్రిమ ఎరువులు లేకుండా ఆవు పేడ ఎరువు, వేప ద్రావణం వాడిన రికార్డు అవసరం. కొనుగోలుదారులు దీన్ని ధృవీకరించినట్లుగా చూస్తారు.'
+                    : 'Organic claim requires evidence of zero synthetic chemicals (cow-dung compost, neem spray, or certification). Buyers see this trust badge.'}
+                </p>
+
+                {/* Live Trust Rating Preview */}
+                <div className="pt-2 border-t border-[#E2DDCF] flex items-center justify-between text-[13px]">
+                  <span className="font-bold text-[#5B5B5B]">
+                    {language === 'te' ? 'ట్రస్ట్ స్కోర్ ప్రివ్యూ:' : 'Live Trust Status:'}
+                  </span>
+                  {organicClaim ? (
+                    <Badge variant="mint" icon={ShieldCheck}>
+                      {language === 'te' ? 'సేంద్రీయ ధృవీకరణ' : 'Verified Organic'}
+                    </Badge>
+                  ) : (
+                    <Badge variant="neutral">
+                      {language === 'te' ? 'ప్రామాణిక పొలం పంట' : 'Standard Direct Farm'}
+                    </Badge>
                   )}
                 </div>
               </div>
-
-              {/* Manual Edit Drawer / Form if farmer wants to adjust */}
-              {step === 'manual-edit' && (
-                <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-stone-700">
-                    {language === 'te' ? 'వివరాలను సవరించండి' : 'Edit Listing Details'}
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-stone-600 mb-1">
-                        {t.productName}
-                      </label>
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        className="w-full px-3 py-1.5 text-sm border border-stone-300 rounded-lg bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-stone-600 mb-1">
-                        {t.category}
-                      </label>
-                      <select
-                        value={editCategory}
-                        onChange={(e) => setEditCategory(e.target.value as ProductCategory)}
-                        className="w-full px-3 py-1.5 text-sm border border-stone-300 rounded-lg bg-white"
-                      >
-                        <option value="Vegetables">Vegetables (కూరగాయలు)</option>
-                        <option value="Fruits">Fruits (పండ్లు)</option>
-                        <option value="Grains">Grains (ధాన్యాలు)</option>
-                        <option value="Dairy">Dairy (పాడి)</option>
-                        <option value="Organic">Organic (సేంద్రీయ)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-stone-600 mb-1">
-                        {t.quantityAvailable} ({editUnit})
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={editQuantity}
-                        onChange={(e) => setEditQuantity(Number(e.target.value))}
-                        className="w-full px-3 py-1.5 text-sm border border-stone-300 rounded-lg bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-stone-600 mb-1">
-                        {t.price} (₹ / {editPriceUnit})
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={editPrice}
-                        onChange={(e) => setEditPrice(Number(e.target.value))}
-                        className="w-full px-3 py-1.5 text-sm border border-stone-300 rounded-lg bg-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="checkbox"
-                      id="editOrganicClaim"
-                      checked={editOrganic}
-                      onChange={(e) => setEditOrganic(e.target.checked)}
-                      className="rounded text-emerald-700 focus:ring-emerald-600 w-4 h-4 cursor-pointer"
-                    />
-                    <label htmlFor="editOrganicClaim" className="text-xs font-medium text-stone-700 cursor-pointer">
-                      {t.isOrganic}
-                    </label>
-                  </div>
-
-                  <div className="pt-2 border-t border-stone-200">
-                    <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                      {language === 'te' ? 'పంట ఫోటో (కెమెరా లేదా గ్యాలరీ)' : 'Produce Photo (Camera or Upload)'}
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <label className="px-3 py-2 bg-white border border-stone-300 hover:border-emerald-700 text-stone-800 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors">
-                        <Camera className="w-4 h-4 text-emerald-800" />
-                        <span>{language === 'te' ? 'ఫోటో తీయండి / అప్‌లోడ్' : 'Take Photo / Upload'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          className="hidden"
-                          onChange={handleImageUpload}
-                        />
-                      </label>
-                      {customImage && (
-                        <button
-                          type="button"
-                          onClick={() => setCustomImage(null)}
-                          className="px-2.5 py-2 text-xs text-red-600 hover:bg-red-50 rounded-xl font-semibold cursor-pointer"
-                        >
-                          {language === 'te' ? 'డిఫాల్ట్ ఫోటో' : 'Reset to Default'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons: Never publish without farmer confirmation! */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setStep('input')}
-                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  {t.speakAgain}
-                </button>
-
-                {step === 'preview' ? (
-                  <button
-                    type="button"
-                    onClick={() => setStep('manual-edit')}
-                    className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    {t.editDetails}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setStep('preview')}
-                    className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors cursor-pointer"
-                  >
-                    {language === 'te' ? 'సమీక్షించండి' : 'Done Editing'}
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleConfirmListing}
-                  className="w-full sm:w-auto px-6 py-2.5 text-sm font-bold bg-[#1e3a24] hover:bg-emerald-950 text-amber-300 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  {t.confirmListing}
-                </button>
-              </div>
             </div>
           )}
+
+          {/* ═════════════════════════════════════════════════ */}
+          {/* STEP 4: PHOTO & FINAL REVIEW */}
+          {/* ═════════════════════════════════════════════════ */}
+          {currentStep === 4 && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div>
+                <h3 className="text-[18px] font-black text-[#1A1A1A]">
+                  {language === 'te' ? 'ఫోటో మరియు వివరాల సమీక్ష' : 'Photo & Final Listing Review'}
+                </h3>
+                <p className="text-[14px] text-[#5B5B5B] mt-0.5">
+                  {language === 'te' ? 'కొనుగోలుదారుల మార్కెట్‌లో కనిపించే రూపం' : 'Review how buyers will see your produce'}
+                </p>
+              </div>
+
+              {/* Photo Card with Camera / Preset options */}
+              <div className="relative rounded-2xl overflow-hidden border border-[#E2DDCF] bg-white">
+                <img
+                  src={activeImage}
+                  alt={cropName}
+                  className="w-full h-44 object-cover bg-stone-50"
+                />
+
+                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-2">
+                  <label className="px-3 py-2 rounded-xl bg-black/75 hover:bg-black text-white text-[13px] font-bold cursor-pointer backdrop-blur-xs flex items-center gap-1.5 transition-colors">
+                    <Camera className="w-4 h-4" />
+                    <span>{language === 'te' ? 'ఫోటో తీయండి' : 'Take Photo'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Summary Card */}
+              <Card variant="mint" padding="md" className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <h4 className="text-[20px] font-black text-[#1A1A1A] leading-tight truncate">
+                      {language === 'te' ? cropTeluguName : cropName}
+                    </h4>
+                    <p className="text-[13px] text-[#5B5B5B] mt-0.5">
+                      {farmerName} • {farmerLocation}
+                    </p>
+                  </div>
+                  {organicClaim && (
+                    <Badge variant="mint" icon={ShieldCheck}>
+                      {language === 'te' ? 'ఆర్గానిక్' : 'Organic'}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#1B3D27]/15">
+                  <div>
+                    <span className="text-[12px] font-bold text-[#5B5B5B] block">
+                      {language === 'te' ? 'పరిమాణం' : 'Total Stock'}
+                    </span>
+                    <span className="text-[18px] font-black text-[#1A1A1A]">
+                      {quantity} {unit}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[12px] font-bold text-[#5B5B5B] block">
+                      {language === 'te' ? 'మీకు అందే మొత్తం' : 'Total Potential Payout'}
+                    </span>
+                    <span className="text-[22px] font-black text-[#1B3D27]">
+                      ₹{price * quantity}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Direct Value Statement */}
+              <p className="text-[13px] text-[#5B5B5B] text-center font-bold">
+                {language === 'te'
+                  ? 'మధ్యవర్తి కమీషన్ సున్నా. కొనుగోలుదారు చెల్లించే పూర్తి మొత్తం మీకే అందుతుంది.'
+                  : 'Zero broker fee. You receive 100% of the produce value directly to your UPI/Bank.'}
+              </p>
+            </div>
+          )}
+
         </div>
+
+        {/* Modal Sticky Footer Navigation */}
+        <div className="p-4 bg-white border-t border-[#E2DDCF] flex items-center justify-between gap-3 shrink-0">
+          {currentStep > 1 ? (
+            <Button
+              variant="secondary"
+              onClick={() => setCurrentStep((s) => s - 1)}
+              className="min-h-[52px] px-4 text-[15px]"
+            >
+              <ArrowLeft className="w-5 h-5 mr-1" />
+              <span>{language === 'te' ? 'వెనుకకు' : 'Back'}</span>
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              className="min-h-[52px] px-4 text-[15px]"
+            >
+              <span>{language === 'te' ? 'రద్దు' : 'Cancel'}</span>
+            </Button>
+          )}
+
+          {currentStep < 4 ? (
+            <Button
+              variant="primary"
+              onClick={() => setCurrentStep((s) => s + 1)}
+              className="flex-1 min-h-[52px] text-[16px]"
+            >
+              <span>{language === 'te' ? 'తరువాత' : 'Next Step'}</span>
+              <ArrowRight className="w-5 h-5 ml-1" />
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={handlePublish}
+              className="flex-1 min-h-[52px] text-[16px]"
+            >
+              <Check className="w-5 h-5 mr-1.5" />
+              <span>{language === 'te' ? 'పంటను చేర్చండి' : 'Publish Listing'}</span>
+            </Button>
+          )}
+        </div>
+
       </div>
     </div>
   );

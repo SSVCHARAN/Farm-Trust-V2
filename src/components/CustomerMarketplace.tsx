@@ -444,7 +444,7 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
                       alt=""
                       aria-hidden="true"
                       onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
+                        e.currentTarget.src = '/products/tomatoes.svg';
                       }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 text-transparent"
                     />

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="200" height="150">
+  <rect width="200" height="150" fill="#FFFDF0" rx="16"/>
+  <!-- Pure Desi Cow Ghee -->
+  <g transform="translate(55, 20)">
+    <rect x="15" y="40" width="60" height="65" rx="12" fill="#F1C40F" stroke="#D4AC0D" stroke-width="2"/>
+    <rect x="22" y="28" width="46" height="14" rx="4" fill="#C0392B"/>
+    <circle cx="45" cy="72" r="16" fill="#FFFFFF"/>
+    <text x="45" y="76" font-family="sans-serif" font-size="10" font-weight="black" fill="#1B3D27" text-anchor="middle">GHEE</text>
+  </g>
+</svg>

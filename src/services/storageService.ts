@@ -9,14 +9,14 @@ import {
 } from '../data/mockData';
 
 const STORAGE_KEYS = {
-  FARMERS: 'farmtrust_farmers_v1',
-  PRODUCTS: 'farmtrust_products_v1',
-  ORDERS: 'farmtrust_orders_v1',
-  REVIEWS: 'farmtrust_reviews_v1',
-  REQUESTS: 'farmtrust_requests_v1',
-  DEMAND: 'farmtrust_demand_v1',
-  ROLE: 'farmtrust_active_role_v1',
-  LANG: 'farmtrust_lang_v1',
+  FARMERS: 'farmtrust_farmers_v2',
+  PRODUCTS: 'farmtrust_products_v2',
+  ORDERS: 'farmtrust_orders_v2',
+  REVIEWS: 'farmtrust_reviews_v2',
+  REQUESTS: 'farmtrust_requests_v2',
+  DEMAND: 'farmtrust_demand_v2',
+  ROLE: 'farmtrust_active_role_v2',
+  LANG: 'farmtrust_lang_v2',
 };
 
 // Safe memory store for headless environments, private mode, and crash-proof persistence
@@ -92,7 +92,7 @@ export class StorageService {
           if (p.id === 'prod-7') {
             return {
               ...p,
-              image: 'https://images.unsplash.com/photo-1590779033100-9f60a05a013d?auto=format&fit=crop&w=600&q=80',
+              image: '/products/okra.svg',
             };
           }
           return p;
@@ -358,7 +358,7 @@ export class StorageService {
       productId: offer.productId || 'prod-1',
       productName: offer.productName,
       productTeluguName: offer.productTeluguName || offer.productName,
-      productImage: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80',
+      productImage: '/products/tomatoes.svg',
       quantity: offer.offeredQuantity,
       unit: offer.unit,
       unitPrice: offer.unitPrice,

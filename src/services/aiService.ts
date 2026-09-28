@@ -506,16 +506,47 @@ export async function parseCustomerRequestVoice(
   let productTelugu = 'నాటు టమాటాలు';
   let unit = 'kg';
 
-  if (lower.includes('rice') || lower.includes('బియ్యం')) {
+  if (lower.includes('rice') || lower.includes('బియ్యం') || lower.includes('సోనా')) {
     product = 'Sona Masoori Rice';
     productTelugu = 'సోనా మసూరి బియ్యం';
-  } else if (lower.includes('mango') || lower.includes('మామిడి')) {
+  } else if (lower.includes('mango') || lower.includes('మామిడి') || lower.includes('బంగనపల్లి')) {
     product = 'Banganapalli Mangoes';
     productTelugu = 'బంగనపల్లి మామిడి';
-  } else if (lower.includes('spinach') || lower.includes('పాలకూర')) {
+  } else if (lower.includes('onion') || lower.includes('ఉల్లి')) {
+    product = 'Red Onions';
+    productTelugu = 'నాటు ఉల్లిపాయలు';
+  } else if (lower.includes('milk') || lower.includes('పాలు') || lower.includes('ఆవు')) {
+    product = 'Desi Cow Milk';
+    productTelugu = 'స్వచ్ఛమైన ఆవు పాలు';
+    unit = 'liters';
+  } else if (lower.includes('chilli') || lower.includes('chili') || lower.includes('మిరప')) {
+    product = 'Red Chillies';
+    productTelugu = 'గుంటూరు ఎండుమిరప';
+  } else if (lower.includes('okra') || lower.includes('bhendi') || lower.includes('ladyfinger') || lower.includes('బెండ')) {
+    product = 'Fresh Okra';
+    productTelugu = 'తాజా బెండకాయలు';
+  } else if (lower.includes('ghee') || lower.includes('నెయ్యి')) {
+    product = 'Desi Ghee';
+    productTelugu = 'స్వచ్ఛమైన ఆవు నెయ్యి';
+    unit = 'liters';
+  } else if (lower.includes('spinach') || lower.includes('పాలకూర') || lower.includes('ఆకుకూర')) {
     product = 'Fresh Spinach';
     productTelugu = 'తాజా పాలకూర';
     unit = 'bunches';
+  } else if (lower.includes('potato') || lower.includes('ఆలు') || lower.includes('బంగాళాదుంప')) {
+    product = 'Fresh Potatoes';
+    productTelugu = 'తాజా బంగాళాదుంపలు';
+  } else if (lower.includes('banana') || lower.includes('అరటి')) {
+    product = 'Fresh Bananas';
+    productTelugu = 'కర్పూర అరటి పండ్లు';
+    unit = 'dozens';
+  } else if (!lower.includes('tomato') && !lower.includes('టమాటా')) {
+    // If not tomatoes and something else was typed, capture the raw subject
+    const cleaned = text.replace(/i need|i want|kg|kilo|liters|tomorrow|today|needed|urgent|కావాలి|కిలో|లీటర్|రేపు/gi, '').trim();
+    if (cleaned.length > 2) {
+      product = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+      productTelugu = cleaned;
+    }
   }
 
   const numbers = text.match(/\d+(\.\d+)?/g)?.map(Number) || [];
@@ -602,33 +633,33 @@ function clientSideVoiceFallback(text: string, _language: 'te' | 'en'): VoiceExt
   let priceUnit = 'kg';
 
   if (lower.includes('టమాటా') || lower.includes('tomato')) {
-    productName = 'Tomatoes (నాటు టమాటాలు)';
+    productName = 'Country Tomatoes';
     productNameTelugu = 'నాటు టమాటాలు';
     category = 'Vegetables';
   } else if (lower.includes('బియ్యం') || lower.includes('rice') || lower.includes('సోనా') || lower.includes('ధాన్యం')) {
-    productName = 'Sona Masoori Rice (సోనా మసూరి)';
+    productName = 'Sona Masoori Rice';
     productNameTelugu = 'సోనా మసూరి బియ్యం';
     category = 'Grains';
   } else if (lower.includes('మామిడి') || lower.includes('mango')) {
-    productName = 'Banganapalli Mangoes (బంగనపల్లి మామిడి)';
+    productName = 'Banganapalli Mangoes';
     productNameTelugu = 'బంగనపల్లి మామిడి';
     category = 'Fruits';
   } else if (lower.includes('పాలు') || lower.includes('milk') || lower.includes('ఆవు')) {
-    productName = 'Pure Desi Cow Milk (ఆవు పాలు)';
+    productName = 'Pure Desi Cow Milk';
     productNameTelugu = 'స్వచ్ఛమైన ఆవు పాలు';
     category = 'Dairy';
     unit = 'liters';
     priceUnit = 'liter';
   } else if (lower.includes('మిరప') || lower.includes('chilli')) {
-    productName = 'Red Chillies (గుంటూరు ఎండుమిరప)';
+    productName = 'Red Chillies';
     productNameTelugu = 'గుంటూరు ఎండుమిరప';
     category = 'Organic';
   } else if (lower.includes('ఉల్లి') || lower.includes('onion')) {
-    productName = 'Red Onions (నాటు ఉల్లి)';
+    productName = 'Red Onions';
     productNameTelugu = 'నాటు ఉల్లిపాయలు';
     category = 'Vegetables';
   } else if (lower.includes('బెండ') || lower.includes('okra') || lower.includes('ladyfinger')) {
-    productName = 'Fresh Okra / Ladyfinger (బెండకాయలు)';
+    productName = 'Fresh Okra';
     productNameTelugu = 'తాజా బెండకాయలు';
     category = 'Vegetables';
   }

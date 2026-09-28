@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="200" height="150">
+  <rect width="200" height="150" fill="#FCF3F8" rx="16"/>
+  <!-- Red Onions -->
+  <g transform="translate(50, 25)">
+    <circle cx="50" cy="65" r="34" fill="#880E4F"/>
+    <path d="M50 31c-3-8-8-12-12-14" stroke="#4A148C" stroke-width="3" fill="none"/>
+    <path d="M30 65c0-15 8-28 20-32" stroke="#AD1457" stroke-width="2.5" fill="none"/>
+    <path d="M40 75c0-12 5-22 15-26" stroke="#C2185B" stroke-width="2" fill="none"/>
+  </g>
+</svg>

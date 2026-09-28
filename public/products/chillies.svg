@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="200" height="150">
+  <rect width="200" height="150" fill="#FFF5F5" rx="16"/>
+  <!-- Guntur Green / Red Chillies -->
+  <g transform="translate(50, 20)">
+    <path d="M30 30c25 15 55 45 45 75-4 12-18 10-25 0-15-20-25-50-20-75z" fill="#E74C3C"/>
+    <path d="M30 30c-4-8-10-12-15-15" stroke="#27AE60" stroke-width="3" fill="none"/>
+    <path d="M25 28c4-4 8-4 12 0" stroke="#27AE60" stroke-width="3" fill="none"/>
+  </g>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="200" height="150">
+  <rect width="200" height="150" fill="#F0F8FF" rx="16"/>
+  <!-- Fresh Cow Milk Can -->
+  <g transform="translate(60, 20)">
+    <!-- Traditional Metal Milk Can -->
+    <path d="M28 20h24v10H28z" fill="#B0BEC5"/>
+    <path d="M24 30h32l8 15v55c0 6-6 10-24 10s-24-4-24-10V45z" fill="#CFD8DC" stroke="#78909C" stroke-width="2"/>
+    <!-- Can Handles -->
+    <path d="M16 45c-8 0-8 15 0 20" stroke="#78909C" stroke-width="3" fill="none"/>
+    <path d="M64 45c8 0 8 15 0 20" stroke="#78909C" stroke-width="3" fill="none"/>
+    <!-- Pure Milk Badge -->
+    <circle cx="40" cy="72" r="14" fill="#1B3D27"/>
+    <text x="40" y="76" font-family="sans-serif" font-size="9" font-weight="black" fill="#FFFFFF" text-anchor="middle">MILK</text>
+  </g>
+</svg>

@@ -129,7 +129,7 @@ export const FarmerOnboardingModal: React.FC<FarmerOnboardingModalProps> = ({
       id: newFarmerId,
       name: formName,
       teluguName: formTeluguName || formName,
-      avatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=300',
+      avatar: '/avatars/farmer-lakshmi.svg',
       phone: formPhone,
       location: formLocation || 'Sabbavaram, Visakhapatnam',
       district: onboardingData?.district || 'Visakhapatnam',

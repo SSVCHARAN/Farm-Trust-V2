@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <circle cx="60" cy="60" r="58" fill="#FFF4D6" stroke="#1B3D27" stroke-width="3"/>
+  <!-- Farmer Lakshmi Devi - South Indian Woman Farmer -->
+  <!-- Shoulders / Saree -->
+  <path d="M22 108c4-20 18-28 38-28s34 8 38 28" fill="#8E44AD"/>
+  <path d="M30 108c10-18 24-22 38-22" stroke="#F1C40F" stroke-width="4" fill="none"/>
+  <path d="M52 80h16v16c0 4-4 8-8 8s-8-4-8-8V80z" fill="#C68A58"/>
+  <!-- Hair Bun -->
+  <circle cx="60" cy="46" r="28" fill="#1C1814"/>
+  <!-- Flowers in hair -->
+  <circle cx="34" cy="48" r="4" fill="#FFFFFF"/>
+  <circle cx="36" cy="42" r="4" fill="#F39C12"/>
+  <circle cx="34" cy="54" r="3.5" fill="#FFFFFF"/>
+  <!-- Face -->
+  <circle cx="60" cy="58" r="21" fill="#C68A58"/>
+  <!-- Bindi -->
+  <circle cx="60" cy="50" r="2" fill="#B3261E"/>
+  <!-- Eyes -->
+  <ellipse cx="52" cy="56" rx="2.5" ry="2" fill="#1C1814"/>
+  <ellipse cx="68" cy="56" rx="2.5" ry="2" fill="#1C1814"/>
+  <!-- Nose stud -->
+  <circle cx="56" cy="61" r="1.2" fill="#F1C40F"/>
+  <!-- Smile -->
+  <path d="M54 67c2 3 8 3 12 0" stroke="#8A3324" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Earrings -->
+  <circle cx="38" cy="60" r="3" fill="#F1C40F"/>
+  <circle cx="82" cy="60" r="3" fill="#F1C40F"/>
+</svg>

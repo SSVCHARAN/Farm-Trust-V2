@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <circle cx="60" cy="60" r="58" fill="#E6F2EA" stroke="#1B3D27" stroke-width="3"/>
+  <!-- Farmer Appala Naidu - Veteran Indian Farmer -->
+  <!-- Shoulders / Kurta -->
+  <path d="M22 108c4-22 20-30 38-30s34 8 38 30" fill="#2C3E50"/>
+  <path d="M52 78h16v18c0 4-4 8-8 8s-8-4-8-8V78z" fill="#B87D4E"/>
+  <!-- Face -->
+  <circle cx="60" cy="56" r="22" fill="#B87D4E"/>
+  <!-- White Eyebrows -->
+  <path d="M48 48c2-2 6-2 8 0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M64 48c2-2 6-2 8 0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Kind Eyes -->
+  <circle cx="52" cy="53" r="2.5" fill="#1C1814"/>
+  <circle cx="68" cy="53" r="2.5" fill="#1C1814"/>
+  <!-- White Mustache -->
+  <path d="M48 64c5 3 10 1 12-2 2 3 7 5 12 2" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <!-- Smile -->
+  <path d="M54 69c2 2 8 2 12 0" stroke="#2C1D11" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <!-- White Pagri / Turban -->
+  <path d="M36 42c0-14 10-24 24-24s24 10 24 24c0 2-4 4-8 4-4 0-8-3-16-3s-12 3-16 3c-4 0-8-2-8-4z" fill="#F8F9F9"/>
+  <path d="M34 40c6-6 16-10 26-10s20 4 26 10" stroke="#E5E7E9" stroke-width="3" fill="none"/>
+  <path d="M36 34c4-4 14-6 24-6s20 2 24 6" stroke="#BDC3C7" stroke-width="2.5" fill="none"/>
+</svg>
