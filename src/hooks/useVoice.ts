@@ -88,6 +88,7 @@ export function useVoice({
   const silenceTimerRef = useRef<any>(null);
   const noSpeechTimeoutRef = useRef<any>(null);
   const isStoppingRef = useRef(false);
+  const lastRecognizedTextRef = useRef('');
 
   const clearTimers = useCallback(() => {
     if (silenceTimerRef.current) {
@@ -341,6 +342,9 @@ export function useVoice({
 
   // Start listening immediately inside user click handler
   const startListening = useCallback(() => {
+    // Unlock mobile Chrome audio context inside user click handler
+    TTSService.unlockAudio();
+
     clearTimers();
     setIsOpen(true);
     setTranscript('');
@@ -348,6 +352,7 @@ export function useVoice({
     setConfirmationSentence('');
     setParsedFarmerAction(null);
     setParsedBuyerIntent(null);
+    lastRecognizedTextRef.current = '';
     isStoppingRef.current = false;
 
     // Feature detect SpeechRecognition
@@ -360,13 +365,27 @@ export function useVoice({
       return;
     }
 
+    // Safely abort any prior running recognition instance
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (_) {}
+      recognitionRef.current = null;
+    }
+
     setVoiceState('requesting_permission');
 
     try {
+      const isMobile =
+        typeof navigator !== 'undefined' &&
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
 
-      recognition.continuous = true;
+      // On mobile Chrome, continuous: true causes severe repeating/glitching text.
+      // Use continuous: false on mobile so Chrome naturally detects single spoken commands.
+      recognition.continuous = !isMobile;
       recognition.interimResults = true;
       recognition.lang = isTe ? 'te-IN' : 'en-IN';
       recognition.maxAlternatives = 1;
@@ -396,42 +415,48 @@ export function useVoice({
         let interim = '';
         let final = '';
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        // Mobile-safe accumulation: avoid index drift across Android Web Speech API versions
+        for (let i = 0; i < event.results.length; i++) {
           const res = event.results[i];
           if (res.isFinal) {
-            final += res[0].transcript;
+            final += res[0].transcript + ' ';
           } else {
             interim += res[0].transcript;
           }
         }
 
+        final = final.trim();
+        interim = interim.trim();
+
         if (interim) {
+          lastRecognizedTextRef.current = interim;
           setInterimTranscript(interim);
-          setAudioVolume(Math.floor(20 + Math.random() * 60));
+          setAudioVolume(Math.floor(25 + Math.random() * 55));
         }
 
-        if (final && final.trim().length > 1) {
-          setTranscript(final.trim());
+        if (final && final.length > 1) {
+          lastRecognizedTextRef.current = final;
+          setTranscript(final);
           setInterimTranscript('');
           isStoppingRef.current = true;
           try {
             recognition.stop();
           } catch (_) {}
-          processRecognizedText(final.trim());
+          processRecognizedText(final);
           return;
         }
 
-        // Auto-stop on silence: 3000ms after last speech (generous time for natural pauses)
+        // Auto-stop on silence: 2500ms after last speech
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
-          if (!isStoppingRef.current && interim && interim.trim().length > 2) {
+          if (!isStoppingRef.current && interim && interim.length > 2) {
             isStoppingRef.current = true;
             try {
               recognition.stop();
             } catch (_) {}
-            processRecognizedText(interim.trim());
+            processRecognizedText(interim);
           }
-        }, 3000);
+        }, 2500);
       };
 
       recognition.onerror = (event: any) => {
@@ -441,6 +466,10 @@ export function useVoice({
           setVoiceState('permission_denied');
         } else if (event.error === 'no-speech') {
           handleFailure('no-speech');
+        } else if (event.error === 'aborted') {
+          if (!isStoppingRef.current) {
+            handleFailure('aborted');
+          }
         } else {
           handleFailure(event.error);
         }
@@ -448,6 +477,14 @@ export function useVoice({
 
       recognition.onend = () => {
         clearTimers();
+        // On mobile Chrome, recognition auto-stops when the user finishes speaking
+        if (!isStoppingRef.current) {
+          const captured = lastRecognizedTextRef.current.trim();
+          if (captured && captured.length > 2) {
+            isStoppingRef.current = true;
+            processRecognizedText(captured);
+          }
+        }
       };
 
       recognition.start();

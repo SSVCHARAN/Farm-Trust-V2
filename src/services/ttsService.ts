@@ -115,6 +115,33 @@ class VernacularTTSService {
     } catch (_) {}
   }
 
+  /**
+   * Mobile Chrome Autoplay Policy unlocker.
+   * Called synchronously on user touch / click (e.g. tapping the mic or a button).
+   * Unlocks both HTMLAudioElement and SpeechSynthesis so subsequent async speech works seamlessly.
+   */
+  public unlockAudio(): void {
+    if (typeof window === 'undefined') return;
+
+    // 1. Silent HTMLAudioElement prime
+    try {
+      const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+      silentAudio.volume = 0.01;
+      silentAudio.play().then(() => {
+        silentAudio.pause();
+      }).catch(() => {});
+    } catch (_) {}
+
+    // 2. Prime SpeechSynthesis on mobile Chrome
+    if ('speechSynthesis' in window) {
+      try {
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0.01;
+        window.speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+  }
+
   private refreshVoices(): void {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       const v = window.speechSynthesis.getVoices();
