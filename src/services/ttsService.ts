@@ -81,11 +81,12 @@ class VernacularTTSService {
   private lastAudioUrl: string | null = null;
   private keepAliveTimer: any = null;
   private voicesLoadedPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+  private manifestPromise: Promise<void> | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
       // Pre-seed static cache manifest for instant neural playback without server dependencies
-      this.loadStaticManifest();
+      this.manifestPromise = this.loadStaticManifest();
 
       if ('speechSynthesis' in window) {
         this.ensureVoicesLoaded();
@@ -103,27 +104,49 @@ class VernacularTTSService {
       if (res.ok) {
         const manifest = await res.json();
         for (const item of Object.values(manifest as Record<string, any>)) {
-          if (item.text && item.url && item.lang) {
-            const clean = formatVernacularSpeech(item.text, item.lang as TTSLanguage);
-            this.memoryCache.set(`${item.lang}:female:${clean.toLowerCase()}`, item.url);
-            this.memoryCache.set(`${item.lang}:male:${clean.toLowerCase()}`, item.url);
-            this.memoryCache.set(`${item.lang}:female:${item.text.toLowerCase().trim()}`, item.url);
-            this.memoryCache.set(`${item.lang}:male:${item.text.toLowerCase().trim()}`, item.url);
+          if (item.url && item.lang) {
+            const clean1 = formatVernacularSpeech(item.text, item.lang as TTSLanguage).toLowerCase().trim();
+            const clean2 = (item.cleaned || '').toLowerCase().trim();
+            const raw = (item.text || '').toLowerCase().trim();
+
+            for (const c of [clean1, clean2, raw]) {
+              if (c) {
+                this.memoryCache.set(`${item.lang}:${c}`, item.url);
+                this.memoryCache.set(`${item.lang}:female:${c}`, item.url);
+                this.memoryCache.set(`${item.lang}:male:${c}`, item.url);
+              }
+            }
           }
         }
       }
     } catch (_) {}
   }
 
+  private findFuzzyStaticAudio(cleanText: string, lang: TTSLanguage): string | null {
+    const target = cleanText.toLowerCase().replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
+    if (!target || target.length < 5) return null;
+
+    for (const [key, url] of this.memoryCache.entries()) {
+      if (key.startsWith(lang)) {
+        const textPart = key.split(':').pop() || '';
+        const normalized = textPart.replace(/[^a-z0-9\u0C00-\u0C7F]/g, '');
+        if (normalized === target || (normalized.length > 10 && (normalized.includes(target) || target.includes(normalized)))) {
+          return url;
+        }
+      }
+    }
+    return null;
+  }
+
   /**
    * Mobile Chrome Autoplay Policy unlocker.
    * Called synchronously on user touch / click (e.g. tapping the mic or a button).
-   * Unlocks both HTMLAudioElement and SpeechSynthesis so subsequent async speech works seamlessly.
+   * Unlocks HTMLAudioElement so subsequent audio playback works seamlessly without autoplay blocking.
    */
   public unlockAudio(): void {
     if (typeof window === 'undefined') return;
 
-    // 1. Silent HTMLAudioElement prime
+    // Silent HTMLAudioElement prime for mobile Chrome & Safari autoplay unlock
     try {
       const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
       silentAudio.volume = 0.01;
@@ -131,15 +154,6 @@ class VernacularTTSService {
         silentAudio.pause();
       }).catch(() => {});
     } catch (_) {}
-
-    // 2. Prime SpeechSynthesis on mobile Chrome
-    if ('speechSynthesis' in window) {
-      try {
-        const u = new SpeechSynthesisUtterance(' ');
-        u.volume = 0.01;
-        window.speechSynthesis.speak(u);
-      } catch (_) {}
-    }
   }
 
   private refreshVoices(): void {
@@ -281,24 +295,7 @@ class VernacularTTSService {
     const teAny = pool.find((v) => v.lang.toLowerCase().startsWith('te'));
     if (teAny) return teAny;
 
-    // 5. Fallback: Indic natural voices (Hindi or Indian English with Natural/Google engine)
-    const indicNatural = pool.find(
-      (v) =>
-        (v.lang.toLowerCase().replace('_', '-').startsWith('hi') ||
-          v.lang.toLowerCase().replace('_', '-').startsWith('en-in') ||
-          v.name.toLowerCase().includes('india')) &&
-        this.isHighQualityVoice(v.name)
-    );
-    if (indicNatural) return indicNatural;
-
-    const indicAny = pool.find(
-      (v) =>
-        v.lang.toLowerCase().replace('_', '-').startsWith('hi') ||
-        v.lang.toLowerCase().replace('_', '-').startsWith('en-in') ||
-        v.name.toLowerCase().includes('india')
-    );
-    if (indicAny) return indicAny;
-
+    // NEVER return Hindi for Telugu. Return null so it never attempts to read Telugu with a Hindi voice.
     return null;
   }
 
@@ -347,12 +344,43 @@ class VernacularTTSService {
     this.lastText = text;
     this.lastLang = lang;
 
-    const cacheKey = `${lang}:${options?.voiceGender || 'female'}:${cleanText.toLowerCase()}`;
-    const cachedUrl = this.memoryCache.get(cacheKey);
+    // 0. Instant Synchronous Cache Check (preserves user interaction context for mobile autoplay)
+    const gender = options?.voiceGender || 'female';
+    const cleanLower = cleanText.toLowerCase().trim();
+    const rawLower = text.toLowerCase().trim();
+    const cacheKey = `${lang}:${gender}:${cleanLower}`;
+
+    let cachedUrl =
+      this.memoryCache.get(cacheKey) ||
+      this.memoryCache.get(`${lang}:${gender}:${rawLower}`) ||
+      this.memoryCache.get(`${lang}:${cleanLower}`) ||
+      this.memoryCache.get(`${lang}:${rawLower}`) ||
+      this.findFuzzyStaticAudio(cleanText, lang) ||
+      this.findFuzzyStaticAudio(text, lang);
 
     if (cachedUrl) {
       this.playAudioFile(cachedUrl, options, cleanText, lang);
       return;
+    }
+
+    // If manifest was still in flight on first launch, await it once and retry lookup
+    if (this.manifestPromise) {
+      try {
+        await this.manifestPromise;
+      } catch (_) {}
+
+      cachedUrl =
+        this.memoryCache.get(cacheKey) ||
+        this.memoryCache.get(`${lang}:${gender}:${rawLower}`) ||
+        this.memoryCache.get(`${lang}:${cleanLower}`) ||
+        this.memoryCache.get(`${lang}:${rawLower}`) ||
+        this.findFuzzyStaticAudio(cleanText, lang) ||
+        this.findFuzzyStaticAudio(text, lang);
+
+      if (cachedUrl) {
+        this.playAudioFile(cachedUrl, options, cleanText, lang);
+        return;
+      }
     }
 
     // ─── TIER 1: Natural Neural Voice via Backend API ───
@@ -381,6 +409,7 @@ class VernacularTTSService {
         const data = await response.json();
         if (data.success && data.audioUrl) {
           this.memoryCache.set(cacheKey, data.audioUrl);
+          this.memoryCache.set(`${lang}:${cleanLower}`, data.audioUrl);
           this.isAudioLoading = false;
           options?.onLoading?.(false);
           this.playAudioFile(data.audioUrl, options, cleanText, lang);

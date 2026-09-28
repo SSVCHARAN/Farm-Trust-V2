@@ -536,6 +536,7 @@ export function useVoice({
   // Simulate command from chip (runs through identical confirm flow without microphone)
   const simulateCommand = useCallback(
     (promptText: string) => {
+      TTSService.unlockAudio();
       setIsOpen(true);
       processRecognizedText(promptText);
     },

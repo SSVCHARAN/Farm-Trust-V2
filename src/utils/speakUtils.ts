@@ -18,6 +18,7 @@ export function speakOrderAloud(
   },
   language: 'te' | 'en'
 ): void {
+  TTSService.unlockAudio();
   let text = '';
   if (language === 'te') {
     const prod = order.productTeluguName || order.productName;

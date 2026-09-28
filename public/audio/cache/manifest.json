@@ -7,18 +7,21 @@
   },
   "0ffafaa4b29ba4b4": {
     "text": "మీకు రెండు పెండింగ్ ఆర్డర్లు ఉన్నాయి.",
+    "cleaned": "మీకు రెండు పెండింగ్ ఆర్డర్లు ఉన్నాయి.",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/0ffafaa4b29ba4b4.mp3"
   },
   "90f4dc93738d3ee8": {
     "text": "మీ దగ్గర 20 కిలోల టమాటాలు ఉన్నాయి.",
+    "cleaned": "మీ దగ్గర 20 కిలోల టమాటాలు ఉన్నాయి.",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/90f4dc93738d3ee8.mp3"
   },
   "c91212f4dc5cc878": {
     "text": "టమాటాల ధర 35 రూపాయలు చేయనా?",
+    "cleaned": "టమాటాల ధర 35 రూపాయలు చేయనా?",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/c91212f4dc5cc878.mp3"
@@ -55,30 +58,35 @@
   },
   "56f227cca19294a3": {
     "text": "మీకు ఒక పెండింగ్ ఆర్డర్ ఉంది.",
+    "cleaned": "మీకు ఒక పెండింగ్ ఆర్డర్ ఉంది.",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/56f227cca19294a3.mp3"
   },
   "2a590fb95090cf79": {
     "text": "ప్రస్తుతం పెండింగ్‌లో ఎటువంటి ఆర్డర్లు లేవు. అన్ని ఆర్డర్లు ప్రాసెస్ చేయబడ్డాయి!",
+    "cleaned": "ప్రస్తుతం పెండింగ్‌లో ఎటువంటి ఆర్డర్లు లేవు. అన్ని ఆర్డర్లు ప్రాసెస్ చేయబడ్డాయి!",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/2a590fb95090cf79.mp3"
   },
   "bc40c8560b3b3e73": {
     "text": "అనన్య శర్మ గారి ఆర్డర్ సిద్ధమైంది.",
+    "cleaned": "అనన్య శర్మ గారి ఆర్డర్ సిద్ధమైంది.",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/bc40c8560b3b3e73.mp3"
   },
   "055b690ea7d36ec9": {
     "text": "నమస్కారం! నేను ఫార్మ్ ట్రస్ట్ సహాయకుడిని. మీకు ఎలా సహాయపడగలను?",
+    "cleaned": "నమస్కారం! నేను ఫార్మ్ ట్రస్ట్ సహాయకుడిని. మీకు ఎలా సహాయపడగలను?",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/055b690ea7d36ec9.mp3"
   },
   "271b64feffa3a345": {
     "text": "మాట సరిగ్గా వినపడలేదు. దయచేసి మైక్ నొక్కి మళ్ళీ మాట్లాడండి.",
+    "cleaned": "మాట సరిగ్గా వినపడలేదు. దయచేసి మైక్ నొక్కి మళ్ళీ మాట్లాడండి.",
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/271b64feffa3a345.mp3"
@@ -109,18 +117,21 @@
   },
   "d8041cdd3ea7d581": {
     "text": "You have 2 pending orders.",
+    "cleaned": "You have 2 pending orders.",
     "lang": "en-IN",
     "voice": "en-IN-NeerjaExpressiveNeural",
     "url": "/audio/cache/d8041cdd3ea7d581.mp3"
   },
   "7c577b258bea0cad": {
     "text": "You have 1 pending order from Ananya Sharma.",
+    "cleaned": "You have 1 pending order from Ananya Sharma.",
     "lang": "en-IN",
     "voice": "en-IN-NeerjaExpressiveNeural",
     "url": "/audio/cache/7c577b258bea0cad.mp3"
   },
   "a09b97d7c30de82b": {
     "text": "You have 20 kg of fresh tomatoes in stock.",
+    "cleaned": "You have 20 kg of fresh tomatoes in stock.",
     "lang": "en-IN",
     "voice": "en-IN-NeerjaExpressiveNeural",
     "url": "/audio/cache/a09b97d7c30de82b.mp3"
@@ -133,6 +144,7 @@
   },
   "83211828b77df0fa": {
     "text": "Namaste! I am your Farm Trust assistant. How can I help you today?",
+    "cleaned": "Namaste! I am your Farm Trust assistant. How can I help you today?",
     "lang": "en-IN",
     "voice": "en-IN-NeerjaExpressiveNeural",
     "url": "/audio/cache/83211828b77df0fa.mp3"
@@ -160,5 +172,376 @@
     "lang": "te-IN",
     "voice": "te-IN-ShrutiNeural",
     "url": "/audio/cache/farmer_guidance_te.mp3"
+  },
+  "799556d8de90b88b": {
+    "text": "Namaste Ravi Kumar! You can say: Show pending orders, Change tomato price to 35, Set tomato stock to 20 kg, or Accept Ananya's order.",
+    "cleaned": "Namaste Ravi Kumar! You can say: Show pending orders Change tomato price to 35 Set tomato stock to 20 kg or Accept Ananya's order.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/799556d8de90b88b.mp3"
+  },
+  "bd283a7b337b8643": {
+    "text": "నమస్కారం! మీరు కొత్త ఆర్డర్లు చెప్పు, టమాటాల ధర 35 చేయి, 20 కిలోల స్టాక్ ఉంది, లేదా అనన్య ఆర్డర్ అంగీకరించు అని మాట్లాడవచ్చు.",
+    "cleaned": "నమస్కారం! మీరు కొత్త ఆర్డర్లు చెప్పు టమాటాల ధర 35 చేయి 20 కిలోల స్టాక్ ఉంది లేదా అనన్య ఆర్డర్ అంగీకరించు అని మాట్లాడవచ్చు.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/bd283a7b337b8643.mp3"
+  },
+  "51b38cc21a5e180c": {
+    "text": "What crop are you listing today?",
+    "cleaned": "What crop are you listing today?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/51b38cc21a5e180c.mp3"
+  },
+  "22fde770e082cde3": {
+    "text": "మీరు ఏ పంటను విక్రయించాలనుకుంటున్నారు?",
+    "cleaned": "మీరు ఏ పంటను విక్రయించాలనుకుంటున్నారు?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/22fde770e082cde3.mp3"
+  },
+  "1b94f29b9b247760": {
+    "text": "How much stock do you have ready?",
+    "cleaned": "How much stock do you have ready?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/1b94f29b9b247760.mp3"
+  },
+  "7510eca2e4fb85b6": {
+    "text": "ఎంత పరిమాణం అందుబాటులో ఉంది?",
+    "cleaned": "ఎంత పరిమాణం అందుబాటులో ఉంది?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/7510eca2e4fb85b6.mp3"
+  },
+  "9c6d3649cd4ef7ff": {
+    "text": "What is your selling price?",
+    "cleaned": "What is your selling price?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/9c6d3649cd4ef7ff.mp3"
+  },
+  "d7b5f146342e3adc": {
+    "text": "మీరు ఆశించే ధర ఎంత?",
+    "cleaned": "మీరు ఆశించే ధర ఎంత?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/d7b5f146342e3adc.mp3"
+  },
+  "439e00eab57dbf6e": {
+    "text": "Review and confirm your produce listing.",
+    "cleaned": "Review and confirm your produce listing.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/439e00eab57dbf6e.mp3"
+  },
+  "04eb2eab867ae0dc": {
+    "text": "పంట వివరాలను సమీక్షించి ఖరారు చేయండి.",
+    "cleaned": "పంట వివరాలను సమీక్షించి ఖరారు చేయండి.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/04eb2eab867ae0dc.mp3"
+  },
+  "4e8a40c30d04d445": {
+    "text": "Set tomato price to ₹35/kg?",
+    "cleaned": "Set tomato price to 35 rupees per kg?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/4e8a40c30d04d445.mp3"
+  },
+  "a49e25652ab1ffa3": {
+    "text": "టమాటాల ధర కిలోకి ₹35 చేయమంటారా?",
+    "cleaned": "టమాటాల ధర కిలోకి 35 రూపాయలు చేయమంటారా?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/a49e25652ab1ffa3.mp3"
+  },
+  "a30ef78aa6402c67": {
+    "text": "Change price of Tomatoes to ₹35 per kg?",
+    "cleaned": "Change price of Tomatoes to 35 rupees per kg?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/a30ef78aa6402c67.mp3"
+  },
+  "e65f3aafe569d6e9": {
+    "text": "Add 20 kg to stock?",
+    "cleaned": "Add 20 kg to stock?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/e65f3aafe569d6e9.mp3"
+  },
+  "0750f1cf47d02304": {
+    "text": "Add 20 kg to Tomatoes? Total stock will be 40 kg.",
+    "cleaned": "Add 20 kg to Tomatoes? Total stock will be 40 kg.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/0750f1cf47d02304.mp3"
+  },
+  "999875b9f6d93a16": {
+    "text": "పంట నిల్వకు 20 కిలోలు చేర్చమంటారా?",
+    "cleaned": "పంట నిల్వకు 20 కిలోలు చేర్చమంటారా?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/999875b9f6d93a16.mp3"
+  },
+  "a9e16bab96f49976": {
+    "text": "Mark Tomatoes as out of stock (0 kg)?",
+    "cleaned": "Mark Tomatoes as out of stock 0 kg ?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/a9e16bab96f49976.mp3"
+  },
+  "5c55d7ed01431aa9": {
+    "text": "టమాటాలు స్టాక్ పూర్తయినట్లు మార్చమంటారా?",
+    "cleaned": "టమాటాలు స్టాక్ పూర్తయినట్లు మార్చమంటారా?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/5c55d7ed01431aa9.mp3"
+  },
+  "e1d9beba9708cb98": {
+    "text": "Show pending buyer orders?",
+    "cleaned": "Show pending buyer orders?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/e1d9beba9708cb98.mp3"
+  },
+  "7acff41ae447b710": {
+    "text": "మీ పెండింగ్ ఆర్డర్లు చూపించమంటారా?",
+    "cleaned": "మీ పెండింగ్ ఆర్డర్లు చూపించమంటారా?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/7acff41ae447b710.mp3"
+  },
+  "449ebb5c28bf59d7": {
+    "text": "Search marketplace for Tomatoes?",
+    "cleaned": "Search marketplace for Tomatoes?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/449ebb5c28bf59d7.mp3"
+  },
+  "4451ba71334be48d": {
+    "text": "టమాటాలు కోసం మార్కెట్‌లో శోధించమంటారా?",
+    "cleaned": "టమాటాలు కోసం మార్కెట్‌లో శోధించమంటారా?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/4451ba71334be48d.mp3"
+  },
+  "36e6898354c7cfa3": {
+    "text": "Search marketplace for Fresh Tomatoes under ₹30?",
+    "cleaned": "Search marketplace for Fresh Tomatoes under 30 rupees?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/36e6898354c7cfa3.mp3"
+  },
+  "46981c9b1ef44fad": {
+    "text": "Update order for Ananya Sharma to \"Accepted by Farmer\"?",
+    "cleaned": "Update order for Ananya Sharma to Accepted by Farmer ?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/46981c9b1ef44fad.mp3"
+  },
+  "0b1b68339f7537f0": {
+    "text": "అనన్య శర్మ గారి ఆర్డర్ స్థితిని \"రైతు అంగీకరించారు\"గా మార్చమంటారా?",
+    "cleaned": "అనన్య శర్మ గారి ఆర్డర్ స్థితిని రైతు అంగీకరించారు గా మార్చమంటారా?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/0b1b68339f7537f0.mp3"
+  },
+  "6f98f921dc715d3f": {
+    "text": "Update order for Ananya Sharma to \"Ready\"?",
+    "cleaned": "Update order for Ananya Sharma to Ready ?",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/6f98f921dc715d3f.mp3"
+  },
+  "a0d6a4f5b2091c5e": {
+    "text": "అనన్య శర్మ గారి ఆర్డర్ స్థితిని \"డెలివరీకి సిద్ధం\"గా మార్చమంటారా?",
+    "cleaned": "అనన్య శర్మ గారి ఆర్డర్ స్థితిని డెలివరీకి సిద్ధం గా మార్చమంటారా?",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/a0d6a4f5b2091c5e.mp3"
+  },
+  "398299a032d025b2": {
+    "text": "Order from Ananya Sharma. 2 kg of Fresh Tomatoes. You receive 40 rupees.",
+    "cleaned": "Order from Ananya Sharma. 2 kg of Fresh Tomatoes. You receive 40 rupees.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/398299a032d025b2.mp3"
+  },
+  "229e1b280a44c03e": {
+    "text": "అనన్య శర్మ నుండి ఆర్డర్. 2 కిలోల నాటు టమాటాలు. మీకు అందే మొత్తం 40 రూపాయలు.",
+    "cleaned": "అనన్య శర్మ నుండి ఆర్డర్. 2 కిలోల నాటు టమాటాలు. మీకు అందే మొత్తం 40 రూపాయలు.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/229e1b280a44c03e.mp3"
+  },
+  "baf69f92af1cdd85": {
+    "text": "Order from Suresh Varma. 5 kg of Country Tomatoes. You receive 150 rupees.",
+    "cleaned": "Order from Suresh Varma. 5 kg of Country Tomatoes. You receive 150 rupees.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/baf69f92af1cdd85.mp3"
+  },
+  "925b2fdf14016520": {
+    "text": "సురేష్ వర్మ నుండి ఆర్డర్. 5 కిలోల నాటు టమాటాలు. మీకు అందే మొత్తం 150 రూపాయలు.",
+    "cleaned": "సురేష్ వర్మ నుండి ఆర్డర్. 5 కిలోల నాటు టమాటాలు. మీకు అందే మొత్తం 150 రూపాయలు.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/925b2fdf14016520.mp3"
+  },
+  "6233f6e34c44522d": {
+    "text": "You have 1 pending order: #FT-1024.",
+    "cleaned": "You have 1 pending order: FT-1024.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/6233f6e34c44522d.mp3"
+  },
+  "1311a9669fdff089": {
+    "text": "మీకు ఒక పెండింగ్ ఆర్డర్ ఉంది: #FT-1024.",
+    "cleaned": "మీకు ఒక పెండింగ్ ఆర్డర్ ఉంది: FT-1024.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/1311a9669fdff089.mp3"
+  },
+  "14760756946eefd9": {
+    "text": "You have no pending orders. All orders are up to date!",
+    "cleaned": "You have no pending orders. All orders are up to date!",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/14760756946eefd9.mp3"
+  },
+  "407a1066172e843f": {
+    "text": "You have no pending orders right now. All orders are up to date!",
+    "cleaned": "You have no pending orders right now. All orders are up to date!",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/407a1066172e843f.mp3"
+  },
+  "c4646a33c6c6732b": {
+    "text": "This week you had total sales of 580 rupees.",
+    "cleaned": "This week you had total sales of 580 rupees.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/c4646a33c6c6732b.mp3"
+  },
+  "0f4807b60cb3c968": {
+    "text": "ఈ వారం మీరు మొత్తం 580 రూపాయల అమ్మకాలు చేశారు.",
+    "cleaned": "ఈ వారం మీరు మొత్తం 580 రూపాయల అమ్మకాలు చేశారు.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/0f4807b60cb3c968.mp3"
+  },
+  "c1a93698f137227f": {
+    "text": "This week you had total sales of 2,450 rupees.",
+    "cleaned": "This week you had total sales of 2450 rupees.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/c1a93698f137227f.mp3"
+  },
+  "60711c1da566c209": {
+    "text": "ఈ వారం మీరు మొత్తం 2,450 రూపాయల అమ్మకాలు చేశారు.",
+    "cleaned": "ఈ వారం మీరు మొత్తం 2450 రూపాయల అమ్మకాలు చేశారు.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/60711c1da566c209.mp3"
+  },
+  "7764a96a83256a05": {
+    "text": "Sure, I have updated the tomato price to 35 rupees per kg.",
+    "cleaned": "Sure I have updated the tomato price to 35 rupees per kg.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/7764a96a83256a05.mp3"
+  },
+  "40b1904e6ae59bd3": {
+    "text": "సరే, టమాటాల ధర కిలోకి 35 రూపాయలు చేశాను.",
+    "cleaned": "సరే టమాటాల ధర కిలోకి 35 రూపాయలు చేశాను.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/40b1904e6ae59bd3.mp3"
+  },
+  "02440f332d6941ca": {
+    "text": "Added 10 kg to Tomatoes. Total stock is now 30 kg.",
+    "cleaned": "Added 10 kg to Tomatoes. Total stock is now 30 kg.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/02440f332d6941ca.mp3"
+  },
+  "4fedeb73f87994aa": {
+    "text": "టమాటాలు నిల్వకు 10 కిలోలు జోడించాను. మొత్తం నిల్వ 30 కిలోలు.",
+    "cleaned": "టమాటాలు నిల్వకు 10 కిలోలు జోడించాను. మొత్తం నిల్వ 30 కిలోలు.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/4fedeb73f87994aa.mp3"
+  },
+  "4510af358dcbb02d": {
+    "text": "Order #FT-1024 for Ananya Sharma has been updated to \"Accepted by Farmer\".",
+    "cleaned": "Order FT-1024 for Ananya Sharma has been updated to Accepted by Farmer .",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/4510af358dcbb02d.mp3"
+  },
+  "2209431febb31303": {
+    "text": "Your produce offer was sent to the customer successfully!",
+    "cleaned": "Your produce offer was sent to the customer successfully!",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/2209431febb31303.mp3"
+  },
+  "14ab5f169e830c42": {
+    "text": "కస్టమర్‌కు మీ పంట ఆఫర్ విజయవంతంగా పంపించబడింది!",
+    "cleaned": "కస్టమర్‌కు మీ పంట ఆఫర్ విజయవంతంగా పంపించబడింది!",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/14ab5f169e830c42.mp3"
+  },
+  "50b0580fa0ff87db": {
+    "text": "Offer accepted! Order placed direct with the farmer.",
+    "cleaned": "Offer accepted! Order placed direct with the farmer.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/50b0580fa0ff87db.mp3"
+  },
+  "16516cc81c102407": {
+    "text": "రైతు ఆఫర్ అంగీకరించబడింది! ఆర్డర్ ఖరారైంది.",
+    "cleaned": "రైతు ఆఫర్ అంగీకరించబడింది! ఆర్డర్ ఖరారైంది.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/16516cc81c102407.mp3"
+  },
+  "6f96f0feb4c61e43": {
+    "text": "Okay, action cancelled.",
+    "cleaned": "Okay action cancelled.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/6f96f0feb4c61e43.mp3"
+  },
+  "74ceed97f0a39cbd": {
+    "text": "సరే, చర్య రద్దు చేయబడింది.",
+    "cleaned": "సరే చర్య రద్దు చేయబడింది.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/74ceed97f0a39cbd.mp3"
+  },
+  "ae01b2cc2bdecdf4": {
+    "text": "Sorry, I did not catch that. Please tap the mic and speak again.",
+    "cleaned": "Sorry I did not catch that. Please tap the mic and speak again.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/ae01b2cc2bdecdf4.mp3"
+  },
+  "16b6a8d171df1b29": {
+    "text": "Couldn't catch that clearly. Please complete details manually.",
+    "cleaned": "Couldn't catch that clearly. Please complete details manually.",
+    "lang": "en-IN",
+    "voice": "en-IN-NeerjaExpressiveNeural",
+    "url": "/audio/cache/16b6a8d171df1b29.mp3"
+  },
+  "6eddaf695a30e3f4": {
+    "text": "వాయిస్ గుర్తించలేకపోయాము. దయచేసి వివరాలను మాన్యువల్‌గా పూర్తి చేయండి.",
+    "cleaned": "వాయిస్ గుర్తించలేకపోయాము. దయచేసి వివరాలను మాన్యువల్‌గా పూర్తి చేయండి.",
+    "lang": "te-IN",
+    "voice": "te-IN-ShrutiNeural",
+    "url": "/audio/cache/6eddaf695a30e3f4.mp3"
   }
 }
