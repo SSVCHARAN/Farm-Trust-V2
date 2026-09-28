@@ -89,17 +89,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               </span>
             </button>
 
-            {/* 3. CENTER PROMINENT VOICE BUTTON */}
+            {/* 3. CENTER PROMINENT VOICE BUTTON (64px amber circle) */}
             <div className="flex-1 flex flex-col items-center justify-center -mt-6">
               <button
                 type="button"
                 onClick={onOpenVoiceAction}
-                aria-label={language === 'te' ? 'వాయిస్ ద్వారా మాట్లాడండి' : 'Speak to Farm Trust'}
-                className="w-15 h-15 rounded-full bg-[#F5B800] text-[#1A1A1A] hover:bg-[#E5AC00] active:scale-95 transition-all shadow-[0_4px_16px_rgba(245,184,0,0.45)] border-4 border-white flex flex-col items-center justify-center cursor-pointer"
+                aria-label="Speak / మాట్లాడండి"
+                className="w-16 h-16 rounded-full bg-[#F5B800] text-[#1A1A1A] hover:bg-[#E5AC00] active:scale-95 transition-all shadow-[0_4px_16px_rgba(245,184,0,0.45)] border-4 border-white flex flex-col items-center justify-center cursor-pointer shrink-0"
               >
-                <Mic className="w-6 h-6 stroke-[2.5]" />
+                <Mic className="w-7 h-7 stroke-[2.5]" />
               </button>
-              <span className="text-[11px] font-black text-[#1A1A1A] mt-0.5 tracking-tight">
+              <span className="text-[11px] font-black text-[#1A1A1A] mt-0.5 tracking-tight whitespace-nowrap">
                 {language === 'te' ? 'మాట్లాడండి' : 'Speak'}
               </span>
             </div>
@@ -172,17 +172,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               </span>
             </button>
 
-            {/* 3. CENTER PROMINENT VOICE BUTTON */}
+            {/* 3. CENTER PROMINENT VOICE BUTTON (64px amber circle) */}
             <div className="flex-1 flex flex-col items-center justify-center -mt-6">
               <button
                 type="button"
                 onClick={onOpenVoiceAction}
-                aria-label={language === 'te' ? 'వాయిస్ ద్వారా వెతకండి' : 'Speak to search produce'}
-                className="w-15 h-15 rounded-full bg-[#F5B800] text-[#1A1A1A] hover:bg-[#E5AC00] active:scale-95 transition-all shadow-[0_4px_16px_rgba(245,184,0,0.45)] border-4 border-white flex flex-col items-center justify-center cursor-pointer"
+                aria-label="Speak / మాట్లాడండి"
+                className="w-16 h-16 rounded-full bg-[#F5B800] text-[#1A1A1A] hover:bg-[#E5AC00] active:scale-95 transition-all shadow-[0_4px_16px_rgba(245,184,0,0.45)] border-4 border-white flex flex-col items-center justify-center cursor-pointer shrink-0"
               >
-                <Mic className="w-6 h-6 stroke-[2.5]" />
+                <Mic className="w-7 h-7 stroke-[2.5]" />
               </button>
-              <span className="text-[11px] font-black text-[#1A1A1A] mt-0.5 tracking-tight">
+              <span className="text-[11px] font-black text-[#1A1A1A] mt-0.5 tracking-tight whitespace-nowrap">
                 {language === 'te' ? 'మాట్లాడండి' : 'Speak'}
               </span>
             </div>

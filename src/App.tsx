@@ -15,6 +15,7 @@ import {
   CustomerRequest,
   LocalDemandItem,
   FarmerOffer,
+  FarmerAssistantAction,
 } from './types';
 import { Language, translations } from './data/translations';
 import { StorageService } from './services/storageService';
@@ -33,7 +34,9 @@ import { FarmerOnboardingModal } from './components/FarmerOnboardingModal';
 import { CustomerRequestModal } from './components/CustomerRequestModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { OnboardingModal } from './components/OnboardingModal';
-import { CheckCircle2, Sparkles, Mic, RotateCcw } from 'lucide-react';
+import { VoiceSheet } from './components/VoiceSheet';
+import { useVoice } from './hooks/useVoice';
+import { CheckCircle2, Sparkles, RotateCcw } from 'lucide-react';
 
 export default function App() {
   // App-level state (defaults to FARMER in Telugu; supports URL param and localStorage)
@@ -334,6 +337,58 @@ export default function App() {
     (o) => o.customerId === 'cust-1' && o.status !== 'Completed' && o.status !== 'Rejected'
   ).length;
 
+  const handleFarmerVoiceAction = (action: FarmerAssistantAction) => {
+    if (action.actionType === 'UPDATE_PRICE' && action.payload?.newPrice) {
+      const prod = action.payload.productId
+        ? products.find((p) => p.id === action.payload?.productId)
+        : products.find((p) => p.farmerId === activeFarmer?.id);
+      if (prod) {
+        handleUpdateProductPrice(prod.id, action.payload.newPrice);
+      }
+    } else if ((action.actionType === 'SET_STOCK' || action.actionType === 'ADD_STOCK') && action.payload) {
+      const prod = action.payload.productId
+        ? products.find((p) => p.id === action.payload?.productId)
+        : products.find((p) => p.farmerId === activeFarmer?.id);
+      const qty = action.payload.deltaQuantity || action.payload.quantity || 10;
+      const mode = action.actionType === 'ADD_STOCK' ? 'add' : 'set';
+      if (prod) {
+        handleUpdateProductStock(prod.id, qty, mode);
+      }
+    } else if (action.actionType === 'VIEW_PENDING_ORDERS') {
+      setFarmerTab('orders');
+    } else if (action.actionType === 'UPDATE_ORDER_STATUS' && action.payload?.orderId && action.payload.targetStatus) {
+      handleUpdateOrderStatus(action.payload.orderId, action.payload.targetStatus);
+    } else if (action.actionType === 'VOICE_ONBOARDING') {
+      setIsFarmerOnboardingOpen(true);
+    }
+    showToast(
+      language === 'te'
+        ? (action.messageTelugu || action.message)
+        : action.message
+    );
+  };
+
+  const voice = useVoice({
+    role,
+    language,
+    farmerContext: activeFarmer
+      ? {
+          farmer: activeFarmer,
+          products: products.filter((p) => p.farmerId === activeFarmer.id),
+          orders: orders.filter((o) => o.farmerId === activeFarmer.id),
+          customerRequests,
+        }
+      : undefined,
+    onExecuteFarmerAction: handleFarmerVoiceAction,
+    onApplyBuyerSearch: handleCustomerVoiceSearchApply,
+    onOpenManualForm: (_prefilledText) => {
+      if (role === 'FARMER') {
+        setIsVoiceModalOpen(true);
+      }
+    },
+    showToast,
+  });
+
   const farmerPendingOrdersCount = orders.filter(
     (o) => o.farmerId === activeFarmer?.id && o.status === 'Order Placed'
   ).length;
@@ -403,6 +458,7 @@ export default function App() {
               onSubmitFarmerOffer={handleSubmitFarmerOffer}
               activeTab={farmerTab}
               onTabChange={setFarmerTab}
+              onTriggerVoiceCommand={(cmd) => voice.simulateCommand(cmd)}
             />
           )
         ) : (
@@ -411,7 +467,7 @@ export default function App() {
             farmers={farmers}
             language={language}
             activeVoiceIntent={activeVoiceIntent}
-            onOpenVoiceSearch={() => setIsCustomerVoiceSearchOpen(true)}
+            onOpenVoiceSearch={() => voice.startListening()}
             onOpenCustomerRequest={() => setIsCustomerRequestOpen(true)}
             onClearVoiceIntent={handleClearVoiceIntent}
             onSelectProduct={(p) => setSelectedProduct(p)}
@@ -429,32 +485,13 @@ export default function App() {
         language={language}
         activeOrdersCount={activeCustomerOrdersCount}
         farmerPendingOrdersCount={farmerPendingOrdersCount}
-        onOpenVoiceAction={() => {
-          if (role === 'FARMER') {
-            setIsVoiceModalOpen(true);
-          } else {
-            setIsCustomerVoiceSearchOpen(true);
-          }
-        }}
+        onOpenVoiceAction={() => voice.startListening()}
         onOpenOrders={() => setIsCustomerOrdersOpen(true)}
         onOpenRequestModal={() => setIsCustomerRequestOpen(true)}
         onOpenBasket={() => setIsCustomerOrdersOpen(true)}
         farmerTab={farmerTab}
         setFarmerTab={setFarmerTab}
       />
-
-      {/* Floating Farmer AI Assistant button on Farmer view */}
-      {role === 'FARMER' && (
-        <button
-          type="button"
-          onClick={() => setIsFarmerAssistantOpen(true)}
-          className="fixed right-4 bottom-24 z-30 w-14 h-14 rounded-full bg-[#1B3D27] text-[#F5B800] border-2 border-[#F5B800] shadow-[0_6px_20px_rgba(27,61,39,0.35)] flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all group"
-          aria-label={language === 'te' ? 'రైతు AI సహాయకుడు' : 'Farmer AI Assistant'}
-          title={language === 'te' ? 'రైతు AI సహాయకుడు' : 'Farmer AI Assistant'}
-        >
-          <Mic className="w-6 h-6 stroke-[2.5] group-hover:scale-110 transition-transform" />
-        </button>
-      )}
 
       {/* Footer */}
       <footer className="bg-stone-900 text-stone-300 text-sm py-8 border-t border-stone-800 pb-24 sm:pb-8">
@@ -609,6 +646,23 @@ export default function App() {
           }
         }}
         onClose={() => setIsOnboardingOpen(false)}
+      />
+
+      {/* Universal Single Voice Bottom Sheet for Both Roles */}
+      <VoiceSheet
+        isOpen={voice.isOpen}
+        role={role}
+        language={language}
+        voiceState={voice.voiceState}
+        transcript={voice.transcript}
+        confirmationSentence={voice.confirmationSentence}
+        failureCount={voice.failureCount}
+        onStartListening={voice.startListening}
+        onStopListening={voice.stopListening}
+        onConfirmAction={voice.confirmAction}
+        onCancelAction={voice.cancelAction}
+        onClose={voice.closeSheet}
+        onProcessCustomText={voice.processRecognizedText}
       />
     </div>
   );

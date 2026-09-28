@@ -19,6 +19,7 @@ import { Product, ProductCategory, VoiceExtractionResult } from '../types';
 import { parseVoiceProductInput } from '../services/aiService';
 import { UniversalVoiceInput } from '../services/voiceInputService';
 import { Language } from '../data/translations';
+import { TTSService } from '../services/ttsService';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
@@ -179,8 +180,24 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
   useEffect(() => {
     return () => {
       UniversalVoiceInput.stopListening();
+      TTSService.stop();
     };
   }, []);
+
+  // Voice guidance: Speak step prompt aloud when step changes
+  useEffect(() => {
+    if (!isOpen) return;
+    const prompts = {
+      1: language === 'te' ? 'మీరు ఏ పంటను విక్రయించాలనుకుంటున్నారు?' : 'What crop are you listing today?',
+      2: language === 'te' ? 'ఎంత పరిమాణం అందుబాటులో ఉంది?' : 'How much stock do you have ready?',
+      3: language === 'te' ? 'మీరు ఆశించే ధర ఎంత?' : 'What is your selling price?',
+      4: language === 'te' ? 'పంట వివరాలను సమీక్షించి ఖరారు చేయండి.' : 'Review and confirm your produce listing.',
+    };
+    const currentPrompt = prompts[currentStep as 1 | 2 | 3 | 4];
+    if (currentPrompt) {
+      TTSService.speak(currentPrompt, language === 'te' ? 'te-IN' : 'en-IN');
+    }
+  }, [currentStep, isOpen, language]);
 
   if (!isOpen) return null;
 
@@ -352,24 +369,11 @@ export const VoiceProductModal: React.FC<VoiceProductModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Quick Voice Bar */}
-            <button
-              type="button"
-              onClick={isListening ? stopListening : startListening}
-              className={`p-2 rounded-full cursor-pointer transition-all ${
-                isListening
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : 'bg-[#F5B800] text-[#1A1A1A] hover:bg-amber-300'
-              }`}
-              title={language === 'te' ? 'వాయిస్‌తో చెప్పండి' : 'Speak to fill'}
-            >
-              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            </button>
-
             <button
               type="button"
               onClick={onClose}
               className="p-1.5 text-white/80 hover:text-white rounded-full hover:bg-white/10 cursor-pointer"
+              aria-label={language === 'te' ? 'మూసివేయి' : 'Close'}
             >
               <X className="w-5 h-5" />
             </button>

@@ -51,6 +51,7 @@ interface FarmerDashboardProps {
   onSubmitFarmerOffer?: (requestId: string, offer: FarmerOffer) => void;
   activeTab?: 'home' | 'orders' | 'products' | 'demand' | 'profile';
   onTabChange?: (tab: 'home' | 'orders' | 'products' | 'demand' | 'profile') => void;
+  onTriggerVoiceCommand?: (text: string) => void;
 }
 
 export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
@@ -70,6 +71,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   onSubmitFarmerOffer,
   activeTab: controlledTab,
   onTabChange,
+  onTriggerVoiceCommand,
 }) => {
   const t = translations[language];
   const [internalTab, setInternalTab] = useState<'home' | 'orders' | 'products' | 'demand' | 'profile'>('home');
@@ -211,16 +213,6 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Quick Voice Add button */}
-        <button
-          type="button"
-          onClick={onOpenVoiceModal}
-          className="w-11 h-11 rounded-xl bg-[#F5B800] hover:bg-[#E5AC00] text-[#1A1A1A] flex items-center justify-center shrink-0 shadow-xs cursor-pointer active:scale-95"
-          title={language === 'te' ? 'వాయిస్ ద్వారా పంట చేర్చండి' : 'Add produce by voice'}
-        >
-          <Mic className="w-5 h-5 stroke-[2.5]" />
-        </button>
       </div>
 
       {/* ─── HOME TAB CONTENT ─── */}
@@ -307,7 +299,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
 
               {/* Green Broker Comparison Pill */}
               <div className="px-3 py-1.5 rounded-full bg-[#E6F2EA] text-[#1E7B3F] border border-[#1E7B3F]/25 text-[12px] font-bold flex items-center gap-1.5 text-right">
-                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <TrendingUp className="w-3.5 h-3.5 shrink-0" />
                 <span>
                   {language === 'te'
                     ? 'మండి దళారీ కంటే ₹120 ఎక్కువ'
@@ -329,21 +321,57 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
             </div>
           </Card>
 
-          {/* 96px PULSING VOICE HERO */}
-          <FarmerVoiceHub
-            farmer={farmer}
-            products={farmerProducts}
-            orders={farmerOrders}
-            customerRequests={customerRequests}
-            language={language}
-            onUpdateProductPrice={onUpdateProductPrice}
-            onUpdateProductStock={onUpdateProductStock}
-            onUpdateOrderStatus={onUpdateOrderStatus}
-            onSubmitFarmerOffer={onSubmitFarmerOffer}
-            onNavigateTab={setActiveTab}
-            onOpenFullscreenModal={onOpenAssistant}
-            isModalMode={false}
-          />
+          {/* COMPACT "TRY SAYING" ROW WITH EDGE FADE AND PEEK */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[13px] font-bold text-[#5B5B5B] uppercase tracking-wider flex items-center gap-1.5">
+                <Mic className="w-3.5 h-3.5 text-[#F5B800]" />
+                <span>{language === 'te' ? 'ఇలా చెప్పి చూడండి' : 'Try saying'}</span>
+              </span>
+              <span className="text-[12px] font-medium text-[#5B5B5B]/80">
+                {language === 'te' ? 'డెమో కోసం నొక్కండి' : 'Tap chip to test'}
+              </span>
+            </div>
+
+            <div className="relative">
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-none scroll-smooth px-1">
+                {[
+                  {
+                    label: language === 'te' ? 'టమాటా ధర కిలోకి ₹35 చెయ్యి' : 'Set tomato price to ₹35/kg',
+                    cmd: language === 'te' ? 'టమాటా ధర కిలోకి ₹35 చెయ్యి' : 'Set tomato price to ₹35/kg',
+                  },
+                  {
+                    label: language === 'te' ? 'పెండింగ్ ఆర్డర్లు చూపించు' : 'Show pending buyer orders',
+                    cmd: language === 'te' ? 'పెండింగ్ ఆర్డర్లు చూపించు' : 'Show pending buyer orders',
+                  },
+                  {
+                    label: language === 'te' ? '20 కిలోల టమాటాలు చేర్చు' : 'Add 20 kg tomatoes to stock',
+                    cmd: language === 'te' ? '20 కిలోల టమాటాలు చేర్చు' : 'Add 20 kg tomatoes to stock',
+                  },
+                  {
+                    label: language === 'te' ? 'నేటి టమాటా ధర ఎంత?' : "Today's tomato mandi price",
+                    cmd: language === 'te' ? 'నేటి టమాటా ధర ఎంత?' : "What is today's tomato rate?",
+                  },
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => onTriggerVoiceCommand?.(chip.cmd)}
+                    className="min-h-[48px] px-4 py-2.5 rounded-2xl bg-white border border-[#E2DDCF] hover:border-[#1B3D27] hover:bg-[#E6F2EA]/40 active:scale-97 transition-all flex items-center gap-2 shrink-0 cursor-pointer shadow-xs"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-[#FFF4D6] text-[#1A1A1A] flex items-center justify-center shrink-0">
+                      <Mic className="w-3.5 h-3.5 stroke-[2.5] text-[#F5B800]" />
+                    </div>
+                    <span className="text-[14px] font-bold text-[#1A1A1A] whitespace-nowrap">
+                      "{chip.label}"
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {/* Subtle edge fade indicator */}
+              <div className="pointer-events-none absolute right-0 top-0 bottom-1.5 w-8 bg-gradient-to-l from-[#faf8f5] to-transparent" />
+            </div>
+          </div>
 
           {/* THREE LARGE STAT TILES (24px+ NUMBERS) */}
           <div className="grid grid-cols-3 gap-2.5">

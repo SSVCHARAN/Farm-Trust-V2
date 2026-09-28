@@ -184,33 +184,23 @@ export const CustomerMarketplace: React.FC<CustomerMarketplaceProps> = ({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               language === 'te'
-                ? 'కూరగాయలు, బియ్యం, పండ్లు వెతకండి...'
-                : 'Search fresh harvest, rice, vegetables...'
+                ? 'పంటలను శోధించండి'
+                : 'Search produce'
             }
             aria-label="Search produce"
-            className="w-full pl-11 pr-14 min-h-[52px] bg-white border border-[#E2DDCF] rounded-2xl text-[16px] text-[#1A1A1A] placeholder:text-[#5B5B5B] focus:outline-none focus:ring-2 focus:ring-[#1B3D27] shadow-xs"
+            className="w-full pl-11 pr-10 min-h-[52px] bg-white border border-[#E2DDCF] rounded-2xl text-[16px] text-[#1A1A1A] placeholder:text-[#5B5B5B] focus:outline-none focus:ring-2 focus:ring-[#1B3D27] shadow-xs"
           />
 
-          {/* Embedded Mic Inside the Field */}
-          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="w-8 h-8 rounded-full text-[#5B5B5B] hover:text-[#1A1A1A] flex items-center justify-center cursor-pointer text-sm"
-              >
-                ✕
-              </button>
-            )}
+          {searchQuery && (
             <button
               type="button"
-              onClick={onOpenVoiceSearch}
-              className="w-10 h-10 rounded-xl bg-[#F5B800] hover:bg-amber-400 text-[#1A1A1A] flex items-center justify-center cursor-pointer shadow-xs transition-colors"
-              title={language === 'te' ? 'వాయిస్ శోధన' : 'Search by Voice'}
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full text-[#5B5B5B] hover:text-[#1A1A1A] flex items-center justify-center cursor-pointer text-sm"
+              aria-label={language === 'te' ? 'శోధన ఖాళీ చేయండి' : 'Clear search'}
             >
-              <Mic className="w-5 h-5" />
+              ✕
             </button>
-          </div>
+          )}
         </div>
 
         {/* ─── 2. CATEGORY CHIPS WITH EDGE FADE ─── */}
