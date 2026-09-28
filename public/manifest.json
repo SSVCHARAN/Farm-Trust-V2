@@ -1,0 +1,29 @@
+{
+  "short_name": "Farm Trust",
+  "name": "Farm Trust — Voice-First Direct Marketplace",
+  "description": "Direct farmer-to-buyer marketplace in Telugu and English. No broker. Fair prices.",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "64x64"
+    }
+  ],
+  "start_url": "/?source=pwa",
+  "background_color": "#FBF8F1",
+  "theme_color": "#1B3D27",
+  "display": "standalone",
+  "orientation": "portrait"
+}

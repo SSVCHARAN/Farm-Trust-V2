@@ -10,7 +10,7 @@ fi
 
 mkdir -p "$(dirname "$OUTPUT")"
 PROFILE_DIR=$(mktemp -d)
-timeout 8s firefox --headless --profile "$PROFILE_DIR" --screenshot "$OUTPUT" --window-size="$WIDTH,$HEIGHT" "$URL" >/dev/null 2>&1
+timeout 15s firefox --headless --no-remote --profile "$PROFILE_DIR" --window-size="$WIDTH,$HEIGHT" --screenshot "$OUTPUT" "$URL" >/dev/null 2>&1
 rm -rf "$PROFILE_DIR"
 if [ -f "$OUTPUT" ]; then
   echo "Saved screenshot to $OUTPUT (${WIDTH}x${HEIGHT})"

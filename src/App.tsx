@@ -32,7 +32,8 @@ import { FarmerAssistantModal } from './components/FarmerAssistantModal';
 import { FarmerOnboardingModal } from './components/FarmerOnboardingModal';
 import { CustomerRequestModal } from './components/CustomerRequestModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
-import { CheckCircle2, Sparkles, Mic } from 'lucide-react';
+import { OnboardingModal } from './components/OnboardingModal';
+import { CheckCircle2, Sparkles, Mic, RotateCcw } from 'lucide-react';
 
 export default function App() {
   // App-level state (defaults to FARMER in Telugu; supports URL param and localStorage)
@@ -92,10 +93,33 @@ export default function App() {
 
   // Modals & Drawers
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-  const [isCustomerVoiceSearchOpen, setIsCustomerVoiceSearchOpen] = useState(false);
-  const [isFarmerAssistantOpen, setIsFarmerAssistantOpen] = useState(false);
+  const [isCustomerVoiceSearchOpen, setIsCustomerVoiceSearchOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('voicesearch') === 'true';
+    }
+    return false;
+  });
+  const [isFarmerAssistantOpen, setIsFarmerAssistantOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('assistant') === 'true';
+    }
+    return false;
+  });
   const [isFarmerOnboardingOpen, setIsFarmerOnboardingOpen] = useState(false);
   const [isCustomerRequestOpen, setIsCustomerRequestOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const ob = new URLSearchParams(window.location.search).get('onboarding');
+      if (ob === 'true') return true;
+      if (ob === 'false') return false;
+      const hasRoleParam = new URLSearchParams(window.location.search).has('role');
+      const hasLangParam = new URLSearchParams(window.location.search).has('lang');
+      if (!hasRoleParam && !hasLangParam && localStorage.getItem('ft_onboarded') !== 'true') {
+        return true;
+      }
+    }
+    return false;
+  });
 
   const [activeVoiceIntent, setActiveVoiceIntent] = useState<CustomerVoiceSearchIntent | null>(null);
 
@@ -419,6 +443,19 @@ export default function App() {
         setFarmerTab={setFarmerTab}
       />
 
+      {/* Floating Farmer AI Assistant button on Farmer view */}
+      {role === 'FARMER' && (
+        <button
+          type="button"
+          onClick={() => setIsFarmerAssistantOpen(true)}
+          className="fixed right-4 bottom-24 z-30 w-14 h-14 rounded-full bg-[#1B3D27] text-[#F5B800] border-2 border-[#F5B800] shadow-[0_6px_20px_rgba(27,61,39,0.35)] flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all group"
+          aria-label={language === 'te' ? 'రైతు AI సహాయకుడు' : 'Farmer AI Assistant'}
+          title={language === 'te' ? 'రైతు AI సహాయకుడు' : 'Farmer AI Assistant'}
+        >
+          <Mic className="w-6 h-6 stroke-[2.5] group-hover:scale-110 transition-transform" />
+        </button>
+      )}
+
       {/* Footer */}
       <footer className="bg-stone-900 text-stone-300 text-sm py-8 border-t border-stone-800 pb-24 sm:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -430,7 +467,14 @@ export default function App() {
           <div className="flex items-center gap-4 text-stone-300">
             <span>Visakhapatnam, Andhra Pradesh</span>
             <span>·</span>
-            <span>Voice-First AI Agricultural Marketplace</span>
+            <button
+              type="button"
+              onClick={() => setIsOnboardingOpen(true)}
+              className="text-[#F5B800] hover:underline cursor-pointer font-bold inline-flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{language === 'te' ? 'డెమో రీసెట్ / రోల్ మార్చు' : 'Demo Switcher'}</span>
+            </button>
           </div>
         </div>
       </footer>
@@ -545,6 +589,26 @@ export default function App() {
         onAddReview={handleAddReview}
         onConfirmDelivery={(orderId) => handleUpdateOrderStatus(orderId, 'Completed')}
         language={language}
+      />
+
+      {/* 10. First-Time & Demo Onboarding Modal */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        currentRole={role}
+        currentLanguage={language}
+        onComplete={(newRole, newLang) => {
+          setRole(newRole);
+          setLanguage(newLang);
+          setIsOnboardingOpen(false);
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('role', newRole);
+            url.searchParams.set('lang', newLang);
+            url.searchParams.delete('onboarding');
+            window.history.replaceState({}, '', url.toString());
+          }
+        }}
+        onClose={() => setIsOnboardingOpen(false)}
       />
     </div>
   );

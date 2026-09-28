@@ -572,12 +572,18 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
               
               <div className="mt-3 space-y-1">
                 <p className="text-[18px] font-black text-white tracking-tight">
-                  {isTe ? 'నొక్కి మాట్లాడండి' : 'Tap and speak'}
+                  {!isModalMode
+                    ? (isTe ? 'మీ పంట వివరాలు చెప్పండి' : 'Tell us about your produce')
+                    : (isTe ? 'నొక్కి మాట్లాడండి' : 'Tap and speak')}
                 </p>
                 <p className="text-[13px] text-emerald-100 font-medium">
-                  {isTe
-                    ? 'ధర మార్చడం, స్టాక్, ఆర్డర్ల వివరాలు నోటితో చెప్పండి'
-                    : 'Speak crop prices, update stock, or check orders'}
+                  {!isModalMode
+                    ? (isTe
+                        ? 'ధర మార్చడం, స్టాక్, లేదా కొత్త పంట వివరాలు నోటితో చెప్పండి'
+                        : 'Speak crop price, stock update, or new produce')
+                    : (isTe
+                        ? 'మండీ ధరలు, వాతావరణం, ఆర్డర్ల సమాచారం అడగండి'
+                        : 'Ask mandi rates, weather forecast, or pending orders')}
                 </p>
               </div>
             </div>
@@ -586,57 +592,115 @@ export const FarmerVoiceHub: React.FC<FarmerVoiceHubProps> = ({
             <div className="space-y-1.5 text-left pt-1">
               <span className="text-[12px] font-bold text-emerald-200 flex items-center gap-1.5 px-1">
                 <Sparkles className="w-3.5 h-3.5 text-[#F5B800]" />
-                <span>{isTe ? 'ఉదాహరణ ఆదేశాలు (నొక్కండి):' : 'Sample voice commands (tap to try):'}</span>
+                <span>
+                  {!isModalMode
+                    ? (isTe ? 'ఉదాహరణ పంట వివరాలు (నొక్కండి):' : 'Sample produce commands (tap to try):')
+                    : (isTe ? 'శీఘ్ర ప్రశ్నలు (నొక్కండి):' : 'Quick questions (tap to ask):')}
+                </span>
               </span>
 
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {/* Chip 1 */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const prompt = isTe ? 'టమాటాల ధర 35 రూపాయలు చేయి' : 'Change tomato price to 35';
-                    setTranscript(prompt);
-                    processQuery(prompt);
-                  }}
-                  className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
-                >
-                  <span className="text-sm">💰</span>
-                  <span className="text-[13px] font-bold text-amber-300 whitespace-nowrap">
-                    {isTe ? 'టమాటాల ధర ₹35 చేయి' : 'Change tomato price to ₹35'}
-                  </span>
-                </button>
+                {!isModalMode ? (
+                  <>
+                    {/* Chip 1 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prompt = isTe ? 'టమాటాలు 50 కేజీలు 30 రూపాయలు' : 'Tomatoes 50 kg 30 rupees';
+                        setTranscript(prompt);
+                        processQuery(prompt);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="text-sm">🍅</span>
+                      <span className="text-[13px] font-bold text-amber-300 whitespace-nowrap">
+                        {isTe ? 'టమాటాలు 50 కేజీలు 30 రూపాయలు' : '50 kg tomatoes at Rs 30'}
+                      </span>
+                    </button>
 
-                {/* Chip 2 */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const prompt = isTe ? 'నా పెండింగ్ ఆర్డర్లు చూపించు' : 'Show my pending orders';
-                    setTranscript(prompt);
-                    processQuery(prompt);
-                  }}
-                  className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
-                >
-                  <span className="text-sm">📦</span>
-                  <span className="text-[13px] font-bold text-emerald-300 whitespace-nowrap">
-                    {isTe ? 'పెండింగ్ ఆర్డర్లు చూపించు' : 'Show pending orders'}
-                  </span>
-                </button>
+                    {/* Chip 2 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prompt = isTe ? 'పాలకూర 20 కట్టలు 15 రూపాయలు' : 'Spinach 20 bunches 15 rupees';
+                        setTranscript(prompt);
+                        processQuery(prompt);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="text-sm">🥬</span>
+                      <span className="text-[13px] font-bold text-emerald-300 whitespace-nowrap">
+                        {isTe ? 'పాలకూర 20 కట్టలు 15 రూపాయలు' : '20 bunches spinach at Rs 15'}
+                      </span>
+                    </button>
 
-                {/* Chip 3 */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const prompt = isTe ? '20 కిలోల కొత్త బెండకాయలు చేర్చు' : 'Add 20 kg fresh okra';
-                    setTranscript(prompt);
-                    processQuery(prompt);
-                  }}
-                  className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
-                >
-                  <span className="text-sm">🌱</span>
-                  <span className="text-[13px] font-bold text-amber-300 whitespace-nowrap">
-                    {isTe ? '20 కిలోల బెండకాయలు చేర్చు' : 'Add 20 kg fresh okra'}
-                  </span>
-                </button>
+                    {/* Chip 3 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prompt = isTe ? 'వంకాయలు 30 కేజీలు 25 రూపాయలు' : 'Brinjal 30 kg 25 rupees';
+                        setTranscript(prompt);
+                        processQuery(prompt);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="text-sm">🍆</span>
+                      <span className="text-[13px] font-bold text-amber-300 whitespace-nowrap">
+                        {isTe ? 'వంకాయలు 30 కేజీలు 25 రూపాయలు' : '30 kg brinjal at Rs 25'}
+                      </span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* Assistant Chip 1: Mandi Price */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prompt = isTe ? 'ఈ రోజు టమాటా ధర ఎంత?' : "Today's tomato price?";
+                        setTranscript(prompt);
+                        processQuery(prompt);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="text-sm">💰</span>
+                      <span className="text-[13px] font-bold text-amber-300 whitespace-nowrap">
+                        {isTe ? 'ఈ రోజు టమాటా ధర ఎంత?' : "Today's tomato price?"}
+                      </span>
+                    </button>
+
+                    {/* Assistant Chip 2: Weather Rain */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prompt = isTe ? 'వర్షం పడుతుందా?' : 'Will it rain?';
+                        setTranscript(prompt);
+                        processQuery(prompt);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="text-sm">🌧️</span>
+                      <span className="text-[13px] font-bold text-emerald-300 whitespace-nowrap">
+                        {isTe ? 'వర్షం పడుతుందా?' : 'Will it rain?'}
+                      </span>
+                    </button>
+
+                    {/* Assistant Chip 3: Pending Orders */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const prompt = isTe ? 'నా ఆర్డర్లు ఎన్ని?' : 'How many orders?';
+                        setTranscript(prompt);
+                        processQuery(prompt);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 hover:border-[#F5B800] rounded-xl text-left transition-all shrink-0 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="text-sm">📦</span>
+                      <span className="text-[13px] font-bold text-amber-300 whitespace-nowrap">
+                        {isTe ? 'నా ఆర్డర్లు ఎన్ని?' : 'How many orders?'}
+                      </span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
