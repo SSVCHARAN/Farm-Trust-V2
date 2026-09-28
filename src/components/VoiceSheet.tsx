@@ -328,30 +328,54 @@ export const VoiceSheet: React.FC<VoiceSheetProps> = ({
           {/* ─── STATE 7: UNSUPPORTED / OFFLINE ─── */}
           {voiceState === 'unsupported' && (
             <div className="w-full space-y-4 animate-in fade-in">
-              <div className="w-20 h-20 rounded-full bg-stone-100 text-[#5B5B5B] flex items-center justify-center mx-auto border border-[#E2DDCF]">
+              <div className="w-20 h-20 rounded-full bg-amber-50 text-[#C98A00] flex items-center justify-center mx-auto border-2 border-[#F5B800]">
                 <HelpCircle className="w-10 h-10 stroke-[2]" />
               </div>
 
               <div className="space-y-1">
                 <p className="text-[18px] font-black text-[#1A1A1A]">
-                  {isTe ? 'వాయిస్ సపోర్ట్ లేదు' : 'Voice Input Unavailable'}
+                  {isTe ? 'వాయిస్ ఈ బ్రౌజర్‌లో పని చేయదు' : 'Voice not supported here'}
                 </p>
-                <p className="text-[14px] text-[#5B5B5B]">
+                <p className="text-[14px] text-[#5B5B5B] leading-relaxed">
                   {isTe
-                    ? 'ఈ బ్రౌజర్‌లో వాయిస్ రికగ్నిషన్ సపోర్ట్ లేదు. దయచేసి టైప్ చేయండి.'
-                    : 'Your current browser does not support speech recognition. Please type your request.'}
+                    ? 'Firefox వాయిస్ రికగ్నిషన్‌ను సపోర్ట్ చేయదు. Chrome లేదా Edge బ్రౌజర్ వాడండి, లేదా టైప్ చేయండి.'
+                    : 'Firefox does not support voice input. Use Chrome or Edge for voice — or just type your command below.'}
                 </p>
               </div>
 
-              <div className="w-full">
-                <button
-                  type="button"
-                  onClick={() => setIsTypingMode(true)}
-                  className="w-full min-h-[48px] bg-[#1B3D27] text-white font-bold rounded-xl flex items-center justify-center cursor-pointer"
-                >
-                  {isTe ? 'టైప్ చేయండి' : 'Type instead'}
-                </button>
-              </div>
+              {/* Immediately show typing form — no extra click needed */}
+              <form onSubmit={handleTypedSubmit} className="w-full space-y-3 pt-1 animate-in fade-in">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={typedText}
+                    onChange={(e) => setTypedText(e.target.value)}
+                    placeholder={
+                      role === 'FARMER'
+                        ? isTe
+                          ? 'ఉదా. టమాటా ధర ₹35 చేయండి'
+                          : 'E.g. Set tomato price to ₹35'
+                        : isTe
+                        ? 'ఉదా. తాజా టమాటాలు'
+                        : 'E.g. Fresh organic tomatoes'
+                    }
+                    autoFocus
+                    className="w-full min-h-[50px] px-4 pr-12 text-[16px] text-[#1A1A1A] bg-white border border-[#E2DDCF] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B3D27]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!typedText.trim()}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-[#1B3D27] disabled:bg-stone-300 text-white flex items-center justify-center cursor-pointer transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-[12px] text-[#5B5B5B] text-left">
+                  {isTe
+                    ? 'మీ సందేశాన్ని నమోదు చేసి పంపండి'
+                    : 'Type your command and press send'}
+                </p>
+              </form>
             </div>
           )}
 

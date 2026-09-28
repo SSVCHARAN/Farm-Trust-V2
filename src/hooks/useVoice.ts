@@ -360,8 +360,11 @@ export function useVoice({
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      // Fallback to MediaRecorder -> /api/voice/transcribe
-      startMediaRecorderFallback();
+      // Firefox / non-Chrome browser on static deployment: no Speech API available.
+      // The MediaRecorder + /api/voice/transcribe path requires a running backend server,
+      // which is not present on static Vercel/Netlify hosting.
+      // Show 'unsupported' immediately so users land directly on the typing fallback.
+      setVoiceState('unsupported');
       return;
     }
 
