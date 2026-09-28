@@ -172,9 +172,18 @@ export function useVoice({
           const action = await callFarmerAIAssistant(clean, isTe ? 'te' : 'en', farmerContext || {});
           setParsedFarmerAction(action);
 
-          // If the AI classified the action as NONE (unrecognized or ambient noise), trigger failure ladder
-          // instead of trapping the user inside a false "Confirm Action" modal with Yes/No buttons!
+          // If the AI returned an informational message (e.g. crop not in produce list), speak it out loud!
           if (action.actionType === 'NONE') {
+            if (action.message && !action.message.toLowerCase().includes("didn't catch") && !action.message.toLowerCase().includes('unrecognized')) {
+              const msg = isTe ? (action.messageTelugu || action.message) : action.message;
+              setVoiceState('done');
+              setConfirmationSentence(msg);
+              TTSService.speak(msg, isTe ? 'te-IN' : 'en-IN');
+              setTimeout(() => {
+                closeSheet();
+              }, 4000);
+              return;
+            }
             handleFailure('no-match');
             return;
           }

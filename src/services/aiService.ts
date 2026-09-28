@@ -192,12 +192,19 @@ export async function callFarmerAIAssistant(
   const detectCrop = (text: string): { en: string; te: string; id: string; found: boolean; queryCropName?: string; queryCropNameTe?: string } | null => {
     const lower = text.toLowerCase();
 
+    const matchTerm = (haystack: string, term: string): boolean => {
+      if (/[a-zA-Z]/.test(term)) {
+        return new RegExp(`\\b${term}\\b`, 'i').test(haystack);
+      }
+      return haystack.includes(term);
+    };
+
     // 1. Search directly in farmer's active produce inventory
     for (const p of products) {
       const pName = (p.name || '').toLowerCase();
       const pTelugu = (p.teluguName || '').toLowerCase();
 
-      if (pName && lower.includes(pName)) {
+      if (pName && matchTerm(lower, pName)) {
         return { en: p.name, te: p.teluguName || p.name, id: p.id, found: true };
       }
       if (pTelugu && lower.includes(pTelugu)) {
@@ -218,8 +225,8 @@ export async function callFarmerAIAssistant(
       };
 
       for (const [, syns] of Object.entries(synonyms)) {
-        if (syns.some((s) => pName.includes(s) || pTelugu.includes(s))) {
-          if (syns.some((s) => lower.includes(s))) {
+        if (syns.some((s) => matchTerm(pName, s) || pTelugu.includes(s))) {
+          if (syns.some((s) => matchTerm(lower, s))) {
             return { en: p.name, te: p.teluguName || p.name, id: p.id, found: true };
           }
         }
@@ -246,7 +253,7 @@ export async function callFarmerAIAssistant(
     ];
 
     for (const kp of allKnownProduces) {
-      if (kp.synonyms.some((s) => lower.includes(s))) {
+      if (kp.synonyms.some((s) => matchTerm(lower, s))) {
         return { en: kp.en, te: kp.te, id: '', found: false, queryCropName: kp.en, queryCropNameTe: kp.te };
       }
     }

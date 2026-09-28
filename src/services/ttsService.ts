@@ -371,6 +371,7 @@ class VernacularTTSService {
 
   private isRoboticVoice(name: string): boolean {
     const lower = name.toLowerCase();
+    // Only block actual mechanical / robotic synthesizers (espeak, klatt, mbrola)
     return (
       lower.includes('espeak') ||
       lower.includes('klatt') ||
@@ -379,15 +380,11 @@ class VernacularTTSService {
       lower.includes('festival') ||
       lower.includes('flite') ||
       lower.includes('pico') ||
-      lower.includes('epos') ||
-      // Linux espeak-ng often names voices like "English (Great Britain)" from espeak
-      (lower.includes('english') && !lower.includes('google') && !lower.includes('natural') && !lower.includes('neural') && !lower.includes('online') &&
-        typeof navigator !== 'undefined' && /linux/i.test(navigator.platform || ''))
+      lower.includes('epos')
     );
   }
 
   private selectBestTeluguVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
-    // Filter out robotic voices if higher quality alternatives exist
     const nonRobotic = voices.filter((v) => !this.isRoboticVoice(v.name));
     const pool = nonRobotic.length > 0 ? nonRobotic : voices;
 
@@ -424,27 +421,27 @@ class VernacularTTSService {
     const nonRobotic = voices.filter((v) => !this.isRoboticVoice(v.name));
     const pool = nonRobotic.length > 0 ? nonRobotic : voices;
 
-    // 1. Natural / Neural Indian English voices
-    const enInNatural = pool.find(
+    // 1. Indian English voice (e.g. Google English India, en-IN)
+    const enIn = pool.find(
       (v) =>
-        (v.lang.toLowerCase().replace('_', '-') === 'en-in' || v.name.toLowerCase().includes('india')) &&
-        this.isHighQualityVoice(v.name)
+        v.lang.toLowerCase().replace('_', '-') === 'en-in' ||
+        v.name.toLowerCase().includes('india')
     );
-    if (enInNatural) return enInNatural;
+    if (enIn) return enIn;
 
-    // 2. Exact match en-IN or contains 'India' in voice name
-    const enInExact = pool.find((v) => {
-      const l = v.lang.toLowerCase().replace('_', '-');
-      return l === 'en-in' || v.name.toLowerCase().includes('india');
-    });
-    if (enInExact) return enInExact;
+    // 2. Google English natural voices on Mobile Chrome (clear, warm, non-robotic)
+    const googleEn = pool.find(
+      (v) => v.name.toLowerCase().includes('google') && v.lang.toLowerCase().startsWith('en')
+    );
+    if (googleEn) return googleEn;
 
-    // 3. Any English Natural voice
+    // 3. Natural / Neural / Online English voices
     const enNatural = pool.find(
       (v) => v.lang.toLowerCase().startsWith('en') && this.isHighQualityVoice(v.name)
     );
     if (enNatural) return enNatural;
 
+    // 4. Any English voice
     return pool.find((v) => v.lang.toLowerCase().startsWith('en')) || null;
   }
 
@@ -600,7 +597,12 @@ class VernacularTTSService {
     await this.ensureVoicesLoaded();
 
     try {
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+      }
+      try {
+        window.speechSynthesis.resume();
+      } catch (_) {}
 
       const voice = this.getBestVoice(lang);
 
@@ -613,21 +615,16 @@ class VernacularTTSService {
         }
         const voiceIsTelugu = voice.lang.toLowerCase().startsWith('te') || voice.name.toLowerCase().includes('telugu');
         if (!voiceIsTelugu) {
-          console.info('[TTS] Telugu guard: non-Telugu voice would play — aborting to prevent Hindi/espeak audio.');
+          console.info('[TTS] Telugu guard: non-Telugu voice would play — aborting to prevent Hindi audio.');
           options?.onEnd?.();
           return;
         }
       }
 
-      // ── English: skip if only espeak or robotic voices available ──
+      // ── English: on mobile Chrome, ensure natural, non-robotic playback ──
       if (lang.startsWith('en')) {
-        const availableEnVoices = this.voices.filter(v => v.lang.toLowerCase().startsWith('en'));
-        const hasGoodEnVoice = availableEnVoices.some(v =>
-          !this.isRoboticVoice(v.name) &&
-          (this.isHighQualityVoice(v.name) || v.name.toLowerCase().includes('google') || !v.name.toLowerCase().includes('espeak'))
-        );
-        if (!hasGoodEnVoice || !voice) {
-          console.info('[TTS] No quality English voice; skipping browser TTS to avoid robotic audio.');
+        if (!voice) {
+          console.info('[TTS] No English voice available; skipping browser TTS.');
           options?.onEnd?.();
           return;
         }
@@ -639,7 +636,7 @@ class VernacularTTSService {
       }
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = options?.rate ?? (lang === 'te-IN' ? 0.9 : 0.95);
+      utterance.rate = options?.rate ?? (lang === 'te-IN' ? 0.92 : 0.98);
       utterance.pitch = options?.pitch ?? 1.0;
       utterance.volume = 1.0;
 
@@ -674,12 +671,21 @@ class VernacularTTSService {
 
       (window as any).__farmTrustUtterance = utterance;
       this.currentUtterance = utterance;
+
+      // Chrome Mobile speech resume
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch (_) {}
+
       window.speechSynthesis.speak(utterance);
     } catch (err) {
       this.isAudioPlaying = false;
       this.stopKeepAlive();
-      console.warn('Browser TTS speech error:', err);
-      options?.onError?.(err);
+      this.currentUtterance = null;
+      console.warn('[TTS] SpeechSynthesis failed:', err);
+      options?.onEnd?.();
     }
   }
 
