@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   KeyRound,
   ArrowUpRight,
+  ArrowLeft,
   Sparkles,
   HelpCircle,
   X,
@@ -423,11 +424,11 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
               <div className="flex items-center gap-2.5 pt-1">
                 <Button
                   variant="primary"
+                  icon={CheckCircle2}
                   onClick={() => handleAcceptOrder(pendingOrders[0])}
-                  className="flex-1 min-h-[48px] text-[15px]"
+                  className="flex-1 min-h-[48px] text-[15px] gap-2"
                 >
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  <span>{language === 'te' ? 'ఆర్డర్ అంగీకరించండి' : 'Accept Order'}</span>
+                  {language === 'te' ? 'ఆర్డర్ అంగీకరించండి' : 'Accept Order'}
                 </Button>
 
                 <Button
@@ -676,10 +677,18 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           <div className="bg-white rounded-2xl p-5 border border-[#E2DDCF] shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight flex items-center gap-2">
-                  <Package className="w-6 h-6 text-[#1B3D27]" />
-                  <span>{language === 'te' ? 'ఆర్డర్లు & రోజువారీ అమ్మకాలు' : 'Orders & Daily Sales'}</span>
-                </h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    icon={ArrowLeft}
+                    onClick={() => setActiveTab('home')}
+                    className="p-0 min-h-[40px] w-10"
+                  />
+                  <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight flex items-center gap-2">
+                    <Package className="w-6 h-6 text-[#1B3D27]" />
+                    <span>{language === 'te' ? 'ఆర్డర్లు & రోజువారీ అమ్మకాలు' : 'Orders & Daily Sales'}</span>
+                  </h2>
+                </div>
                 <p className="text-[13px] text-[#5B5B5B] mt-0.5">
                   {language === 'te'
                     ? 'ప్రతిరోజు ఎంత అమ్మకం జరిగింది, ఎంత సంపాదన వచ్చిందో తేదీ మరియు సమయంతో సహా చూడండి.'
@@ -1041,9 +1050,17 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           
           {/* Header */}
           <div>
-            <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight">
-              {language === 'te' ? 'మండి మరియు ప్రత్యక్ష మార్కెట్ ధరలు' : 'Mandi vs Direct Fair Prices'}
-            </h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                icon={ArrowLeft}
+                onClick={() => setActiveTab('home')}
+                className="p-0 min-h-[40px] w-10"
+              />
+              <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight">
+                {language === 'te' ? 'మండి మరియు ప్రత్యక్ష మార్కెట్ ధరలు' : 'Mandi vs Direct Fair Prices'}
+              </h2>
+            </div>
             <p className="text-[14px] text-[#5B5B5B] mt-0.5">
               {language === 'te'
                 ? 'దళారీ లేకుండా రైతు నేరుగా అమ్మితే లభించే అదనపు లాభం'
@@ -1146,22 +1163,28 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
       {activeTab === 'products' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                icon={ArrowLeft}
+                onClick={() => setActiveTab('home')}
+                className="p-0 min-h-[40px] w-10"
+              />
               <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight">
                 {language === 'te' ? 'మీ వద్ద ఉన్న పంటలు' : 'My Stall Produce'}
               </h2>
-              <p className="text-[13px] text-[#5B5B5B]">
-                {farmerProducts.length} {language === 'te' ? 'రకాలు అందుబాటులో ఉన్నాయి' : 'crops listed live'}
-              </p>
             </div>
+            <p className="text-[13px] text-[#5B5B5B]">
+              {farmerProducts.length} {language === 'te' ? 'రకాలు అందుబాటులో ఉన్నాయి' : 'crops listed live'}
+            </p>
 
             <Button
               variant="mic"
+              icon={Plus}
               onClick={onOpenVoiceModal}
-              className="min-h-[48px] px-4 text-[14px]"
+              className="min-h-[48px] px-4 text-[14px] gap-2"
             >
-              <Plus className="w-5 h-5 mr-1" />
-              <span>{language === 'te' ? 'పంట చేర్చండి' : 'Add Produce'}</span>
+              {language === 'te' ? 'పంట చేర్చండి' : 'Add Produce'}
             </Button>
           </div>
 
@@ -1229,9 +1252,17 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
       {activeTab === 'profile' && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight">
-              {language === 'te' ? 'రైతు ట్రస్ట్ పాస్‌పోర్ట్' : 'Farmer Trust Passport'}
-            </h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                icon={ArrowLeft}
+                onClick={() => setActiveTab('home')}
+                className="p-0 min-h-[40px] w-10"
+              />
+              <h2 className="text-[22px] font-black text-[#1A1A1A] tracking-tight">
+                {language === 'te' ? 'రైతు ట్రస్ట్ పాస్‌పోర్ట్' : 'Farmer Trust Passport'}
+              </h2>
+            </div>
             <p className="text-[13px] text-[#5B5B5B]">
               {language === 'te' ? 'ధృవీకరించబడిన పొలం మరియు రికార్డు వివరాలు' : 'Verified credentials & fulfillment history'}
             </p>
